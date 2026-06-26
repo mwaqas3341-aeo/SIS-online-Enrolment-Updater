@@ -1,197 +1,362 @@
+
 """
-fetch.py  —  SIS PESRP Dashboard Scraper
-Scrapes publicly accessible pages on https://sis.pesrp.edu.pk
-using a headless Chromium browser (Playwright) so AJAX data is captured.
-Writes clean data.json for the GitHub Pages front-end.
+fetch.py  —  SIS PESRP School-wise Enrollment Scraper
+Strategy:
+  1. Open /str/analysis with Playwright
+  2. Intercept ALL network responses — capture AJAX JSON automatically
+  3. Drive the dropdowns: Province → District → Tehsil → School
+  4. Collect per-school enrollment + teacher data
+  5. Write data.json for GitHub Pages front-end
 """
 
-import json, re, time
+import json, time, re
 from datetime import datetime, timezone
+from collections import defaultdict
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
-BASE_URL = "https://sis.pesrp.edu.pk"
+BASE_URL   = "https://sis.pesrp.edu.pk"
+STATS_URL  = f"{BASE_URL}/str/analysis"
+TIMEOUT    = 30_000   # ms
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# Network interceptor — captures every JSON response automatically
+# ─────────────────────────────────────────────────────────────────────────────
+captured_requests = []
 
-def safe_text(page, selector, default="N/A"):
+def handle_response(response):
+    """Called for every network response. Saves JSON ones."""
     try:
-        el = page.query_selector(selector)
-        return el.inner_text().strip() if el else default
+        ct = response.headers.get("content-type", "")
+        if "json" in ct or "javascript" in ct:
+            url  = response.url
+            body = response.text()
+            if len(body) > 10 and body.strip().startswith(("[", "{")):
+                captured_requests.append({
+                    "url":    url,
+                    "status": response.status,
+                    "body":   body[:50_000],   # cap at 50 KB
+                })
     except Exception:
-        return default
+        pass   # ignore binary / empty
 
-def safe_all(page, selector):
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+def get_options(page, selector):
+    """Return list of (value, label) for a <select> element."""
+    opts = []
+    for el in page.query_selector_all(f"{selector} option"):
+        val = el.get_attribute("value") or ""
+        txt = (el.inner_text() or "").strip()
+        if val and txt and txt.lower() not in ("select", "all", "--", "select district",
+                                                "select tehsil", "select markaz", "select school"):
+            opts.append((val, txt))
+    return opts
+
+def wait_for_data(page, ms=2500):
+    """Short pause for AJAX to settle after a dropdown change."""
     try:
-        return [el.inner_text().strip() for el in page.query_selector_all(selector)]
+        page.wait_for_load_state("networkidle", timeout=ms)
     except Exception:
-        return []
+        pass
+    time.sleep(1.5)
 
-def clean(text):
-    return re.sub(r'\s+', ' ', text).strip()
+def select_and_wait(page, selector, value):
+    try:
+        page.select_option(selector, value=value)
+        wait_for_data(page)
+        return True
+    except Exception:
+        return False
 
-# ── scraper ───────────────────────────────────────────────────────────────────
+def try_parse(text):
+    try:
+        return json.loads(text)
+    except Exception:
+        return None
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main scraper
+# ─────────────────────────────────────────────────────────────────────────────
 def scrape():
-    result = {
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
-        "source": BASE_URL,
-        "etransfer": {},
-        "site_info": {},
-        "stats": {},
-        "str_analysis": {},
-        "notices": [],
+    output = {
+        "scraped_at":      datetime.now(timezone.utc).isoformat(),
+        "source":          BASE_URL,
+        "discovered_apis": [],          # auto-discovered AJAX endpoints
+        "districts":       [],          # district list
+        "schools":         [],          # flat list of schools with enrollment
+        "summary": {
+            "total_schools":  0,
+            "total_students": 0,
+            "total_boys":     0,
+            "total_girls":    0,
+            "total_teachers": 0,
+        },
         "error": None,
     }
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
-        ctx     = browser.new_context(
-            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                       "(KHTML, like Gecko) Chrome/124 Safari/537.36"
+        ctx = browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124 Safari/537.36"
+            )
         )
-
-        # ── PAGE 1: Home page ────────────────────────────────────────────────
         page = ctx.new_page()
+
+        # ── Attach network interceptor ───────────────────────────────────────
+        page.on("response", handle_response)
+
+        # ── Step 1: Load /str/analysis ───────────────────────────────────────
+        print("Opening /str/analysis …")
         try:
-            page.goto(BASE_URL, wait_until="networkidle", timeout=60_000)
-            time.sleep(3)   # let any late AJAX settle
-
-            # Last updated timestamp shown on home page
-            last_updated_raw = safe_text(page, "text=/Last Updated/", "")
-            if not last_updated_raw:
-                # try scanning all visible text
-                full_text = page.inner_text("body")
-                m = re.search(r'Last Updated.*?(\d{1,2}\s+\w+\s+\d{4}.*?)(?:\n|$)',
-                              full_text, re.IGNORECASE)
-                last_updated_raw = m.group(0).strip() if m else "Not found"
-
-            result["site_info"]["last_updated_raw"] = last_updated_raw
-
-            # E-Transfer status — parse every notice paragraph
-            body_text = page.inner_text("body")
-
-            etransfer_open   = "applications are being accepted" in body_text.lower() \
-                               and "not being accepted" not in body_text.lower()
-            result["etransfer"]["accepting"] = etransfer_open
-            result["etransfer"]["status_label"] = (
-                "OPEN" if etransfer_open else "CLOSED"
-            )
-
-            # Extract last round dates (e.g. "from 11-Jun-25 to 15-Jun-25")
-            round_matches = re.findall(
-                r'from\s+(\d{1,2}-\w{3}-\d{2,4})\s+to\s+(\d{1,2}-\w{3}-\d{2,4})',
-                body_text, re.IGNORECASE
-            )
-            if round_matches:
-                last = round_matches[-1]
-                result["etransfer"]["last_round_start"] = last[0]
-                result["etransfer"]["last_round_end"]   = last[1]
-
-            # Collect all notice/alert text blocks
-            for sel in ["p", ".alert", ".notice", "div.info"]:
-                for el in page.query_selector_all(sel):
-                    t = clean(el.inner_text())
-                    if len(t) > 30 and t not in result["notices"]:
-                        result["notices"].append(t)
-
-            # Grab any headline numbers (cards / stat boxes)
-            stat_numbers = {}
-            for card in page.query_selector_all(
-                    ".stat-box, .info-box, .card, .counter, [class*='count']"):
-                label = clean(card.inner_text())
-                num_m = re.search(r'[\d,]+', label)
-                if num_m and len(label) < 80:
-                    key = re.sub(r'\d[\d,]*', '', label).strip()
-                    stat_numbers[key] = num_m.group(0)
-
-            result["stats"]["home_cards"] = stat_numbers
-
+            page.goto(STATS_URL, wait_until="networkidle", timeout=60_000)
         except PWTimeout:
-            result["error"] = "Timeout on home page"
-        except Exception as e:
-            result["error"] = f"Home page error: {e}"
+            output["error"] = "Timeout loading /str/analysis"
+            browser.close()
+            return output
 
-        # ── PAGE 2: /str/analysis (public enrollment/teacher stats) ──────────
-        page2 = ctx.new_page()
-        try:
-            page2.goto(f"{BASE_URL}/str/analysis",
-                       wait_until="networkidle", timeout=60_000)
-            time.sleep(4)
+        wait_for_data(page, 5000)
 
-            body2 = page2.inner_text("body")
+        # ── Step 2: Discover dropdowns ───────────────────────────────────────
+        # Common selector patterns in SIS-type CodeIgniter apps
+        district_selectors = [
+            "select[name='district']", "select#district", "select.district",
+            "select[name='district_id']", "#district_id", "#sel_district",
+        ]
+        tehsil_selectors = [
+            "select[name='tehsil']", "select#tehsil", "select.tehsil",
+            "select[name='tehsil_id']", "#tehsil_id", "#sel_tehsil",
+        ]
+        school_selectors = [
+            "select[name='school']", "select#school", "select.school",
+            "select[name='school_id']", "#school_id", "#sel_school",
+        ]
 
-            # Description text
-            desc_el = page2.query_selector("p, .description, .intro")
-            result["str_analysis"]["description"] = (
-                clean(desc_el.inner_text()) if desc_el else
-                "Free public access to high-level stats tabulated from "
-                "self-reported data by public schools in Punjab."
-            )
+        def find_sel(candidates):
+            for s in candidates:
+                if page.query_selector(s):
+                    return s
+            # fallback: inspect all selects
+            for sel in page.query_selector_all("select"):
+                nm = (sel.get_attribute("name") or sel.get_attribute("id") or "").lower()
+                if any(k in nm for k in ["district"]):
+                    return f"select[name='{sel.get_attribute('name')}']" if sel.get_attribute('name') else f"#{sel.get_attribute('id')}"
+            return None
 
-            # Tables — capture any data tables
-            tables = []
-            for tbl in page2.query_selector_all("table"):
-                rows = []
-                headers = [clean(th.inner_text())
-                           for th in tbl.query_selector_all("th")]
-                for tr in tbl.query_selector_all("tbody tr"):
-                    cells = [clean(td.inner_text())
-                             for td in tr.query_selector_all("td")]
-                    if cells:
-                        rows.append(cells)
-                if rows:
-                    tables.append({"headers": headers, "rows": rows[:30]})
-            result["str_analysis"]["tables"] = tables
+        dist_sel = find_sel(district_selectors)
 
-            # Extract any dropdown options (district list)
-            districts = []
-            for opt in page2.query_selector_all("select option"):
-                val = opt.get_attribute("value") or ""
-                txt = clean(opt.inner_text())
-                if val and txt and txt.lower() not in ("select", "all", "--"):
-                    districts.append({"id": val, "name": txt})
-            result["str_analysis"]["districts"] = districts
+        if not dist_sel:
+            # No dropdown found — save whatever AJAX was captured on load
+            output["error"] = "No district dropdown found. Check captured_requests for raw API data."
+            _save_captured(output)
+            browser.close()
+            return output
 
-            # Key numbers visible on the analysis page
-            nums = {}
-            for el in page2.query_selector_all(
-                    ".number, .stat, .count, .total, [class*='figure']"):
-                t = clean(el.inner_text())
-                if re.search(r'\d{3,}', t) and len(t) < 60:
-                    nums[t[:40]] = t
-            result["str_analysis"]["visible_numbers"] = nums
+        # ── Step 3: Get district list ────────────────────────────────────────
+        districts = get_options(page, dist_sel)
+        print(f"Found {len(districts)} districts")
+        output["districts"] = [{"id": v, "name": n} for v, n in districts]
 
-        except PWTimeout:
-            result["str_analysis"]["error"] = "Timeout on /str/analysis"
-        except Exception as e:
-            result["str_analysis"]["error"] = str(e)
+        teh_sel    = find_sel(tehsil_selectors)
+        school_sel = find_sel(school_selectors)
+
+        # ── Step 4: Iterate districts → tehsils → schools ────────────────────
+        all_schools = []
+
+        for d_val, d_name in districts:
+            print(f"  District: {d_name}")
+            if not select_and_wait(page, dist_sel, d_val):
+                continue
+
+            # Refresh tehsil options after selecting district
+            tehsils = get_options(page, teh_sel) if teh_sel else []
+
+            if not tehsils:
+                # Try to read school-level data directly
+                schools = _extract_school_table(page, d_name, "", "")
+                all_schools.extend(schools)
+                continue
+
+            for t_val, t_name in tehsils:
+                print(f"    Tehsil: {t_name}")
+                if teh_sel:
+                    select_and_wait(page, teh_sel, t_val)
+
+                # School list within tehsil
+                if school_sel:
+                    school_opts = get_options(page, school_sel)
+                    for s_val, s_name in school_opts:
+                        select_and_wait(page, school_sel, s_val)
+                        school_data = _extract_school_stats(page)
+                        all_schools.append({
+                            "district":     d_name,
+                            "tehsil":       t_name,
+                            "school_id":    s_val,
+                            "school_name":  s_name,
+                            **school_data,
+                        })
+                else:
+                    # No school dropdown — read aggregate table for this tehsil
+                    rows = _extract_school_table(page, d_name, t_name, "")
+                    all_schools.extend(rows)
+
+        output["schools"] = all_schools
+
+        # ── Step 5: Compute summary totals ───────────────────────────────────
+        for s in all_schools:
+            output["summary"]["total_schools"]  += 1
+            output["summary"]["total_students"] += _int(s.get("total_students", 0))
+            output["summary"]["total_boys"]     += _int(s.get("boys", 0))
+            output["summary"]["total_girls"]    += _int(s.get("girls", 0))
+            output["summary"]["total_teachers"] += _int(s.get("teachers", 0))
+
+        # ── Step 6: Save auto-discovered AJAX APIs ───────────────────────────
+        _save_captured(output)
 
         browser.close()
 
-    # ── deduplicate notices ───────────────────────────────────────────────────
-    seen, unique = set(), []
-    for n in result["notices"]:
-        k = n[:60]
-        if k not in seen:
-            seen.add(k)
-            unique.append(n)
-    result["notices"] = unique[:10]   # keep max 10
-
-    return result
+    return output
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# Extract stats from the currently displayed page
+# ─────────────────────────────────────────────────────────────────────────────
+def _extract_school_stats(page):
+    """
+    After selecting a school in the dropdown, read the displayed stats.
+    Tries multiple common patterns.
+    """
+    stats = {"total_students": 0, "boys": 0, "girls": 0, "teachers": 0}
+    body  = page.inner_text("body")
 
+    # Pattern: look for labeled numbers  e.g. "Boys: 123"  "Girls: 456"
+    for label, key in [
+        (r"boys\s*:?\s*([\d,]+)",        "boys"),
+        (r"girls\s*:?\s*([\d,]+)",       "girls"),
+        (r"total\s+students?\s*:?\s*([\d,]+)", "total_students"),
+        (r"teachers?\s*:?\s*([\d,]+)",   "teachers"),
+        (r"enrollment\s*:?\s*([\d,]+)",  "total_students"),
+    ]:
+        m = re.search(label, body, re.IGNORECASE)
+        if m:
+            stats[key] = _int(m.group(1))
+
+    # If we got boys+girls but not total, compute it
+    if stats["total_students"] == 0 and (stats["boys"] or stats["girls"]):
+        stats["total_students"] = stats["boys"] + stats["girls"]
+
+    # Try table cells too
+    rows = page.query_selector_all("table tbody tr")
+    for row in rows:
+        cells = [c.inner_text().strip() for c in row.query_selector_all("td")]
+        if len(cells) >= 3:
+            nums = [_int(c) for c in cells if re.match(r"^[\d,]+$", c.replace(",",""))]
+            if nums:
+                stats["total_students"] = max(stats["total_students"], sum(nums[:2]))
+
+    return stats
+
+
+def _extract_school_table(page, district, tehsil, markaz):
+    """
+    Reads any visible table as rows of school data.
+    Returns list of dicts.
+    """
+    schools = []
+    for tbl in page.query_selector_all("table"):
+        headers = [clean(th.inner_text()) for th in tbl.query_selector_all("th")]
+        for tr in tbl.query_selector_all("tbody tr"):
+            cells = [clean(td.inner_text()) for td in tr.query_selector_all("td")]
+            if not cells:
+                continue
+            row = {"district": district, "tehsil": tehsil, "markaz": markaz}
+            if headers:
+                for i, h in enumerate(headers):
+                    if i < len(cells):
+                        row[h.lower().replace(" ", "_")] = cells[i]
+            else:
+                # No headers — try to infer
+                row["school_name"]    = cells[0] if len(cells) > 0 else ""
+                row["total_students"] = _int(cells[1]) if len(cells) > 1 else 0
+                row["boys"]           = _int(cells[2]) if len(cells) > 2 else 0
+                row["girls"]          = _int(cells[3]) if len(cells) > 3 else 0
+                row["teachers"]       = _int(cells[4]) if len(cells) > 4 else 0
+            schools.append(row)
+    return schools
+
+
+def _save_captured(output):
+    """Save discovered AJAX endpoints and their parsed responses."""
+    seen_urls = set()
+    apis = []
+    for req in captured_requests:
+        url = req["url"]
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        parsed = try_parse(req["body"])
+        apis.append({
+            "url":     url,
+            "status":  req["status"],
+            "sample":  parsed if isinstance(parsed, (dict, list)) else req["body"][:500],
+        })
+
+        # If the AJAX response contains school/enrollment data, merge it
+        if isinstance(parsed, list) and len(parsed) > 0:
+            first = parsed[0]
+            if isinstance(first, dict):
+                keys = {k.lower() for k in first.keys()}
+                if any(k in keys for k in ["enrollment", "students", "boys", "girls",
+                                            "school", "emis", "school_name"]):
+                    print(f"  ✓ Found school-data API: {url}  ({len(parsed)} rows)")
+                    # Merge into schools if not already populated
+                    if not output["schools"]:
+                        output["schools"] = parsed
+
+    output["discovered_apis"] = apis[:30]   # keep up to 30
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Utilities
+# ─────────────────────────────────────────────────────────────────────────────
+def _int(v):
+    try:
+        return int(str(v).replace(",", "").strip())
+    except Exception:
+        return 0
+
+def clean(text):
+    return re.sub(r'\s+', ' ', (text or "")).strip()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Entry point
+# ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("Scraping sis.pesrp.edu.pk …")
+    print("=== SIS PESRP School Enrollment Scraper ===")
     data = scrape()
 
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print(f"✓ Wrote data.json  (E-Transfer: {data['etransfer'].get('status_label','?')})")
-    print(f"  Districts found : {len(data['str_analysis'].get('districts', []))}")
-    print(f"  Tables found    : {len(data['str_analysis'].get('tables', []))}")
-    print(f"  Notices         : {len(data['notices'])}")
+    s = data["summary"]
+    print(f"\n✓ data.json written")
+    print(f"  Schools     : {s['total_schools']:,}")
+    print(f"  Students    : {s['total_students']:,}")
+    print(f"  Boys        : {s['total_boys']:,}")
+    print(f"  Girls       : {s['total_girls']:,}")
+    print(f"  Teachers    : {s['total_teachers']:,}")
+    print(f"  AJAX APIs   : {len(data['discovered_apis'])}")
+
     if data.get("error"):
-        print(f"  ⚠ Error: {data['error']}")
+        print(f"\n⚠ {data['error']}")
+
+    # Print discovered API endpoints — useful for debugging
+    if data["discovered_apis"]:
+        print("\n--- Discovered AJAX Endpoints ---")
+        for api in data["discovered_apis"][:10]:
+            print(f"  {api['status']}  {api['url']}")
