@@ -1,0 +1,38 @@
+name: Fetch SIS PESRP Data
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours  (4×/day = ~120 runs/month)
+  workflow_dispatch:          # allow manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write         # needed to commit data.json back
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          pip install playwright requests beautifulsoup4
+          playwright install chromium --with-deps
+
+      - name: Run scraper
+        run: python fetch.py
+
+      - name: Commit updated data.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet \
+            || git commit -m "data: update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
