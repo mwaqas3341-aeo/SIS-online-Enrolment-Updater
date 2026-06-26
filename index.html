@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIS PESRP — Live Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:   #1A7A4A;
+    --green-l: #E6F4ED;
+    --red:     #C0392B;
+    --red-l:   #FDECEA;
+    --gold:    #B8860B;
+    --gold-l:  #FDF6E3;
+    --blue:    #1565C0;
+    --blue-l:  #E3F0FF;
+    --bg:      #F5F6FA;
+    --surface: #FFFFFF;
+    --border:  #E0E4EC;
+    --text:    #1A2035;
+    --muted:   #6B7280;
+    --mono:    'JetBrains Mono', monospace;
+    --sans:    'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--green);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 52px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+
+  .topbar-left img { height: 28px; filter: brightness(0) invert(1); }
+
+  .gov-badge {
+    font-size: 11px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 3px;
+    padding: 2px 7px;
+    letter-spacing: .05em;
+  }
+
+  .topbar-right {
+    font-size: 12px;
+    opacity: .85;
+    font-family: var(--mono);
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 28px 20px;
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+
+  .subtitle { color: var(--muted); font-size: 13px; }
+
+  /* E-Transfer status pill */
+  .etransfer-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 200px;
+    justify-content: center;
+  }
+
+  .etransfer-pill.open  { background: var(--green-l); color: var(--green); border: 1.5px solid var(--green); }
+  .etransfer-pill.closed{ background: var(--red-l);   color: var(--red);   border: 1.5px solid var(--red);   }
+
+  .dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot.green { background: var(--green); animation: blink 1.5s ease-in-out infinite; }
+  .dot.red   { background: var(--red); }
+
+  @keyframes blink {
+    0%,100% { opacity:1 } 50% { opacity:.3 }
+  }
+
+  /* ── MAIN GRID ── */
+  main {
+    max-width: 1100px;
+    margin: 28px auto;
+    padding: 0 28px;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .stat-card.c-green::before { background: var(--green); }
+  .stat-card.c-blue::before  { background: var(--blue);  }
+  .stat-card.c-gold::before  { background: var(--gold);  }
+  .stat-card.c-red::before   { background: var(--red);   }
+
+  .stat-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text);
+    letter-spacing: -.02em;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .panel-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .panel-tag {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  .tag-live { background: var(--green-l); color: var(--green); }
+  .tag-info { background: var(--blue-l);  color: var(--blue);  }
+  .tag-warn { background: var(--gold-l);  color: var(--gold);  }
+
+  .panel-body { padding: 20px; }
+
+  /* ── ETRANSFER DETAIL ── */
+  .etransfer-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 560px) { .etransfer-detail { grid-template-columns: 1fr; } }
+
+  .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .detail-val {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ── NOTICES ── */
+  .notice-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .notice-item {
+    background: var(--gold-l);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #4a3a00;
+  }
+
+  /* ── DATA TABLE ── */
+  .data-table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    background: #FAFBFC;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F8F9FF; }
+
+  /* ── DISTRICTS TABLE ── */
+  .district-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--blue-l);
+    color: var(--blue);
+    font-family: var(--mono);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 18px 28px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 20px;
+  }
+
+  footer a { color: var(--green); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── LOADING / ERROR ── */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .loading::before {
+    content: '';
+    display: block;
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    animation: spin .8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    background: var(--red-l);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 16px 20px;
+    color: var(--red);
+    font-size: 13px;
+  }
+
+  /* ── UPDATED ── */
+  .updated-bar {
+    background: #EBF5F0;
+    border: 1px solid #B2D8C5;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--green);
+    font-family: var(--mono);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .updated-bar strong { color: var(--green); }
+</style>
+</head>
+<body>
+
+<!-- TOP GOVERNMENT BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    🏫
+    <span>Punjab Education Sector Reform Programme (PESRP) — PMIU</span>
+    <span class="gov-badge">Government of Punjab</span>
+  </div>
+  <div class="topbar-right" id="live-clock">Loading…</div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>SIS Live Dashboard</h1>
+      <p class="subtitle">School Information System · Auto-refreshed from sis.pesrp.edu.pk every 6 hours</p>
+    </div>
+    <div id="etransfer-pill-wrap">
+      <div class="etransfer-pill closed">
+        <span class="dot red"></span>
+        <span>Loading E-Transfer…</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- LAST UPDATED BAR -->
+  <div class="updated-bar" id="updated-bar">
+    ⏱ Checking data freshness…
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-grid" id="stat-grid">
+    <div class="stat-card c-green">
+      <div class="stat-icon">🏫</div>
+      <div class="stat-label">Data Source</div>
+      <div class="stat-value" style="font-size:16px;margin-top:4px">SIS PESRP</div>
+      <div class="stat-sub">Punjab public schools</div>
+    </div>
+    <div class="stat-card c-blue">
+      <div class="stat-icon">📅</div>
+      <div class="stat-label">SIS Last Updated</div>
+      <div class="stat-value" id="sis-updated" style="font-size:16px;margin-top:4px">—</div>
+      <div class="stat-sub">Reported by SIS homepage</div>
+    </div>
+    <div class="stat-card c-gold">
+      <div class="stat-icon">🔄</div>
+      <div class="stat-label">E-Transfer Status</div>
+      <div class="stat-value" id="etransfer-big" style="font-size:22px;margin-top:4px">—</div>
+      <div class="stat-sub" id="etransfer-round-sub">Loading…</div>
+    </div>
+    <div class="stat-card c-red">
+      <div class="stat-icon">🕒</div>
+      <div class="stat-label">Dashboard Updated</div>
+      <div class="stat-value" id="scraped-at" style="font-size:14px;margin-top:4px;letter-spacing:0">—</div>
+      <div class="stat-sub">GitHub Actions run</div>
+    </div>
+  </div>
+
+  <!-- E-TRANSFER PANEL -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">📋 E-Transfer System Status</span>
+      <span class="panel-tag tag-live">Live</span>
+    </div>
+    <div class="panel-body">
+      <div class="etransfer-detail" id="etransfer-detail">
+        <div class="loading">Loading E-Transfer details…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTICES PANEL -->
+  <div class="panel" id="notices-panel" style="display:none">
+    <div class="panel-head">
+      <span class="panel-title">📢 Official Notices &amp; Updates</span>
+      <span class="panel-tag tag-warn">From SIS Homepage</span>
+    </div>
+    <div class="panel-body">
+      <div class="notice-list" id="notice-list"></div>
+    </div>
+  </div>
+
+  <!-- DISTRICTS PANEL -->
+  <div class="panel" id="districts-panel" style="display:none">
+    <div class="panel-head">
+      <span class="panel-title">🗺️ Available Districts</span>
+      <span class="panel-tag tag-info">From /str/analysis</span>
+    </div>
+    <div class="panel-body">
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>District ID</th>
+              <th>District Name</th>
+            </tr>
+          </thead>
+          <tbody id="district-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA TABLES PANEL -->
+  <div class="panel" id="tables-panel" style="display:none">
+    <div class="panel-head">
+      <span class="panel-title">📊 Statistics Tables</span>
+      <span class="panel-tag tag-info">From /str/analysis</span>
+    </div>
+    <div class="panel-body" id="tables-body">
+      <div class="loading">Loading stats…</div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">ℹ️ About This Dashboard</span>
+    </div>
+    <div class="panel-body">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:10px">
+        This dashboard is a <strong>read-only mirror</strong> of publicly accessible data from
+        <a href="https://sis.pesrp.edu.pk" target="_blank" style="color:var(--green)">sis.pesrp.edu.pk</a>
+        — the official School Information System of the Punjab Education Sector Reform Programme.
+        Data is scraped every 6 hours via GitHub Actions and served as a static JSON file on GitHub Pages.
+      </p>
+      <p style="color:var(--muted);font-size:13px">
+        <strong>Coverage:</strong> E-Transfer status, official notices, district list, and public enrollment statistics.
+        Data is self-reported by schools and is provisional in nature. For authoritative records,
+        visit the official SIS portal.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Data sourced from
+  <a href="https://sis.pesrp.edu.pk" target="_blank">sis.pesrp.edu.pk</a>
+  · PMIU PESRP, Government of Punjab ·
+  Dashboard hosted on
+  <a href="https://pages.github.com" target="_blank">GitHub Pages</a>
+  · Not an official government product
+</footer>
+
+<script>
+// ── Live clock ──────────────────────────────────────────────────────────────
+function tick() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    now.toUTCString().replace('GMT','UTC');
+}
+tick();
+setInterval(tick, 1000);
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString('en-PK', {
+      timeZone: 'Asia/Karachi',
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }) + ' PKT';
+  } catch(e) { return iso; }
+}
+
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Load data.json ───────────────────────────────────────────────────────────
+fetch(`data.json?t=${Date.now()}`)
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(d => renderDashboard(d))
+  .catch(err => {
+    document.getElementById('updated-bar').innerHTML =
+      `<span style="color:#C0392B">⚠ Could not load data.json — ${esc(err.message)}.
+       Run the GitHub Actions workflow first, or check the repo.</span>`;
+  });
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderDashboard(d) {
+
+  // ── Updated bar
+  document.getElementById('updated-bar').innerHTML =
+    `✅ <strong>Dashboard last scraped:</strong> ${fmtDate(d.scraped_at)}
+     &nbsp;|&nbsp; Source: <a href="${esc(d.source)}" target="_blank" style="color:var(--green)">${esc(d.source)}</a>`;
+
+  // ── SIS own "Last Updated" text
+  const sisUp = d.site_info?.last_updated_raw || '—';
+  document.getElementById('sis-updated').textContent =
+    sisUp.replace(/Last Updated at\s*:?\s*/i,'').trim() || sisUp;
+
+  // ── Scraped at
+  document.getElementById('scraped-at').textContent = fmtDate(d.scraped_at);
+
+  // ── E-Transfer pill
+  const et   = d.etransfer || {};
+  const open = et.accepting;
+  document.getElementById('etransfer-pill-wrap').innerHTML = `
+    <div class="etransfer-pill ${open ? 'open' : 'closed'}">
+      <span class="dot ${open ? 'green' : 'red'}"></span>
+      E-Transfer ${open ? 'OPEN' : 'CLOSED'}
+    </div>`;
+
+  // ── E-Transfer big card
+  document.getElementById('etransfer-big').textContent = et.status_label || '—';
+  document.getElementById('etransfer-big').style.color = open ? 'var(--green)' : 'var(--red)';
+
+  const roundText = et.last_round_start
+    ? `Last round: ${et.last_round_start} → ${et.last_round_end}`
+    : 'Round dates not found';
+  document.getElementById('etransfer-round-sub').textContent = roundText;
+
+  // ── E-Transfer detail panel
+  document.getElementById('etransfer-detail').innerHTML = `
+    <div class="detail-row">
+      <span class="detail-label">Current Status</span>
+      <span class="detail-val" style="color:${open ? 'var(--green)' : 'var(--red)'}">
+        ${open ? '✅ Applications Open' : '🔴 Not Accepting Applications'}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Previous Round Start</span>
+      <span class="detail-val">${esc(et.last_round_start || '—')}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Previous Round End</span>
+      <span class="detail-val">${esc(et.last_round_end || '—')}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Data Type</span>
+      <span class="detail-val" style="font-size:13px;font-weight:500">Provisional (self-reported)</span>
+    </div>`;
+
+  // ── Notices
+  const notices = d.notices || [];
+  if (notices.length) {
+    document.getElementById('notices-panel').style.display = '';
+    document.getElementById('notice-list').innerHTML = notices
+      .map(n => `<div class="notice-item">${esc(n)}</div>`)
+      .join('');
+  }
+
+  // ── Districts
+  const districts = d.str_analysis?.districts || [];
+  if (districts.length) {
+    document.getElementById('districts-panel').style.display = '';
+    document.getElementById('district-tbody').innerHTML = districts
+      .map((dist, i) => `
+        <tr>
+          <td style="color:var(--muted);font-family:var(--mono)">${i + 1}</td>
+          <td><span class="district-badge">${esc(dist.id)}</span></td>
+          <td>${esc(dist.name)}</td>
+        </tr>`).join('');
+  }
+
+  // ── Statistics tables
+  const tables = d.str_analysis?.tables || [];
+  if (tables.length) {
+    document.getElementById('tables-panel').style.display = '';
+    document.getElementById('tables-body').innerHTML = tables.map((tbl, ti) => `
+      <div style="margin-bottom:24px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);
+                    text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+          Table ${ti + 1}
+        </div>
+        <div class="data-table-wrap">
+          <table>
+            <thead>
+              <tr>${tbl.headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${tbl.rows.map(row =>
+                `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`
+              ).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── Error banner
+  if (d.error) {
+    document.querySelector('main').insertAdjacentHTML('afterbegin', `
+      <div class="error-box" style="margin-bottom:20px">
+        ⚠ Scraper reported an issue: ${esc(d.error)}
+      </div>`);
+  }
+}
+</script>
+</body>
+</html>
