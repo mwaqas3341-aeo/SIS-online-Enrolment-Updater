@@ -1,0 +1,33 @@
+{
+  "scraped_at": "2026-06-26T19:35:44.585596+00:00",
+  "source": "https://sis.pesrp.edu.pk",
+  "etransfer": {
+    "accepting": false,
+    "status_label": "CLOSED"
+  },
+  "site_info": {
+    "last_updated_raw": "Last Updated at:"
+  },
+  "stats": {
+    "home_cards": {}
+  },
+  "str_analysis": {
+    "description": "SIS (School Information System) is a software used by the public schools all across Punjab, to self report data on registered students, teachers and facilities; using a low-cost android based tablet.",
+    "tables": [],
+    "districts": [],
+    "visible_numbers": {}
+  },
+  "notices": [
+    "SIS (School Information System) is a software used by the public schools all across Punjab, to self report data on registered students, teachers and facilities; using a low-cost android based tablet.",
+    "Each student is uniquely tagged in SIS, based on the parent/guardian CNIC. These CNICs are checked for validity via the NADRA database, at the time of student enrollment.",
+    "This online dashboard provides free public access to high-level stats automatically tabulated from the self-reported by public schools in Punjab everyday. It enables users to drill-down to district, tehsil, markaz, and school level information, via drop-down lists and filters.",
+    "These online stats include reports on enrollment by gender, grade, geographic location, as well as on teacher and staff allocation.",
+    "This is provisional data based on self reporting by schools (in SIS). For transfer, finalization of candidates will be subject to verification of all the data (teacher records, sanctioned posts, enrollment, etc.)",
+    "Submission of E-Transfer applications is now open. Applications can be submitted from 23-Jun-26 to 30-Jun-26.",
+    "The E-Transfer system uses provisional data, based on self-reporting in SIS by schools and teachers. Application submission and processing will be subject to the transfer rules approved by SED. Finalization of transfer will depend on the verification of all the data and relevant documents (teacher records, sanctioned posts, enrollment, etc.) by concerned offices/issuing authorities.",
+    "Contact details of these teachers (who are available for mutual transfer) is only visible to other teachers who are a match for them. These can be accessed via the SIS mobile app.",
+    "Currently, Hardship applications are not being accepted. (Previous round of submission was from 08-Dec-25 to 20-Dec-25).",
+    "The transfer on hardship grounds uses provisional data, based on self-reporting in SIS by schools and teachers. Application submission and processing will be subject to the transfer policy rules approved by SED. Finalization of transfer will depend on the CEO verification of all the data and relevant documents (teacher records, sanctioned posts, Surplus and Deficit count, etc.) by concerned offices/approving authorities."
+  ],
+  "error": null
+}
