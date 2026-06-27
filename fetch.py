@@ -5,13 +5,38 @@ fetch.py — SIS PESRP Scraper
 Grade mapping (confirmed from live website screenshot):
   Chart columns: ECE | Nursery | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
-  Positional array length → grade keys:
+  Positional array length → grade keys (used ONLY when the API response
+  has no `categories` field):
     12 values  →  ECE, Nursery, 1–10
     11 values  →  Nursery, 1–10
     10 values  →  1–10
     <10 values →  1 … n
 
-Remove `inventory[:50]` for the full 38k-school run.
+FIX (this version):
+  The previous version silently dropped ECE/Nursery data whenever the API
+  response included a `categories` array, because GRADE_MAP lookups were
+  case-sensitive and didn't tolerate whitespace/punctuation variants like
+  "ece", "E.C.E", "Play Group", "K.G", etc. Any category that didn't match
+  exactly mapped to None and was skipped — even though the male/female
+  numbers for that slot were present in the response.
+
+  This version:
+    1. Normalizes categories (lowercase, strip, collapse whitespace,
+       strip trailing dots) before lookup.
+    2. Expands GRADE_MAP with common ECE/Nursery synonyms.
+    3. Prints a [WARN] for any category that still doesn't map, so a
+       silent-drop can never happen again unnoticed.
+    4. verify_ece_school() now prints the raw `categories` field (not just
+       male/female arrays), so we can see definitively whether the API is
+       using positional or labeled mode for that school.
+
+TEST MODE: this run processes exactly 10 schools, with the known ECE
+school (EMIS 37110221) forced into the batch (added first if not already
+present), so we get real ECE/Nursery output to inspect — not just zeros
+from schools that may not offer those grades.
+
+Remove `inventory[:50]` (now [:10]) and the FORCE_TEST_EMIS forcing logic
+for the full 38k-school run.
 """
 
 import json
@@ -43,6 +68,10 @@ csv_lock           = threading.Lock()
 DEBUG_FIRST_SCHOOL = True
 _debug_printed     = False
 
+# Force this EMIS code into the test batch so we get a real ECE/Nursery
+# sample in the 10-school test run, instead of relying on luck.
+FORCE_TEST_EMIS = "37110221"
+
 ALL_GRADES = ["ECE", "Nursery", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
 FIELDS = [
@@ -64,20 +93,40 @@ FIELDS = [
     "etransfer_status", "scraped_at",
 ]
 
+# ── FIX: case-insensitive, whitespace/punctuation-tolerant grade map ───────
+# Keys are normalized (lowercase, stripped, trailing dots removed) before
+# lookup — see normalize_category(). Add more synonyms here as you discover
+# them from [WARN] Unmapped category logs.
 GRADE_MAP = {
-    "ECE":        "ECE",
-    "Nursery":    "Nursery", "nursery": "Nursery",
-    "KG":         "Nursery", "katchi":  "Nursery", "Katchi": "Nursery",
-    "Pre-School": "Nursery", "Prep":    "Nursery",
+    "ece": "ECE", "e c e": "ECE", "early childhood": "ECE",
+    "early childhood education": "ECE",
+
+    "nursery": "Nursery", "kg": "Nursery", "k g": "Nursery",
+    "katchi": "Nursery", "pre-school": "Nursery", "pre school": "Nursery",
+    "prep": "Nursery", "play group": "Nursery", "playgroup": "Nursery",
+    "pg": "Nursery", "mont-1": "Nursery", "montessori": "Nursery",
+
     "1": "1",  "2": "2",  "3": "3",  "4": "4",  "5": "5",
     "6": "6",  "7": "7",  "8": "8",  "9": "9",  "10": "10",
-    "Class 1": "1",  "Class 2": "2",  "Class 3": "3",
-    "Class 4": "4",  "Class 5": "5",  "Class 6": "6",
-    "Class 7": "7",  "Class 8": "8",  "Class 9": "9",  "Class 10": "10",
-    "Grade 1": "1",  "Grade 2": "2",  "Grade 3": "3",
-    "Grade 4": "4",  "Grade 5": "5",  "Grade 6": "6",
-    "Grade 7": "7",  "Grade 8": "8",  "Grade 9": "9",  "Grade 10": "10",
+
+    "class 1": "1",  "class 2": "2",  "class 3": "3",
+    "class 4": "4",  "class 5": "5",  "class 6": "6",
+    "class 7": "7",  "class 8": "8",  "class 9": "9",  "class 10": "10",
+
+    "grade 1": "1",  "grade 2": "2",  "grade 3": "3",
+    "grade 4": "4",  "grade 5": "5",  "grade 6": "6",
+    "grade 7": "7",  "grade 8": "8",  "grade 9": "9",  "grade 10": "10",
 }
+
+
+def normalize_category(raw):
+    """Lowercase, strip, collapse internal whitespace, drop trailing dots."""
+    if raw is None:
+        return ""
+    s = str(raw).strip().lower()
+    s = re.sub(r'\s+', ' ', s)
+    s = s.rstrip('.')
+    return s
 
 
 def positional_grade_keys(n):
@@ -232,7 +281,20 @@ def apply_grade_data(school_info, data2):
         return False
 
     n = max(len(male_vals), len(female_vals))
-    grade_keys = [GRADE_MAP.get(str(c).strip()) for c in categories] if categories else positional_grade_keys(n)
+
+    # ── FIX: normalize categories before mapping, and warn on any miss ──────
+    if categories:
+        grade_keys = []
+        for c in categories:
+            norm  = normalize_category(c)
+            g_key = GRADE_MAP.get(norm)
+            if g_key is None:
+                print(f"[WARN] Unmapped category '{c}' (normalized: '{norm}') "
+                      f"for school {school_info['school_id']} — value at this "
+                      f"index will be dropped. Add it to GRADE_MAP.", flush=True)
+            grade_keys.append(g_key)
+    else:
+        grade_keys = positional_grade_keys(n)
 
     for i, g_key in enumerate(grade_keys):
         if g_key is None: continue
@@ -274,7 +336,11 @@ def worker_fetch_school_data(school_info, ts):
         if DEBUG_FIRST_SCHOOL and not _debug_printed:
             _debug_printed = True
             print("\n" + "=" * 65, flush=True)
-            print(f"[DEBUG] Raw grade bar (first school, array_len={n}):", flush=True)
+            print(f"[DEBUG] Raw grade bar (first school processed, array_len={n}):", flush=True)
+            print(f"[DEBUG] School: {school_info['school_name']} "
+                  f"(EMIS: {school_info['emis_code']})", flush=True)
+            print(f"[DEBUG] categories field: "
+                  f"{data2.get('categories') if isinstance(data2, dict) else 'N/A'}", flush=True)
             print(json.dumps(data2, indent=2)[:1500], flush=True)
             print("=" * 65 + "\n", flush=True)
 
@@ -313,19 +379,14 @@ def worker_fetch_school_data(school_info, ts):
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ECE/Nursery verification — finds the school from the screenshot by EMIS code
-# and prints its raw API response so we can confirm the 12-value mapping.
+# and prints its raw API response (INCLUDING categories) so we can confirm
+# whether the API uses positional or labeled grade mapping.
 # ═══════════════════════════════════════════════════════════════════════════════
 def verify_ece_school(inventory, csrf):
-    """
-    Search the full inventory for EMIS code 37110221 (the ATTOCK school
-    visible in the user's screenshot that has ECE + Nursery students).
-    Print its raw grade bar response and the mapped result.
-    """
-    TARGET_EMIS = "37110221"
+    TARGET_EMIS = FORCE_TEST_EMIS
     match = next((s for s in inventory if s.get("emis_code") == TARGET_EMIS), None)
 
     if not match:
-        # Fallback: find ANY school in ATTOCK that might have ECE
         attock = [s for s in inventory if s.get("district","").upper() == "ATTOCK"]
         print(f"\n[ECE-CHECK] EMIS {TARGET_EMIS} not found. "
               f"Checking first 10 ATTOCK schools ({len(attock)} total)...", flush=True)
@@ -346,41 +407,39 @@ def verify_ece_school(inventory, csrf):
         try:
             r = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
             data = r.json()
-            male   = data.get("male",   [])
-            female = data.get("female", [])
+            male       = data.get("male",   [])
+            female     = data.get("female", [])
+            categories = data.get("categories", [])
             n = len(male)
 
             print(f"\n[ECE-CHECK] School: {school['school_name']} "
                   f"(EMIS: {school['emis_code']}, ID: {school['school_id']})", flush=True)
-            print(f"  array_len={n}  →  mapped as: {positional_grade_keys(n)}", flush=True)
-            print(f"  male  : {male}",   flush=True)
-            print(f"  female: {female}", flush=True)
+            print(f"  array_len   : {n}", flush=True)
+            print(f"  categories  : {categories!r}", flush=True)  # <-- the key diagnostic
+            print(f"  male        : {male}",   flush=True)
+            print(f"  female      : {female}", flush=True)
 
-            # Show what we'd write for each grade
-            keys = positional_grade_keys(n)
-            for i, g_key in enumerate(keys):
-                b  = to_int(male[i])   if i < len(male)   else 0
-                f_ = to_int(female[i]) if i < len(female) else 0
-                if b or f_:
-                    print(f"    grade_{g_key:>7}: boys={b}  girls={f_}", flush=True)
+            if categories:
+                print(f"  → LABELED mode (categories present). Normalized mapping:", flush=True)
+                for i, c in enumerate(categories):
+                    norm  = normalize_category(c)
+                    g_key = GRADE_MAP.get(norm)
+                    flag  = "✅" if g_key else "❌ UNMAPPED"
+                    print(f"    [{i}] raw='{c}' → norm='{norm}' → {g_key} {flag}", flush=True)
+            else:
+                keys = positional_grade_keys(n)
+                print(f"  → POSITIONAL mode (no categories). mapped as: {keys}", flush=True)
+                for i, g_key in enumerate(keys):
+                    b  = to_int(male[i])   if i < len(male)   else 0
+                    f_ = to_int(female[i]) if i < len(female) else 0
+                    if b or f_:
+                        print(f"    grade_{g_key:>7}: boys={b}  girls={f_}", flush=True)
 
-            if n in (11, 12):
-                print(f"  ✅ ECE/Nursery detected! array_len={n}", flush=True)
-                break   # found what we needed
+            if n in (11, 12) or any(normalize_category(c) in ("ece", "nursery") for c in categories):
+                print(f"  ✅ ECE/Nursery signal detected for this school!", flush=True)
+                break
         except Exception as e:
             print(f"[ECE-CHECK] Error for {school['school_id']}: {e}", flush=True)
-
-
-def parse_resp(r):
-    if not r or r.status_code != 200: return []
-    body = r.text.strip()
-    if not body: return []
-    if body.startswith("{"):
-        try:
-            d = r.json()
-            return parse_options(d.get("html") or d.get("data") or d.get("options") or "")
-        except: pass
-    return parse_options(body)
 
 
 def scrape():
@@ -421,10 +480,15 @@ def scrape():
     # ── Verify ECE/Nursery mapping against known school ─────────────────────
     verify_ece_school(inventory, csrf)
 
-    # ── TEST MODE: first 50 schools ──────────────────────────────────────────
-    # Change to `test_inventory = inventory` for the full run.
-    test_inventory = inventory[:50]
-    print(f"\n[TEST MODE] Limiting to first {len(test_inventory)} of {len(inventory)} schools.", flush=True)
+    # ── TEST MODE: exactly 10 schools, with the known ECE school forced in ──
+    # Change to `test_inventory = inventory` for the full run, and remove
+    # the FORCE_TEST_EMIS block below.
+    forced = [s for s in inventory if s.get("emis_code") == FORCE_TEST_EMIS]
+    rest   = [s for s in inventory if s.get("emis_code") != FORCE_TEST_EMIS]
+    test_inventory = (forced + rest)[:10]
+
+    print(f"\n[TEST MODE] Limiting to {len(test_inventory)} of {len(inventory)} schools "
+          f"(forced EMIS {FORCE_TEST_EMIS}: {'included' if forced else 'NOT FOUND'}).", flush=True)
     # ────────────────────────────────────────────────────────────────────────
 
     with open("schools.csv", "w", newline="", encoding="utf-8") as f:
@@ -447,7 +511,7 @@ def scrape():
 
 if __name__ == "__main__":
     print("=" * 65, flush=True)
-    print("  SIS PESRP Scraper — TEST MODE (first 50 schools)", flush=True)
+    print("  SIS PESRP Scraper — TEST MODE (10 schools, ECE-forced)", flush=True)
     print("=" * 65, flush=True)
     start_time = time.time()
 
