@@ -1,1 +1,1 @@
-school_id,school_name,district,tehsil,markaz,total_students,boys,girls,teachers,scraped_at
+school_id,school_name,district,tehsil,markaz,total_students,boys,girls,teachers,grade_KG_boys,grade_KG_girls,grade_1_boys,grade_1_girls,grade_2_boys,grade_2_girls,grade_3_boys,grade_3_girls,grade_4_boys,grade_4_girls,grade_5_boys,grade_5_girls,grade_6_boys,grade_6_girls,grade_7_boys,grade_7_girls,grade_8_boys,grade_8_girls,grade_9_boys,grade_9_girls,grade_10_boys,grade_10_girls,etransfer_status,scraped_at
