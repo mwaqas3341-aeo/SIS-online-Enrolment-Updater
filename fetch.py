@@ -227,11 +227,14 @@ def scrape():
                     g = enr.get("grades", {})
 
                     schools.append({
-                        "school_id": s_id,
-                        "school_name": s_name,
-                        "district": d_name,
-                        "tehsil": t_name,
-                        "markaz": m_name,
+    "school_id": s_id,
+    "school_name": s_name,
+    "district_id": d_id,        # <--- ADD THIS
+    "district": d_name,
+    "tehsil_id": t_id,          # <--- ADD THIS
+    "tehsil": t_name,
+    "markaz_id": m_id,          # <--- ADD THIS
+    "markaz": m_name,
                         "total_students": enr.get("total_students", 0),
                         "boys": enr.get("boys", 0),
                         "girls": enr.get("girls", 0),
@@ -272,7 +275,10 @@ def scrape():
 # ----------------------------------------------------------------------
 
 FIELDS = [
-    "school_id", "school_name", "district", "tehsil", "markaz",
+    "school_id", "school_name", 
+    "district_id", "district",    # added district_id
+    "tehsil_id", "tehsil",        # added tehsil_id
+    "markaz_id", "markaz",        # added markaz_id
     "total_students", "boys", "girls", "teachers",
     "grade_KG_boys", "grade_KG_girls",
     "grade_1_boys", "grade_1_girls", "grade_2_boys", "grade_2_girls",
