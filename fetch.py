@@ -423,7 +423,7 @@ def scrape():
 
     # ── TEST MODE: first 50 schools ──────────────────────────────────────────
     # Change to `test_inventory = inventory` for the full run.
-    inventory = inventory
+    test_inventory = inventory[:50]
     print(f"\n[TEST MODE] Limiting to first {len(test_inventory)} of {len(inventory)} schools.", flush=True)
     # ────────────────────────────────────────────────────────────────────────
 
