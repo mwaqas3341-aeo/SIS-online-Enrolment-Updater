@@ -1,94 +1,211 @@
 """
-fetch.py — SIS PESRP Scraper
-Intercepts AJAX calls on sis.pesrp.edu.pk/str/analysis,
-drives District → Tehsil → Markaz → School dropdowns,
-collects every school's enrollment data and saves:
-  • schools.csv  — open in Excel / Google Sheets
-  • data.json    — read by GitHub Pages dashboard
+fetch.py — SIS PESRP Scraper (v2)
+Strategy:
+  1. Load /str/analysis and extract all <script> src URLs
+  2. Search JS files for API endpoint patterns
+  3. Also try common CodeIgniter endpoint patterns directly
+  4. Use requests to call each endpoint and collect school data
+  5. Fallback: Playwright clicks every dropdown option and captures responses
 """
 
-import json, csv, re, time
+import json, csv, re, time, requests
 from datetime import datetime, timezone
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
-BASE   = "https://sis.pesrp.edu.pk"
-URL    = f"{BASE}/str/analysis"
+BASE    = "https://sis.pesrp.edu.pk"
+URL     = f"{BASE}/str/analysis"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Referer": URL,
+}
 
-# ── AJAX interceptor ──────────────────────────────────────────────────────────
-ajax = []   # all captured JSON responses
+# ── Captured AJAX responses (Playwright) ─────────────────────────────────────
+ajax = []
 
 def on_response(resp):
     try:
-        ct  = resp.headers.get("content-type", "")
-        url = resp.url
-        if "json" in ct or any(k in url for k in
-                ["/str/","/api/","/get_","/fetch_","/load_","/stats/"]):
-            body = resp.text()
-            if body and body.strip()[:1] in ("[","{"): 
-                ajax.append({"url": url, "status": resp.status, "body": body[:20000]})
+        url  = resp.url
+        ct   = resp.headers.get("content-type","")
+        body = resp.text()
+        if body and body.strip()[:1] in ("[","{"):
+            ajax.append({"url": url, "status": resp.status, "body": body[:50000]})
+            print(f"  [AJAX] {resp.status} {url[:80]}")
     except Exception:
         pass
 
-# ── Dropdown helpers ──────────────────────────────────────────────────────────
-def options(page, sel):
-    out = []
-    try:
-        for el in page.query_selector_all(f"{sel} option"):
-            v = el.get_attribute("value") or ""
-            t = (el.inner_text() or "").strip()
-            skip = {"","select","all","--","select district","select tehsil",
-                    "select markaz","select school","select all"}
-            if v and t.lower() not in skip:
-                out.append((v, t))
-    except Exception:
-        pass
-    return out
+# ── Step 1: Extract JS URLs and find API endpoints ────────────────────────────
+def find_api_endpoints(html, js_texts):
+    """Search HTML and JS source for AJAX endpoint patterns."""
+    endpoints = set()
+    combined  = html + "\n" + "\n".join(js_texts)
 
-def find(page, *keywords):
-    for kw in keywords:
-        for el in page.query_selector_all("select"):
-            nm = (el.get_attribute("name") or el.get_attribute("id") or "").lower()
-            if kw in nm:
-                a = "name" if el.get_attribute("name") else "id"
-                return f"select[{a}='{el.get_attribute(a)}']"
-    return None
+    # Common patterns in CodeIgniter / Laravel SIS apps
+    patterns = [
+        r"""(?:url|action)\s*[:=]\s*['"`]([^'"`]+(?:str|stats|api|get|fetch|load|school|district|tehsil|enroll)[^'"`]*)['"`]""",
+        r"""(?:ajax|fetch|post|get)\s*\(\s*['"`]([^'"`]+)['"`]""",
+        r"""['"`](/[a-z_/]+(?:school|district|tehsil|enroll|stats|str)[a-z_/]*)['"`]""",
+        r"""url\s*:\s*site_url\s*\(\s*['"`]([^'"`]+)['"`]\s*\)""",
+        r"""base_url\s*\+\s*['"`]([^'"`]+)['"`]""",
+    ]
 
-def pick(page, sel, val, wait=2.0):
-    try:
-        page.select_option(sel, value=val)
-        try: page.wait_for_load_state("networkidle", timeout=5000)
-        except Exception: pass
-        time.sleep(wait)
-        return True
-    except Exception:
-        return False
+    for pat in patterns:
+        for m in re.finditer(pat, combined, re.IGNORECASE):
+            ep = m.group(1).strip()
+            if ep.startswith("/") or ep.startswith("http"):
+                if not ep.startswith("http"):
+                    ep = BASE + ep
+                endpoints.add(ep)
 
-def clean(t): return re.sub(r"\s+", " ", (t or "")).strip()
-def num(v):
-    try: return int(re.sub(r"[^\d]", "", str(v or 0)) or 0)
-    except: return 0
+    # Also try known CodeIgniter URL patterns for this type of system
+    guesses = [
+        "/str/get_districts",
+        "/str/get_tehsils",
+        "/str/get_markazs",
+        "/str/get_schools",
+        "/str/get_school_data",
+        "/str/get_enrollment",
+        "/str/school_list",
+        "/str/district_data",
+        "/str/stats",
+        "/stats/get_district",
+        "/stats/get_school",
+        "/api/schools",
+        "/api/enrollment",
+        "/api/districts",
+        "/str/analysis/get_data",
+        "/str/analysis/schools",
+        "/str/analysis/district",
+        "/home/get_stats",
+        "/home/stats",
+    ]
+    for g in guesses:
+        endpoints.add(BASE + g)
 
-# ── Parse JSON from AJAX ──────────────────────────────────────────────────────
-NAME_K  = ["school_name","name","school","sch_name","school_title"]
-TOT_K   = ["total","total_students","enrollment","students","enrolled"]
-BOYS_K  = ["boys","male","male_enrollment","boy_count"]
-GIRLS_K = ["girls","female","female_enrollment","girl_count"]
-TCH_K   = ["teachers","teacher_count","allocated_teachers","staff"]
-DIST_K  = ["district","district_name","dist_name"]
-TEH_K   = ["tehsil","tehsil_name","teh_name"]
-MRK_K   = ["markaz","markaz_name","circle"]
-ID_K    = ["school_id","id","emis","emis_code","school_code"]
+    return list(endpoints)
+
+# ── Step 2: Try each endpoint with GET and POST ───────────────────────────────
+def probe_endpoints(endpoints):
+    """Call each endpoint and return ones that return JSON school data."""
+    found = []
+    sess  = requests.Session()
+    sess.headers.update(HEADERS)
+
+    for ep in endpoints:
+        for method in ("GET", "POST"):
+            try:
+                if method == "GET":
+                    r = sess.get(ep, timeout=10)
+                else:
+                    r = sess.post(ep, data={
+                        "district_id":"", "tehsil_id":"", "markaz_id":"",
+                        "district":"",    "tehsil":"",    "markaz":"",
+                    }, timeout=10)
+
+                if r.status_code == 200 and r.text.strip()[:1] in ("[", "{"):
+                    data = r.json()
+                    rows = parse_json(data)
+                    if rows:
+                        print(f"  ✓ {method} {ep} → {len(rows)} rows")
+                        found.append({"url": ep, "method": method, "rows": rows})
+                    else:
+                        # Might be a list of districts/tehsils — save for drilling
+                        if isinstance(data, list) and len(data) > 0:
+                            print(f"  ~ {method} {ep} → list of {len(data)} items (not school data)")
+                            found.append({"url": ep, "method": method, "rows": [], "raw": data})
+            except Exception:
+                pass
+
+    return found
+
+# ── Step 3: Drill district → tehsil → school ─────────────────────────────────
+def drill(districts_url, method, districts_raw, sess):
+    """Given a district list, drill down to get per-school data."""
+    all_rows = []
+
+    for d in districts_raw[:36]:  # Punjab has 36 districts
+        d_id  = d.get("district_id") or d.get("id") or d.get("value") or ""
+        d_nm  = d.get("district_name") or d.get("name") or d.get("text") or str(d_id)
+        if not d_id:
+            continue
+
+        print(f"  District: {d_nm}")
+        # Try to get tehsils for this district
+        for tep in ["/str/get_tehsils", "/str/get_tehsil", "/api/tehsils"]:
+            try:
+                r = sess.post(BASE+tep,
+                    data={"district_id": d_id, "district": d_id}, timeout=8)
+                if r.status_code==200 and r.text.strip()[:1] in ("[","{"):
+                    tehsils = r.json()
+                    if isinstance(tehsils, list) and tehsils:
+                        all_rows.extend(drill_tehsils(tehsils, d_id, d_nm, sess))
+                        break
+            except Exception:
+                pass
+        else:
+            # No tehsil endpoint — try school endpoint directly
+            all_rows.extend(try_school_endpoint(d_id, d_nm, "", "", sess))
+
+    return all_rows
+
+def drill_tehsils(tehsils, d_id, d_nm, sess):
+    rows = []
+    for t in tehsils:
+        t_id = t.get("tehsil_id") or t.get("id") or t.get("value") or ""
+        t_nm = t.get("tehsil_name") or t.get("name") or t.get("text") or str(t_id)
+        if not t_id:
+            continue
+        rows.extend(try_school_endpoint(d_id, d_nm, t_id, t_nm, sess))
+    return rows
+
+def try_school_endpoint(d_id, d_nm, t_id, t_nm, sess):
+    rows = []
+    for sep in ["/str/get_schools","/str/school_list","/str/get_school_data",
+                "/api/schools","/str/analysis/schools"]:
+        try:
+            r = sess.post(BASE+sep, data={
+                "district_id": d_id, "district": d_id,
+                "tehsil_id":   t_id, "tehsil":   t_id,
+            }, timeout=10)
+            if r.status_code==200 and r.text.strip()[:1] in ("[","{"):
+                parsed = parse_json(r.json(), d_nm, t_nm)
+                if parsed:
+                    print(f"    {t_nm}: {len(parsed)} schools from {sep}")
+                    rows.extend(parsed)
+                    break
+        except Exception:
+            pass
+    return rows
+
+# ── Parse school JSON ─────────────────────────────────────────────────────────
+NAME_K  = ["school_name","name","school","sch_name","school_title","sname"]
+TOT_K   = ["total","total_students","enrollment","students","enrolled","total_enrol","tot_enrol"]
+BOYS_K  = ["boys","male","male_enrollment","boy_count","male_count","boys_enrol"]
+GIRLS_K = ["girls","female","female_enrollment","girl_count","female_count","girls_enrol"]
+TCH_K   = ["teachers","teacher_count","allocated_teachers","staff","tch_count"]
+DIST_K  = ["district","district_name","dist_name","dname"]
+TEH_K   = ["tehsil","tehsil_name","teh_name","tname"]
+MRK_K   = ["markaz","markaz_name","mrk_name"]
+ID_K    = ["school_id","id","emis","emis_code","school_code","scode"]
 
 def gf(row, keys):
-    rl = {k.lower(): v for k, v in row.items()}
+    rl = {k.lower(): v for k,v in row.items()}
     for k in keys:
         if k in rl: return rl[k]
     return ""
 
-def parse_ajax(data, dist="", teh="", mrk="", ts=""):
+def num(v):
+    try: return int(re.sub(r"[^\d]","",str(v or 0)) or 0)
+    except: return 0
+
+def clean(t): return re.sub(r"\s+"," ",(t or "")).strip()
+
+def parse_json(data, dist="", teh=""):
     rows = []
     if isinstance(data, dict):
-        for key in ("data","result","schools","rows","records","items"):
+        for key in ("data","result","schools","rows","records","items","list"):
             if key in data and isinstance(data[key], list):
                 data = data[key]; break
         else:
@@ -98,9 +215,11 @@ def parse_ajax(data, dist="", teh="", mrk="", ts=""):
     for item in data:
         if not isinstance(item, dict): continue
         keys = {k.lower() for k in item}
-        if not any(k in keys for k in
-                   ["school","emis","enrollment","students","boys","girls"]):
-            continue
+        # Must look like school data
+        has_school = any(k in keys for k in ["school_name","school","emis","sch_name","sname"])
+        has_data   = any(k in keys for k in ["enrollment","students","boys","girls","total","tot_enrol"])
+        if not (has_school or has_data): continue
+
         b = num(gf(item, BOYS_K))
         g = num(gf(item, GIRLS_K))
         t = num(gf(item, TOT_K)) or b + g
@@ -109,187 +228,195 @@ def parse_ajax(data, dist="", teh="", mrk="", ts=""):
             "school_name":    clean(gf(item, NAME_K)) or "Unknown",
             "district":       clean(gf(item, DIST_K)) or dist,
             "tehsil":         clean(gf(item, TEH_K))  or teh,
-            "markaz":         clean(gf(item, MRK_K))  or mrk,
+            "markaz":         clean(gf(item, MRK_K)),
             "total_students": t,
             "boys":           b,
             "girls":          g,
             "teachers":       num(gf(item, TCH_K)),
-            "scraped_at":     ts,
         })
     return rows
 
-# ── Table scraping fallback ───────────────────────────────────────────────────
-def scrape_table(page, dist, teh, mrk, ts):
+# ── Playwright fallback: click every dropdown option ─────────────────────────
+def playwright_fallback(ts):
+    print("\n--- Playwright fallback: driving dropdowns ---")
     rows = []
-    for tbl in page.query_selector_all("table"):
-        hdrs = [clean(h.inner_text()).lower()
-                for h in tbl.query_selector_all("th")]
-        for tr in tbl.query_selector_all("tbody tr"):
-            cells = [clean(td.inner_text())
-                     for td in tr.query_selector_all("td")]
-            if not cells: continue
-            row = dict(zip(hdrs, cells)) if hdrs else {}
-            if not row and cells:
-                row = {"school_name": cells[0]}
-                for i, c in enumerate(cells[1:], 1):
-                    row[f"col{i}"] = c
-            parsed = parse_ajax([row], dist, teh, mrk, ts)
-            rows.extend(parsed)
-    return rows
-
-# ── Main ──────────────────────────────────────────────────────────────────────
-def scrape():
-    ts   = datetime.now(timezone.utc).isoformat()
-    rows = []
-    prev = 0
-
-    def flush_ajax(dist="", teh="", mrk=""):
-        nonlocal prev
-        found = []
-        for entry in ajax[prev:]:
-            try: data = json.loads(entry["body"])
-            except: continue
-            r = parse_ajax(data, dist, teh, mrk, ts)
-            if r:
-                print(f"    ✓ AJAX  {entry['url'][:70]}  → {len(r)} rows")
-                found.extend(r)
-        prev = len(ajax)
-        return found
 
     with sync_playwright() as pw:
         br  = pw.chromium.launch(headless=True)
-        ctx = br.new_context(user_agent=(
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/124 Safari/537.36"))
+        ctx = br.new_context(user_agent=HEADERS["User-Agent"])
         pg  = ctx.new_page()
         pg.on("response", on_response)
 
-        print(f"Opening {URL} …")
         try:
             pg.goto(URL, wait_until="networkidle", timeout=60000)
-        except PWTimeout:
-            print("❌ Timeout"); br.close(); return rows, ts
-
-        time.sleep(4)
-        flush_ajax()   # capture whatever loaded on page-open
-
-        # Locate dropdowns
-        d_sel = find(pg, "district")
-        t_sel = find(pg, "tehsil")
-        m_sel = find(pg, "markaz", "circle")
-        s_sel = find(pg, "school")
-
-        print(f"Selectors → district:{d_sel}  tehsil:{t_sel}  "
-              f"markaz:{m_sel}  school:{s_sel}")
-
-        districts = options(pg, d_sel) if d_sel else []
-        print(f"Districts found: {len(districts)}")
-
-        if not districts:
-            # No dropdowns — grab whatever is visible
-            rows = scrape_table(pg, "", "", "", ts)
+        except Exception as e:
+            print(f"  Page load error: {e}")
             br.close()
-            return rows, ts
+            return rows
 
-        for dv, dn in districts:
-            print(f"\n📍 {dn}")
-            if d_sel: pick(pg, d_sel, dv)
-            r = flush_ajax(dn)
-            rows.extend(r)
+        time.sleep(5)
 
-            tehsils = options(pg, t_sel) if t_sel else [("","")]
-            for tv, tn in tehsils:
-                if t_sel and tv: pick(pg, t_sel, tv, 1.5)
-                r = flush_ajax(dn, tn)
-                rows.extend(r)
+        # Print page title and all select elements found
+        title = pg.title()
+        print(f"  Page title: {title}")
 
-                markazs = options(pg, m_sel) if m_sel else [("","")]
-                for mv, mn in markazs:
-                    if m_sel and mv: pick(pg, m_sel, mv, 1.5)
-                    r = flush_ajax(dn, tn, mn)
+        selects = pg.query_selector_all("select")
+        print(f"  Found {len(selects)} <select> elements")
+        for sel in selects:
+            nm = sel.get_attribute("name") or sel.get_attribute("id") or "?"
+            opts = sel.query_selector_all("option")
+            print(f"    select[{nm}]: {len(opts)} options")
+
+        # Try clicking any buttons or links that might load data
+        for btn_text in ["Search","Load","Get Data","Show","Filter","Submit","Go"]:
+            try:
+                btn = pg.get_by_text(btn_text, exact=False).first
+                if btn:
+                    btn.click()
+                    time.sleep(2)
+                    print(f"  Clicked button: {btn_text}")
+            except Exception:
+                pass
+
+        # Get page source and look for inline JSON
+        html = pg.content()
+        json_blobs = re.findall(r'var\s+\w+\s*=\s*(\[{.*?}\])', html, re.DOTALL)
+        for blob in json_blobs[:5]:
+            try:
+                parsed = json.loads(blob)
+                r = parse_json(parsed)
+                if r:
+                    print(f"  Found {len(r)} rows in inline JS variable")
                     rows.extend(r)
+            except Exception:
+                pass
 
-                    if s_sel:
-                        schools = options(pg, s_sel)
-                        print(f"  {tn}/{mn}: {len(schools)} schools")
-                        for sv, sn in schools:
-                            pick(pg, s_sel, sv, 1.0)
-                            r = flush_ajax(dn, tn, mn)
-                            if not r:
-                                r = scrape_table(pg, dn, tn, mn, ts)
-                            if not r:
-                                r = [{"school_id":"","school_name":sn,
-                                      "district":dn,"tehsil":tn,"markaz":mn,
-                                      "total_students":0,"boys":0,"girls":0,
-                                      "teachers":0,"scraped_at":ts}]
-                            rows.extend(r)
-                    else:
-                        r = scrape_table(pg, dn, tn, mn, ts)
-                        if r:
-                            print(f"  {tn}/{mn}: {len(r)} rows (table)")
-                            rows.extend(r)
+        # Extract all script src URLs
+        scripts = [s.get_attribute("src") for s in pg.query_selector_all("script[src]")]
+        scripts = [s for s in scripts if s and "pesrp" in s.lower() or "sis" in s.lower()
+                   or "/assets/" in s or "/static/" in s or "/js/" in s]
+        print(f"  Script files: {scripts[:5]}")
 
         br.close()
 
-    # Deduplicate by (school_name, district)
-    seen, unique = set(), []
-    for r in rows:
-        key = (r["school_name"], r["district"])
-        if key not in seen:
-            seen.add(key)
-            unique.append(r)
+    # Check AJAX captures
+    for entry in ajax:
+        try:
+            data   = json.loads(entry["body"])
+            parsed = parse_json(data)
+            if parsed:
+                print(f"  AJAX gave {len(parsed)} rows: {entry['url'][:70]}")
+                rows.extend(parsed)
+        except Exception:
+            pass
 
-    return unique, ts
+    return rows, html, scripts
 
 # ── Save CSV ──────────────────────────────────────────────────────────────────
 FIELDS = ["school_id","school_name","district","tehsil","markaz",
-          "total_students","boys","girls","teachers","scraped_at"]
+          "total_students","boys","girls","teachers"]
 
-def save_csv(rows):
-    with open("schools.csv", "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+def save_csv(rows, ts):
+    with open("schools.csv","w",newline="",encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS+["scraped_at"], extrasaction="ignore")
         w.writeheader()
-        w.writerows(rows)
-    print(f"✓ schools.csv  ({len(rows)} rows)")
+        for r in rows:
+            r["scraped_at"] = ts
+            w.writerow(r)
+    print(f"✓ schools.csv ({len(rows)} rows)")
 
-# ── Save JSON ─────────────────────────────────────────────────────────────────
-def save_json(rows, ts):
-    tot = sum(r["total_students"] for r in rows)
-    boy = sum(r["boys"]           for r in rows)
-    grl = sum(r["girls"]          for r in rows)
-    tch = sum(r["teachers"]       for r in rows)
+def save_json(rows, ts, endpoints_tried):
+    tot = sum(r.get("total_students",0) for r in rows)
     out = {
         "scraped_at": ts,
         "source":     BASE,
         "summary": {
             "total_schools":  len(rows),
             "total_students": tot,
-            "total_boys":     boy,
-            "total_girls":    grl,
-            "total_teachers": tch,
+            "total_boys":     sum(r.get("boys",0)     for r in rows),
+            "total_girls":    sum(r.get("girls",0)    for r in rows),
+            "total_teachers": sum(r.get("teachers",0) for r in rows),
         },
         "schools": rows,
-        "ajax_endpoints": [
-            {"url": e["url"], "status": e["status"]}
-            for e in ajax[:30]
-        ],
+        "ajax_endpoints": [{"url":e["url"],"status":e["status"]} for e in ajax[:30]],
+        "endpoints_tried": endpoints_tried[:20],
     }
-    with open("data.json", "w", encoding="utf-8") as f:
+    with open("data.json","w",encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    print(f"✓ data.json    ({len(rows)} schools | {tot:,} students)")
+    print(f"✓ data.json ({len(rows)} schools | {tot:,} students)")
 
-# ── Entry ─────────────────────────────────────────────────────────────────────
+# ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("=" * 50)
-    print("  SIS PESRP Scraper")
-    print("=" * 50)
-    rows, ts = scrape()
-    print(f"\nTotal rows: {len(rows)}")
-    save_csv(rows)
-    save_json(rows, ts)
+    ts = datetime.now(timezone.utc).isoformat()
+    print("="*55)
+    print("  SIS PESRP Scraper v2")
+    print("="*55)
 
-    if not rows:
-        print("\n⚠ No data collected.")
-        print("   AJAX endpoints captured:")
+    # Step 1: Playwright to get page HTML + capture AJAX + find scripts
+    print("\n[1] Loading page and discovering structure …")
+    all_rows, html, scripts = playwright_fallback(ts)
+
+    sess = requests.Session()
+    sess.headers.update(HEADERS)
+
+    # Step 2: Fetch JS files and extract endpoint URLs
+    print("\n[2] Scanning JS files for API endpoints …")
+    js_texts = []
+    for src in scripts[:10]:
+        try:
+            if not src.startswith("http"):
+                src = BASE + src
+            r = sess.get(src, timeout=10)
+            if r.status_code == 200:
+                js_texts.append(r.text[:200000])
+                print(f"  Fetched {src[:70]} ({len(r.text)} chars)")
+        except Exception:
+            pass
+
+    # Step 3: Find and probe endpoints
+    print("\n[3] Probing API endpoints …")
+    endpoints = find_api_endpoints(html, js_texts)
+    print(f"  {len(endpoints)} endpoints to probe")
+    results = probe_endpoints(endpoints)
+
+    endpoints_tried = [e for e in endpoints]
+
+    # Step 4: Collect school rows from probed endpoints
+    print("\n[4] Collecting school rows …")
+    districts_raw = None
+    for r in results:
+        if r["rows"]:
+            all_rows.extend(r["rows"])
+        elif r.get("raw") and isinstance(r["raw"], list):
+            # This might be a district list
+            first = r["raw"][0] if r["raw"] else {}
+            if isinstance(first, dict):
+                keys_lower = {k.lower() for k in first}
+                if any(k in keys_lower for k in ["district","district_id","dist_id"]):
+                    print(f"  Found district list: {len(r['raw'])} districts from {r['url']}")
+                    districts_raw = r["raw"]
+
+    # Step 5: If we found a district list, drill into tehsils/schools
+    if districts_raw and not all_rows:
+        print("\n[5] Drilling district → tehsil → schools …")
+        all_rows.extend(drill(None, "POST", districts_raw, sess))
+
+    # Deduplicate
+    seen, unique = set(), []
+    for r in all_rows:
+        k = (r.get("school_name",""), r.get("district",""))
+        if k not in seen:
+            seen.add(k)
+            unique.append(r)
+
+    print(f"\nTotal unique schools: {len(unique)}")
+    save_csv(unique, ts)
+    save_json(unique, ts, endpoints_tried)
+
+    if not unique:
+        print("\n⚠ Still 0 rows. AJAX captured:")
         for e in ajax[:10]:
-            print(f"   {e['status']}  {e['url']}")
+            print(f"  {e['status']}  {e['url']}")
+        print("\nEndpoints tried:")
+        for ep in endpoints_tried[:15]:
+            print(f"  {ep}")
