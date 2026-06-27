@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch.py — SIS PESRP Scraper (Multithreaded + Live CSV Writing)
+fetch.py — SIS PESRP Scraper (Fully Multithreaded Menu & Data Fetching)
 =======================================================================
 """
 
@@ -19,7 +19,6 @@ from urllib3.util.retry import Retry
 BASE = "https://sis.pesrp.edu.pk"
 
 # --- Thread-Safe Session Configuration ---
-# Increased pool_connections and pool_maxsize to handle concurrent threads
 S = requests.Session()
 retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
 adapter = HTTPAdapter(max_retries=retries, pool_connections=50, pool_maxsize=50)
@@ -33,7 +32,6 @@ S.headers.update({
     "Referer": f"{BASE}/?tab=district_quota&district=",
 })
 
-# Lock for writing to CSV safely from multiple threads
 csv_lock = threading.Lock()
 
 FIELDS = [
@@ -87,7 +85,7 @@ def parse_resp(r):
         except: pass
     return parse_options(body)
 
-# --- Hierarchy Discovery Functions ---
+# --- Hierarchy Discovery ---
 def get_tehsils(d_id, csrf):
     return parse_resp(S.get(f"{BASE}/user/get_tehsils", params={"district": d_id, "selectedTehsil": "false", "all": "All", "csrf_test_name": csrf}, timeout=30))
 
@@ -97,19 +95,44 @@ def get_markazs(d_id, t_id, csrf):
 def get_schools(d_id, t_id, m_id, csrf):
     return parse_resp(S.get(f"{BASE}/user/get_schools", params={"markaz": m_id, "selectedSchool": "false", "all": "All", "csrf_test_name": csrf}, timeout=30))
 
-# --- Thread Worker for Individual Schools ---
-def fetch_school_data(school_info, ts):
-    """Worker function to fetch enrollment for a single school."""
+# --- Thread Workers ---
+def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
+    """Worker to fetch the list of schools for a specific markaz"""
+    d_id, d_name, t_id, t_name, m_id, m_name = markaz_info
+    school_opts = get_schools(d_id, t_id, m_id, csrf)
+    
+    schools_found = []
+    for s_id, s_name in school_opts:
+        emis_code, school_name_clean = "", s_name
+        if " - " in s_name:
+            parts = s_name.split(" - ", 1)
+            emis_code = parts[0].strip()
+            school_name_clean = parts[1].strip() if len(parts) > 1 else s_name
+
+        base_school = {
+            "school_id": s_id, "emis_code": emis_code, "school_name": school_name_clean,
+            "district_id": d_id, "district": d_name, "tehsil_id": t_id, "tehsil": t_name,
+            "markaz_id": m_id, "markaz": m_name, "total_students": 0, "boys": 0, "girls": 0, "teachers": 0,
+            "etransfer_status": "UNKNOWN", "scraped_at": ts
+        }
+        for g in ["KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
+            base_school[f"grade_{g}_boys"] = 0
+            base_school[f"grade_{g}_girls"] = 0
+            
+        schools_found.append(base_school)
+        
+    return schools_found
+
+def worker_fetch_school_data(school_info, ts):
+    """Worker to fetch enrollment data for a single school"""
     params = {
         "district": school_info["district_id"],
         "tehsil": school_info["tehsil_id"],
         "markaz": school_info["markaz_id"],
         "school": school_info["school_id"],
-        "classes": "",
-        "s_id_emis_code": ""
+        "classes": "", "s_id_emis_code": ""
     }
 
-    # Fetch Pie Chart Data
     try:
         r1 = S.get(f"{BASE}/dashboard_revamp/get_gender_summary_pie", params=params, timeout=20)
         if r1.status_code == 200 and isinstance(r1.json(), dict):
@@ -117,10 +140,8 @@ def fetch_school_data(school_info, ts):
             school_info["total_students"] = to_int(data1.get("total"))
             school_info["boys"] = to_int(data1.get("male_count"))
             school_info["girls"] = to_int(data1.get("female_count"))
-    except Exception as e:
-        pass # Ignore and leave defaults as 0
+    except: pass
 
-    # Fetch Bar Chart Data (Grades)
     try:
         r2 = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=20)
         if r2.status_code == 200 and isinstance(r2.json(), dict):
@@ -136,10 +157,7 @@ def fetch_school_data(school_info, ts):
                 if g_key:
                     school_info[f"grade_{g_key}_boys"] = male_vals[i]
                     school_info[f"grade_{g_key}_girls"] = female_vals[i]
-    except Exception as e:
-        pass
-
-    school_info["scraped_at"] = ts
+    except: pass
 
     # Write to CSV safely
     with csv_lock:
@@ -149,76 +167,66 @@ def fetch_school_data(school_info, ts):
 
     return school_info
 
-# --- Main Scraping Routine ---
+# --- Main Scraper Logic ---
 def scrape():
     ts = datetime.now(timezone.utc).isoformat()
     csrf = get_csrf()
 
-    print("Phase 1: Discovering all schools (this will take a few minutes)...")
+    print("Phase 1a: Mapping Districts, Tehsils, and Markazs...")
     r = S.get(f"{BASE}/user/get_districts", timeout=30)
     districts = parse_resp(r)
     
-    inventory = []
-
+    markaz_list = []
+    
+    # 1. Sequentially map down to the Markaz level (Very fast, ~186 requests)
     for d_id, d_name in districts:
         tehsils = get_tehsils(d_id, csrf) or [("", "All")]
         for t_id, t_name in tehsils:
             markazs = get_markazs(d_id, t_id, csrf) or [("", "All")]
             for m_id, m_name in markazs:
-                school_opts = get_schools(d_id, t_id, m_id, csrf)
-                for s_id, s_name in school_opts:
-                    emis_code, school_name_clean = "", s_name
-                    if " - " in s_name:
-                        parts = s_name.split(" - ", 1)
-                        emis_code = parts[0].strip()
-                        school_name_clean = parts[1].strip() if len(parts) > 1 else s_name
+                markaz_list.append((d_id, d_name, t_id, t_name, m_id, m_name))
+                
+    print(f"  -> Found {len(markaz_list)} Markazs.")
 
-                    # Prepare base dictionary with defaults
-                    base_school = {
-                        "school_id": s_id, "emis_code": emis_code, "school_name": school_name_clean,
-                        "district_id": d_id, "district": d_name, "tehsil_id": t_id, "tehsil": t_name,
-                        "markaz_id": m_id, "markaz": m_name, "total_students": 0, "boys": 0, "girls": 0, "teachers": 0,
-                        "etransfer_status": "UNKNOWN", "scraped_at": ts
-                    }
-                    
-                    # Initialize all grade counts to 0
-                    for g in ["KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
-                        base_school[f"grade_{g}_boys"] = 0
-                        base_school[f"grade_{g}_girls"] = 0
+    # 2. Concurrently fetch school lists for all 3,415 Markazs
+    print(f"\nPhase 1b: Fetching school lists across all {len(markaz_list)} Markazs concurrently...")
+    inventory = []
+    completed_markazs = 0
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        futures = {executor.submit(worker_fetch_schools_in_markaz, m, csrf, ts): m for m in markaz_list}
+        for future in concurrent.futures.as_completed(futures):
+            completed_markazs += 1
+            inventory.extend(future.result())
+            if completed_markazs % 500 == 0:
+                print(f"  -> Processed {completed_markazs} / {len(markaz_list)} Markazs...")
 
-                    inventory.append(base_school)
-                    
-    print(f"\nPhase 1 Complete. Found {len(inventory)} schools.")
+    print(f"\nPhase 1 Complete! Discovered exactly {len(inventory)} schools.")
     
     # Initialize the CSV with headers
     with open("schools.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
 
+    # 3. Concurrently fetch the actual data for the 38k schools
     print("\nPhase 2: Fetching enrollment data concurrently...")
-    completed = 0
+    completed_schools = 0
     final_schools = []
 
-    # --- Concurrent Execution ---
-    # Using 20 workers is a safe balance between speed and not overwhelming the server
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        # Map the worker function over the inventory
-        futures = {executor.submit(fetch_school_data, s, ts): s for s in inventory}
-        
+    with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+        futures = {executor.submit(worker_fetch_school_data, s, ts): s for s in inventory}
         for future in concurrent.futures.as_completed(futures):
-            completed += 1
+            completed_schools += 1
             final_schools.append(future.result())
-            
-            # Print progress every 500 schools
-            if completed % 500 == 0:
-                print(f"  -> Progress: {completed} / {len(inventory)} schools fetched...")
+            if completed_schools % 2000 == 0:
+                print(f"  -> Fetched data for {completed_schools} / {len(inventory)} schools...")
 
     return final_schools, ts
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("  SIS PESRP Scraper (Fast Multithreaded Version)")
-    print("=" * 60)
+    print("=" * 65)
+    print("  SIS PESRP Scraper (Maximum Concurrency Edition)")
+    print("=" * 65)
     start_time = time.time()
     
     schools, ts = scrape()
