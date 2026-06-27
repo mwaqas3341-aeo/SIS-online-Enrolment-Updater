@@ -1,12 +1,11 @@
 {
-  "scraped_at": "2026-06-27T12:00:46.790823+00:00",
+  "scraped_at": "2026-06-27T12:15:40.132595+00:00",
   "source": "https://sis.pesrp.edu.pk",
   "etransfer": {
     "status": "CLOSED",
     "accepting": false,
     "last_round_start": "",
-    "last_round_end": "",
-    "site_updated": "27 Jun 2026, 4:00 PM"
+    "last_round_end": ""
   },
   "summary": {
     "total_schools": 0,
