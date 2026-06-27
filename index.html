@@ -1,458 +1,402 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIS PESRP — School Enrollment Dashboard</title>
+<title>SIS PESRP — School Enrollment</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --green:#1A7A4A; --green-l:#E6F4ED; --red:#C0392B; --red-l:#FDECEA;
-    --blue:#1565C0;  --blue-l:#E3F0FF;  --gold:#B8860B; --gold-l:#FDF6E3;
-    --bg:#F5F6FA; --surface:#fff; --border:#E0E4EC;
-    --text:#1A2035; --muted:#6B7280;
-    --mono:'JetBrains Mono',monospace; --sans:'Inter',sans-serif;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6}
+:root{
+  --g:#1A7A4A;--gl:#E6F4ED;--b:#1565C0;--bl:#E3F0FF;
+  --r:#C0392B;--rl:#FDECEA;--au:#B8860B;--aul:#FDF6E3;
+  --bg:#F4F6FB;--s:#fff;--bd:#E0E4EC;--tx:#1A2035;--mt:#6B7280;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5}
 
-  /* ── TOPBAR ── */
-  .topbar{background:var(--green);color:#fff;display:flex;align-items:center;
-    justify-content:space-between;padding:0 24px;height:48px;flex-wrap:wrap;gap:8px}
-  .topbar-l{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
-  .gov-tag{font-size:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
-    border-radius:3px;padding:2px 7px;letter-spacing:.05em}
-  .topbar-r{font-family:var(--mono);font-size:11px;opacity:.8}
+/* topbar */
+.top{background:var(--g);color:#fff;height:46px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px}
+.top-l{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.gov{font-size:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  border-radius:3px;padding:2px 7px;letter-spacing:.04em}
+.top-r{font-size:11px;font-family:'JetBrains Mono',monospace;opacity:.75}
 
-  /* ── HEADER ── */
-  header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 24px}
-  .hdr{max-width:1200px;margin:0 auto;display:flex;align-items:flex-start;
-    justify-content:space-between;flex-wrap:wrap;gap:16px}
-  h1{font-size:20px;font-weight:700;color:var(--green)}
-  .sub{color:var(--muted);font-size:13px;margin-top:2px}
+/* header */
+header{background:var(--s);border-bottom:1px solid var(--bd);padding:16px 20px}
+.hdr{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:12px}
+h1{font-size:18px;font-weight:700;color:var(--g)}
+.sub{font-size:12px;color:var(--mt);margin-top:2px}
+.hdr-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#ts{font-size:11px;color:var(--mt);font-family:'JetBrains Mono',monospace}
 
-  /* ── SUMMARY CARDS ── */
-  main{max-width:1200px;margin:24px auto;padding:0 24px 60px}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
-    padding:16px 18px;border-top:3px solid var(--green)}
-  .card.blue{border-top-color:var(--blue)}
-  .card.gold{border-top-color:var(--gold)}
-  .card.red{border-top-color:var(--red)}
-  .card-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:4px}
-  .card-val{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em}
-  .card-sub{font-size:11px;color:var(--muted);margin-top:2px}
+/* main */
+main{max-width:1300px;margin:18px auto;padding:0 20px 60px}
 
-  /* ── CONTROLS ── */
-  .controls{background:var(--surface);border:1px solid var(--border);border-radius:10px;
-    padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;
-    flex-wrap:wrap;gap:12px}
-  .ctrl-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px}
-  .ctrl-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-  input[type=text], select{
-    padding:8px 12px;border:1px solid var(--border);border-radius:6px;
-    font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);
-    width:100%;outline:none}
-  input[type=text]:focus,select:focus{border-color:var(--green);background:#fff}
-  .btn-reset{padding:8px 14px;background:var(--red-l);color:var(--red);
-    border:1px solid var(--red);border-radius:6px;font-size:12px;font-weight:600;
-    cursor:pointer;white-space:nowrap;align-self:flex-end}
-  .btn-reset:hover{background:var(--red);color:#fff}
+/* summary cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--s);border:1px solid var(--bd);border-radius:8px;
+  padding:13px 15px;border-top:3px solid var(--g);transition:.15s}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.card.b{border-top-color:var(--b)}.card.r{border-top-color:var(--r)}.card.a{border-top-color:var(--au)}
+.cl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mt);font-weight:600;margin-bottom:3px}
+.cv{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em}
+.cs{font-size:11px;color:var(--mt);margin-top:2px}
 
-  /* ── TABLE ── */
-  .tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-  .tbl-head{padding:14px 18px;border-bottom:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-  .tbl-title{font-size:14px;font-weight:600}
-  .tbl-count{font-size:12px;font-family:var(--mono);color:var(--muted)}
-  .scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
-  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
-    color:var(--muted);font-weight:600;padding:10px 14px;border-bottom:2px solid var(--border);
-    background:#FAFBFC;white-space:nowrap;cursor:pointer;user-select:none}
-  th:hover{color:var(--green)}
-  th.asc::after{content:" ▲";font-size:9px}
-  th.desc::after{content:" ▼";font-size:9px}
-  td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
-  tr:last-child td{border-bottom:none}
-  tr:hover td{background:#F8FFFC}
-  .badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;
-    font-family:var(--mono);background:var(--blue-l);color:var(--blue)}
-  .bar-wrap{display:flex;align-items:center;gap:6px}
-  .bar{height:6px;border-radius:3px;background:var(--border);flex:1;overflow:hidden}
-  .bar-fill{height:100%;border-radius:3px}
-  .bar-fill.boys{background:#2980B9}
-  .bar-fill.girls{background:#E91E8C}
-  .bar-val{font-family:var(--mono);font-size:12px;min-width:38px;text-align:right}
+/* controls */
+.ctrl{background:var(--s);border:1px solid var(--bd);border-radius:8px;
+  padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.cg{display:flex;flex-direction:column;gap:3px;flex:1;min-width:130px}
+.cl2{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mt)}
+input,select{padding:7px 10px;border:1px solid var(--bd);border-radius:5px;
+  font-size:13px;color:var(--tx);background:var(--bg);width:100%;font-family:inherit;transition:.15s}
+input:focus,select:focus{outline:none;border-color:var(--g);background:#fff;box-shadow:0 0 0 3px var(--gl)}
+.btn{padding:7px 13px;border-radius:5px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid;white-space:nowrap;transition:.15s;font-family:inherit}
+.btn-r{background:var(--rl);color:var(--r);border-color:var(--r)}
+.btn-r:hover{background:var(--r);color:#fff}
+.btn-g{background:var(--gl);color:var(--g);border-color:var(--g)}
+.btn-g:hover{background:var(--g);color:#fff}
 
-  /* ── PAGINATION ── */
-  .pager{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px}
-  .pg-btn{padding:6px 12px;border:1px solid var(--border);border-radius:5px;
-    background:var(--surface);font-size:12px;cursor:pointer;color:var(--text)}
-  .pg-btn:hover{border-color:var(--green);color:var(--green)}
-  .pg-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
-  .pg-btn:disabled{opacity:.4;cursor:default}
-  .pg-info{font-size:12px;color:var(--muted);font-family:var(--mono)}
+/* table wrap */
+.tw{background:var(--s);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.th2{padding:11px 16px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.tt{font-size:14px;font-weight:600}
+.tc{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--mt)}
+.scr{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:800px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--mt);font-weight:600;padding:9px 12px;border-bottom:2px solid var(--bd);
+  background:#FAFBFC;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--g)}
+th.asc::after{content:" ▲";font-size:9px}
+th.desc::after{content:" ▼";font-size:9px}
+td{padding:8px 12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F2FAF6}
+.badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;
+  font-family:'JetBrains Mono',monospace;background:var(--bl);color:var(--b);font-weight:500}
+.bar-row{display:flex;align-items:center;gap:6px}
+.bar{height:5px;border-radius:3px;background:var(--bd);flex:1;overflow:hidden;min-width:36px}
+.bar-f{height:100%;border-radius:3px;background:var(--g)}
+.bv{font-family:'JetBrains Mono',monospace;font-size:12px;min-width:44px;text-align:right;font-weight:600}
+.boys{color:#2471A3}.girls{color:#C0392B}.pct{font-size:10px;color:var(--mt)}
 
-  /* ── API PANEL ── */
-  .api-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;
-    margin-top:20px;overflow:hidden}
-  .api-head{padding:14px 18px;border-bottom:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between}
-  .api-head h3{font-size:14px;font-weight:600}
-  .api-body{padding:14px 18px;max-height:320px;overflow-y:auto}
-  .api-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;
-    font-size:12px;font-family:var(--mono);background:#FAFBFC;border:1px solid var(--border);
-    border-radius:6px;padding:8px 10px}
-  .api-status{padding:2px 6px;border-radius:3px;font-weight:700;font-size:11px;flex-shrink:0}
-  .s200{background:var(--green-l);color:var(--green)}
-  .s4xx{background:var(--red-l);color:var(--red)}
-  .api-url{word-break:break-all;color:var(--blue)}
+/* pager */
+.pg{display:flex;align-items:center;justify-content:center;gap:5px;padding:12px;flex-wrap:wrap}
+.pb{padding:5px 10px;border:1px solid var(--bd);border-radius:4px;background:var(--s);
+  font-size:12px;cursor:pointer;color:var(--tx);font-family:inherit;transition:.15s}
+.pb:hover{border-color:var(--g);color:var(--g)}
+.pb.on{background:var(--g);color:#fff;border-color:var(--g)}
+.pb:disabled{opacity:.3;cursor:default}
+.pi{font-size:11px;color:var(--mt);font-family:'JetBrains Mono',monospace;padding:0 4px}
 
-  /* ── LOADING / ERROR ── */
-  .center{text-align:center;padding:48px;color:var(--muted)}
-  .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--green);
-    border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .err{background:var(--red-l);border:1px solid var(--red);border-radius:8px;
-    padding:14px 18px;color:var(--red);font-size:13px;margin-bottom:20px}
-  .warn{background:var(--gold-l);border:1px solid var(--gold);border-radius:8px;
-    padding:14px 18px;color:#5a4000;font-size:13px;margin-bottom:20px}
+/* states */
+.center{text-align:center;padding:48px;color:var(--mt)}
+.spin{width:26px;height:26px;border:3px solid var(--bd);border-top-color:var(--g);
+  border-radius:50%;margin:0 auto 10px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.warn{background:var(--aul);border:1px solid var(--au);border-radius:7px;
+  padding:12px 16px;color:#5a4000;font-size:13px;margin:16px;line-height:1.7}
+.warn code{background:rgba(0,0,0,.07);border-radius:3px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:12px}
+.err{background:var(--rl);border:1px solid var(--r);border-radius:7px;
+  padding:12px 16px;color:var(--r);font-size:13px;margin:16px}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="topbar-l">🏫 SIS PESRP — Punjab School Information System
-    <span class="gov-tag">Govt of Punjab</span>
+<div class="top">
+  <div class="top-l">🏫 SIS PESRP · Punjab School Information System
+    <span class="gov">Govt of Punjab</span>
   </div>
-  <div class="topbar-r" id="clock"></div>
+  <div class="top-r" id="clock"></div>
 </div>
 
 <header>
   <div class="hdr">
     <div>
       <h1>School-wise Enrollment Dashboard</h1>
-      <p class="sub">Live data from <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank"
-        style="color:var(--green)">sis.pesrp.edu.pk/str/analysis</a> · Updated every 6 hours via GitHub Actions</p>
+      <p class="sub">Source: <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank"
+        style="color:var(--g)">sis.pesrp.edu.pk</a> · Scraped daily · Stored in this repo as <code
+        style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--gl);
+        color:var(--g);padding:1px 5px;border-radius:3px">schools.csv</code> + <code
+        style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--gl);
+        color:var(--g);padding:1px 5px;border-radius:3px">data.json</code></p>
     </div>
-    <div id="updated-badge" style="font-size:12px;color:var(--muted);font-family:var(--mono)">Loading…</div>
+    <div class="hdr-r">
+      <span id="ts">Loading…</span>
+      <a id="csv-repo" href="schools.csv" class="btn btn-g" style="text-decoration:none">
+        📥 Download CSV
+      </a>
+    </div>
   </div>
 </header>
 
 <main>
 
-  <!-- SUMMARY CARDS -->
-  <div class="cards" id="cards">
-    <div class="card"><div class="card-lbl">Total Schools</div>
-      <div class="card-val" id="c-schools">—</div><div class="card-sub">Public schools</div></div>
-    <div class="card blue"><div class="card-lbl">Total Students</div>
-      <div class="card-val" id="c-students">—</div><div class="card-sub">Enrolled</div></div>
-    <div class="card"><div class="card-lbl">Boys</div>
-      <div class="card-val" id="c-boys">—</div><div class="card-sub">Male enrollment</div></div>
-    <div class="card gold"><div class="card-lbl">Girls</div>
-      <div class="card-val" id="c-girls">—</div><div class="card-sub">Female enrollment</div></div>
-    <div class="card red"><div class="card-lbl">Teachers</div>
-      <div class="card-val" id="c-teachers">—</div><div class="card-sub">Allocated</div></div>
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card">   <div class="cl">Schools</div>  <div class="cv" id="c0">—</div><div class="cs">Public schools</div></div>
+    <div class="card b"> <div class="cl">Students</div> <div class="cv" id="c1">—</div><div class="cs">Total enrolled</div></div>
+    <div class="card">   <div class="cl">Boys</div>     <div class="cv" id="c2">—</div><div class="cs">Male students</div></div>
+    <div class="card a"> <div class="cl">Girls</div>    <div class="cv" id="c3">—</div><div class="cs">Female students</div></div>
+    <div class="card r"> <div class="cl">Teachers</div> <div class="cv" id="c4">—</div><div class="cs">Allocated</div></div>
   </div>
 
-  <!-- CONTROLS -->
-  <div class="controls">
-    <div class="ctrl-group" style="flex:2;min-width:220px">
-      <div class="ctrl-label">🔍 Search School Name</div>
-      <input type="text" id="q-name" placeholder="Type school name…" oninput="applyFilters()">
+  <!-- Controls -->
+  <div class="ctrl">
+    <div class="cg" style="flex:2;min-width:190px">
+      <div class="cl2">🔍 Search School</div>
+      <input type="text" id="q" placeholder="Type school name…" oninput="doFilter()">
     </div>
-    <div class="ctrl-group">
-      <div class="ctrl-label">🗺 District</div>
-      <select id="q-district" onchange="applyFilters()">
-        <option value="">All Districts</option>
+    <div class="cg">
+      <div class="cl2">🗺 District</div>
+      <select id="sd" onchange="doFilter()"><option value="">All Districts</option></select>
+    </div>
+    <div class="cg">
+      <div class="cl2">📍 Tehsil</div>
+      <select id="st" onchange="doFilter()"><option value="">All Tehsils</option></select>
+    </div>
+    <div class="cg" style="min-width:120px">
+      <div class="cl2">⇅ Sort</div>
+      <select id="ss" onchange="doFilter()">
+        <option value="tot_d">Students ↓</option>
+        <option value="tot_a">Students ↑</option>
+        <option value="nm_a">Name A→Z</option>
+        <option value="nm_d">Name Z→A</option>
+        <option value="girls_d">Girls ↓</option>
+        <option value="tch_d">Teachers ↓</option>
       </select>
     </div>
-    <div class="ctrl-group">
-      <div class="ctrl-label">📍 Tehsil</div>
-      <select id="q-tehsil" onchange="applyFilters()">
-        <option value="">All Tehsils</option>
-      </select>
-    </div>
-    <div class="ctrl-group" style="min-width:120px">
-      <div class="ctrl-label">Sort by</div>
-      <select id="q-sort" onchange="applyFilters()">
-        <option value="total_desc">Students ↓</option>
-        <option value="total_asc">Students ↑</option>
-        <option value="name_asc">Name A→Z</option>
-        <option value="name_desc">Name Z→A</option>
-        <option value="teachers_desc">Teachers ↓</option>
-      </select>
-    </div>
-    <button class="btn-reset" onclick="resetFilters()">Reset</button>
+    <button class="btn btn-r" onclick="doReset()">✕ Reset</button>
+    <button class="btn btn-g" onclick="dlFiltered()">⬇ Export filtered CSV</button>
   </div>
 
-  <!-- TABLE -->
-  <div class="tbl-wrap">
-    <div class="tbl-head">
-      <div class="tbl-title">📋 School Enrollment Records</div>
-      <div class="tbl-count" id="row-count">Loading…</div>
+  <!-- Table -->
+  <div class="tw">
+    <div class="th2">
+      <div class="tt">📋 School Enrollment Records</div>
+      <div class="tc" id="rc">Loading…</div>
     </div>
-    <div id="main-body">
-      <div class="center"><div class="spinner"></div>Fetching school data…</div>
-    </div>
-    <div class="pager" id="pager" style="display:none"></div>
-  </div>
-
-  <!-- DISCOVERED APIS -->
-  <div class="api-panel" id="api-panel" style="display:none">
-    <div class="api-head">
-      <h3>🔌 Auto-discovered AJAX Endpoints</h3>
-      <span style="font-size:11px;color:var(--muted)">Captured by network interceptor during scrape</span>
-    </div>
-    <div class="api-body" id="api-body"></div>
+    <div id="body"><div class="center"><div class="spin"></div>Fetching school data…</div></div>
+    <div class="pg" id="pager" style="display:none"></div>
   </div>
 
 </main>
 
 <script>
-// ── State ────────────────────────────────────────────────────────────────────
-let ALL_SCHOOLS = [];
-let FILTERED    = [];
-let PAGE        = 1;
-const PER_PAGE  = 50;
+let ALL=[], FLT=[], PG=1, PER=100, SORT="tot_d";
 
-// ── Clock ────────────────────────────────────────────────────────────────────
-function tick(){
-  document.getElementById('clock').textContent = new Date().toUTCString().replace('GMT','UTC');
-}
-tick(); setInterval(tick,1000);
+// clock
+setInterval(()=>{
+  document.getElementById('clock').textContent =
+    new Date().toUTCString().replace('GMT','UTC');
+},1000);
 
-// ── Format ───────────────────────────────────────────────────────────────────
-function fmt(n){ return Number(n||0).toLocaleString(); }
-function fmtDate(iso){
-  if(!iso) return '—';
+const fmt  = n => Number(n||0).toLocaleString();
+const esc  = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fdt  = iso => {
   try{ return new Date(iso).toLocaleString('en-PK',{timeZone:'Asia/Karachi',
-    day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+' PKT';}
-  catch(e){ return iso; }
-}
-function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+' PKT'; }
+  catch{ return iso; }
+};
 
-// ── Resolve field names flexibly ─────────────────────────────────────────────
-function getField(row, ...keys){
-  for(const k of keys){
-    // exact
-    if(row[k] !== undefined) return row[k];
-    // case-insensitive
-    const lk = k.toLowerCase();
-    for(const rk of Object.keys(row)){
-      if(rk.toLowerCase() === lk) return row[rk];
-    }
-    // partial match
-    for(const rk of Object.keys(row)){
-      if(rk.toLowerCase().includes(lk) || lk.includes(rk.toLowerCase())) return row[rk];
-    }
-  }
-  return '';
-}
-
-function schoolName(r){
-  return getField(r,'school_name','name','school','school_title','title') || '—';
-}
-function totalStudents(r){
-  const v = getField(r,'total_students','enrollment','students','total','enrolled');
-  const boys  = Number(getField(r,'boys','male','male_enrollment','boy_count')||0);
-  const girls = Number(getField(r,'girls','female','female_enrollment','girl_count')||0);
-  const tot   = Number(v||0);
-  return tot || (boys+girls) || 0;
-}
-function boysCount(r){ return Number(getField(r,'boys','male','male_enrollment','boy_count')||0); }
-function girlsCount(r){ return Number(getField(r,'girls','female','female_enrollment','girl_count')||0); }
-function teacherCount(r){ return Number(getField(r,'teachers','teacher_count','staff','allocated_teachers')||0); }
-function districtName(r){ return getField(r,'district','district_name')||'—'; }
-function tehsilName(r){ return getField(r,'tehsil','tehsil_name')||'—'; }
-
-// ── Load ─────────────────────────────────────────────────────────────────────
+// ── Load data.json ────────────────────────────────────────────────────────────
 fetch(`data.json?t=${Date.now()}`)
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(d=>render(d))
+  .then(d=>init(d))
   .catch(err=>{
-    document.getElementById('main-body').innerHTML =
-      `<div class="center err">⚠ Could not load data.json — ${esc(err.message)}<br>
-       Run the GitHub Actions workflow first (Actions → Fetch SIS PESRP Data → Run workflow)</div>`;
+    document.getElementById('body').innerHTML=`
+      <div class="err">
+        ⚠ <strong>Cannot load data.json</strong> — ${esc(err.message)}<br><br>
+        Go to your GitHub repo → <strong>Actions</strong> →
+        <strong>Scrape SIS PESRP</strong> → <strong>Run workflow</strong>
+        to generate the data for the first time.
+      </div>`;
+    document.getElementById('rc').textContent = '0 rows';
   });
 
-function render(d){
-  // Updated badge
-  document.getElementById('updated-badge').textContent = 'Scraped: '+fmtDate(d.scraped_at);
+function init(d){
+  document.getElementById('ts').textContent = 'Scraped: '+fdt(d.scraped_at);
 
-  // Summary cards
-  const s = d.summary || {};
-  document.getElementById('c-schools').textContent  = fmt(s.total_schools  || d.schools?.length || 0);
-  document.getElementById('c-students').textContent = fmt(s.total_students);
-  document.getElementById('c-boys').textContent     = fmt(s.total_boys);
-  document.getElementById('c-girls').textContent    = fmt(s.total_girls);
-  document.getElementById('c-teachers').textContent = fmt(s.total_teachers);
+  const s = d.summary||{};
+  document.getElementById('c0').textContent = fmt(s.total_schools  || d.schools?.length || 0);
+  document.getElementById('c1').textContent = fmt(s.total_students);
+  document.getElementById('c2').textContent = fmt(s.total_boys);
+  document.getElementById('c3').textContent = fmt(s.total_girls);
+  document.getElementById('c4').textContent = fmt(s.total_teachers);
 
-  ALL_SCHOOLS = d.schools || [];
+  ALL = d.schools || [];
 
-  if(ALL_SCHOOLS.length === 0){
-    // No school data yet — show API discovery results and instructions
-    const apis = d.discovered_apis || [];
-    document.getElementById('main-body').innerHTML = `
-      <div class="warn" style="margin:20px">
-        <strong>⚠ No school-level rows collected yet.</strong><br><br>
-        The scraper runs in GitHub Actions — it intercepts AJAX calls on the SIS site.
-        On the first run it discovers the API endpoints. Check the <strong>Discovered APIs</strong>
-        panel below. Once endpoints are found, fetch.py is updated automatically on the next run.
-        ${apis.length ? '<br><br>'+apis.length+' endpoint(s) captured this run.' : ''}
+  if(!ALL.length){
+    document.getElementById('body').innerHTML=`
+      <div class="warn">
+        <strong>No school data yet.</strong><br>
+        Run the GitHub Actions workflow once to populate <code>schools.csv</code>
+        and <code>data.json</code>.<br><br>
+        Repo → <strong>Actions</strong> → <strong>Scrape SIS PESRP</strong> →
+        <strong>Run workflow</strong>
+        ${d.ajax_endpoints?.length
+          ? '<br><br>AJAX endpoints captured this run:<br>'
+            + d.ajax_endpoints.slice(0,5).map(e=>`<code>${esc(e.url)}</code>`).join('<br>')
+          : ''}
       </div>`;
-    showApis(d.discovered_apis);
-    document.getElementById('row-count').textContent = '0 rows';
+    document.getElementById('rc').textContent = '0 rows';
     return;
   }
 
   // Populate district filter
-  const districts = [...new Set(ALL_SCHOOLS.map(districtName))].sort();
-  const dSel = document.getElementById('q-district');
-  districts.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; dSel.appendChild(o); });
+  const dists = [...new Set(ALL.map(r=>r.district||''))].filter(Boolean).sort();
+  const dSel  = document.getElementById('sd');
+  dists.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; dSel.appendChild(o); });
 
-  applyFilters();
-  showApis(d.discovered_apis);
+  doFilter();
 }
 
-// ── Filters & Sort ───────────────────────────────────────────────────────────
-function applyFilters(){
-  const q    = document.getElementById('q-name').value.toLowerCase().trim();
-  const dist = document.getElementById('q-district').value;
-  const teh  = document.getElementById('q-tehsil').value;
-  const sort = document.getElementById('q-sort').value;
+// ── Filter + Sort ─────────────────────────────────────────────────────────────
+function doFilter(){
+  const q    = document.getElementById('q').value.toLowerCase().trim();
+  const dist = document.getElementById('sd').value;
+  const teh  = document.getElementById('st').value;
+  SORT       = document.getElementById('ss').value;
 
-  // Update tehsil options when district changes
+  // Repopulate tehsil list when district changes
   if(dist){
-    const tehsils = [...new Set(
-      ALL_SCHOOLS.filter(r=>districtName(r)===dist).map(tehsilName)
-    )].sort();
-    const tSel = document.getElementById('q-tehsil');
-    const cur  = tSel.value;
-    tSel.innerHTML = '<option value="">All Tehsils</option>';
-    tehsils.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=t;
-      if(t===cur) o.selected=true; tSel.appendChild(o); });
+    const tehs=[...new Set(ALL.filter(r=>r.district===dist).map(r=>r.tehsil||''))].filter(Boolean).sort();
+    const tSel=document.getElementById('st');
+    const cur=tSel.value;
+    tSel.innerHTML='<option value="">All Tehsils</option>';
+    tehs.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v;
+      if(v===cur)o.selected=true; tSel.appendChild(o); });
   }
 
-  FILTERED = ALL_SCHOOLS.filter(r=>{
-    if(dist && districtName(r) !== dist) return false;
-    if(teh  && tehsilName(r)   !== teh)  return false;
-    if(q && !schoolName(r).toLowerCase().includes(q)) return false;
+  FLT = ALL.filter(r=>{
+    if(dist && r.district !== dist) return false;
+    if(teh  && r.tehsil  !== teh)  return false;
+    if(q && !(r.school_name||'').toLowerCase().includes(q)) return false;
     return true;
   });
 
-  // Sort
-  FILTERED.sort((a,b)=>{
-    if(sort==='total_desc') return totalStudents(b)-totalStudents(a);
-    if(sort==='total_asc')  return totalStudents(a)-totalStudents(b);
-    if(sort==='name_asc')   return schoolName(a).localeCompare(schoolName(b));
-    if(sort==='name_desc')  return schoolName(b).localeCompare(schoolName(a));
-    if(sort==='teachers_desc') return teacherCount(b)-teacherCount(a);
+  FLT.sort((a,b)=>{
+    if(SORT==='tot_d')   return (b.total_students||0)-(a.total_students||0);
+    if(SORT==='tot_a')   return (a.total_students||0)-(b.total_students||0);
+    if(SORT==='nm_a')    return (a.school_name||'').localeCompare(b.school_name||'');
+    if(SORT==='nm_d')    return (b.school_name||'').localeCompare(a.school_name||'');
+    if(SORT==='girls_d') return (b.girls||0)-(a.girls||0);
+    if(SORT==='tch_d')   return (b.teachers||0)-(a.teachers||0);
     return 0;
   });
 
-  PAGE = 1;
-  renderTable();
+  PG=1; draw();
 }
 
-function resetFilters(){
-  document.getElementById('q-name').value='';
-  document.getElementById('q-district').value='';
-  document.getElementById('q-tehsil').innerHTML='<option value="">All Tehsils</option>';
-  document.getElementById('q-sort').value='total_desc';
-  applyFilters();
+function doReset(){
+  document.getElementById('q').value='';
+  document.getElementById('sd').value='';
+  document.getElementById('st').innerHTML='<option value="">All Tehsils</option>';
+  document.getElementById('ss').value='tot_d';
+  doFilter();
 }
 
-// ── Table ─────────────────────────────────────────────────────────────────────
-function renderTable(){
-  const total  = FILTERED.length;
-  const pages  = Math.ceil(total/PER_PAGE) || 1;
-  PAGE         = Math.min(PAGE, pages);
-  const start  = (PAGE-1)*PER_PAGE;
-  const slice  = FILTERED.slice(start, start+PER_PAGE);
+// ── Draw table ────────────────────────────────────────────────────────────────
+function draw(){
+  const total = FLT.length;
+  const pages = Math.ceil(total/PER)||1;
+  PG = Math.min(PG,pages);
+  const start = (PG-1)*PER;
+  const slice = FLT.slice(start, start+PER);
 
-  document.getElementById('row-count').textContent =
-    `${fmt(total)} school${total!==1?'s':''} · page ${PAGE}/${pages}`;
+  document.getElementById('rc').textContent =
+    `${fmt(total)} school${total!==1?'s':''} · page ${PG}/${pages}`;
 
-  if(slice.length===0){
-    document.getElementById('main-body').innerHTML =
-      '<div class="center">No schools match the current filters.</div>';
+  if(!slice.length){
+    document.getElementById('body').innerHTML='<div class="center">No schools match your filters.</div>';
     document.getElementById('pager').style.display='none';
     return;
   }
 
-  // Compute max for bar scaling
-  const maxTot = Math.max(...slice.map(totalStudents), 1);
+  const maxT = Math.max(...slice.map(r=>r.total_students||0), 1);
 
   const rows = slice.map((r,i)=>{
-    const tot  = totalStudents(r);
-    const boys = boysCount(r);
-    const gls  = girlsCount(r);
-    const tch  = teacherCount(r);
-    const bPct = tot ? Math.round(boys/tot*100) : 0;
-    const gPct = tot ? Math.round(gls/tot*100) : 0;
-    const barW = tot ? Math.round(tot/maxTot*100) : 0;
-
+    const tot = r.total_students||0;
+    const b   = r.boys||0, g=r.girls||0, tch=r.teachers||0;
+    const bPct = tot ? Math.round(b/tot*100) : 0;
+    const gPct = tot ? Math.round(g/tot*100) : 0;
+    const bw   = tot ? Math.round(tot/maxT*100) : 0;
     return `<tr>
-      <td style="color:var(--muted);font-family:var(--mono);font-size:11px">${start+i+1}</td>
-      <td><strong>${esc(schoolName(r))}</strong></td>
-      <td><span class="badge">${esc(districtName(r))}</span></td>
-      <td style="font-size:12px;color:var(--muted)">${esc(tehsilName(r))}</td>
+      <td style="color:var(--mt);font-family:'JetBrains Mono',monospace;font-size:11px">${start+i+1}</td>
       <td>
-        <div class="bar-wrap">
-          <div class="bar"><div class="bar-fill boys" style="width:${barW}%"></div></div>
-          <div class="bar-val">${fmt(tot)}</div>
+        <strong>${esc(r.school_name||'—')}</strong>
+        ${r.school_id?`<br><span style="font-size:10px;color:var(--mt);font-family:'JetBrains Mono',monospace">${esc(r.school_id)}</span>`:''}
+      </td>
+      <td><span class="badge">${esc(r.district||'—')}</span></td>
+      <td style="font-size:12px;color:var(--mt)">${esc(r.tehsil||'—')}</td>
+      <td style="font-size:12px;color:var(--mt)">${esc(r.markaz||'—')}</td>
+      <td>
+        <div class="bar-row">
+          <div class="bar"><div class="bar-f" style="width:${bw}%"></div></div>
+          <div class="bv">${fmt(tot)}</div>
         </div>
       </td>
-      <td style="color:#2980B9;font-family:var(--mono)">${fmt(boys)} <span style="font-size:10px;color:var(--muted)">(${bPct}%)</span></td>
-      <td style="color:#E91E8C;font-family:var(--mono)">${fmt(gls)} <span style="font-size:10px;color:var(--muted)">(${gPct}%)</span></td>
-      <td style="font-family:var(--mono)">${tch ? fmt(tch) : '—'}</td>
+      <td><span class="boys">${fmt(b)}</span> <span class="pct">(${bPct}%)</span></td>
+      <td><span class="girls">${fmt(g)}</span> <span class="pct">(${gPct}%)</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${tch?fmt(tch):'—'}</td>
     </tr>`;
   }).join('');
 
-  document.getElementById('main-body').innerHTML = `
-    <div class="scroll">
-      <table>
-        <thead><tr>
-          <th>#</th>
-          <th>School Name</th>
-          <th>District</th>
-          <th>Tehsil</th>
-          <th>Total Students</th>
-          <th>Boys</th>
-          <th>Girls</th>
-          <th>Teachers</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+  document.getElementById('body').innerHTML=`
+    <div class="scr"><table>
+      <thead><tr>
+        <th style="cursor:default">#</th>
+        <th style="cursor:default">School Name</th>
+        <th style="cursor:default">District</th>
+        <th style="cursor:default">Tehsil</th>
+        <th style="cursor:default">Markaz</th>
+        <th onclick="setSort('tot_d','tot_a')" class="${SORT==='tot_d'?'desc':SORT==='tot_a'?'asc':''}">Students</th>
+        <th onclick="setSort('nm_a','nm_d')"   class="${SORT==='nm_a'?'asc':SORT==='nm_d'?'desc':''}">Boys</th>
+        <th onclick="setSort('girls_d','')"    class="${SORT==='girls_d'?'desc':''}">Girls</th>
+        <th onclick="setSort('tch_d','')"      class="${SORT==='tch_d'?'desc':''}">Teachers</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
 
-  // Pagination
-  const pager = document.getElementById('pager');
-  if(pages<=1){ pager.style.display='none'; return; }
-  pager.style.display='flex';
-  let btns = `<button class="pg-btn" onclick="goPage(${PAGE-1})" ${PAGE<=1?'disabled':''}>‹ Prev</button>`;
-  const lo = Math.max(1,PAGE-2), hi = Math.min(pages,PAGE+2);
-  if(lo>1) btns += `<button class="pg-btn" onclick="goPage(1)">1</button>${lo>2?'<span class="pg-info">…</span>':''}`;
-  for(let p=lo;p<=hi;p++) btns += `<button class="pg-btn${p===PAGE?' active':''}" onclick="goPage(${p})">${p}</button>`;
-  if(hi<pages) btns += `${hi<pages-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${pages})">${pages}</button>`;
-  btns += `<button class="pg-btn" onclick="goPage(${PAGE+1})" ${PAGE>=pages?'disabled':''}>Next ›</button>`;
-  pager.innerHTML = btns;
+  // Pager
+  const pg = document.getElementById('pager');
+  if(pages<=1){ pg.style.display='none'; return; }
+  pg.style.display='flex';
+  let h = `<button class="pb" onclick="go(${PG-1})" ${PG<=1?'disabled':''}>‹ Prev</button>`;
+  const lo=Math.max(1,PG-2), hi=Math.min(pages,PG+2);
+  if(lo>1) h+=`<button class="pb" onclick="go(1)">1</button>${lo>2?'<span class="pi">…</span>':''}`;
+  for(let p=lo;p<=hi;p++) h+=`<button class="pb${p===PG?' on':''}" onclick="go(${p})">${p}</button>`;
+  if(hi<pages) h+=`${hi<pages-1?'<span class="pi">…</span>':''}<button class="pb" onclick="go(${pages})">${pages}</button>`;
+  h+=`<button class="pb" onclick="go(${PG+1})" ${PG>=pages?'disabled':''}>Next ›</button>`;
+  h+=`<span class="pi">${fmt(total)} total</span>`;
+  pg.innerHTML=h;
 }
 
-function goPage(p){ PAGE=p; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); }
+function go(p){ PG=p; draw(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setSort(asc, desc){
+  document.getElementById('ss').value = (SORT===asc&&desc) ? desc : asc;
+  doFilter();
+}
 
-// ── API panel ─────────────────────────────────────────────────────────────────
-function showApis(apis){
-  if(!apis || !apis.length) return;
-  document.getElementById('api-panel').style.display='';
-  document.getElementById('api-body').innerHTML = apis.slice(0,20).map(a=>`
-    <div class="api-row">
-      <span class="api-status ${a.status===200?'s200':'s4xx'}">${a.status}</span>
-      <span class="api-url">${esc(a.url)}</span>
-    </div>`).join('');
+// ── Export filtered results as CSV ────────────────────────────────────────────
+function dlFiltered(){
+  const hdrs = ['School ID','School Name','District','Tehsil','Markaz',
+                'Total Students','Boys','Girls','Teachers'];
+  const rows = FLT.map(r=>[
+    r.school_id, r.school_name, r.district, r.tehsil, r.markaz,
+    r.total_students, r.boys, r.girls, r.teachers
+  ].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','));
+
+  const csv  = [hdrs.join(','), ...rows].join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `sis_pesrp_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 </script>
 </body>
