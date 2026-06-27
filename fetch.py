@@ -1,418 +1,399 @@
 """
-fetch.py — SIS PESRP Scraper v3
-Key findings from v2:
-  - Page has 0 <select> elements (custom div dropdowns)
-  - Data shown via Highcharts (JS chart library)
-  - AJAX endpoints are in inline <script> blocks in the HTML
-  - Page-specific JS is NOT in external files
+fetch.py — SIS PESRP Scraper v4  (FINAL)
+=========================================
+Discovered endpoints (from v3 log):
+  GET  /user/get_districts          -> {"html": "<option value='1'>Attock</option>..."}
+  POST /user/get_tehsils            -> {"html": "<option>...</option>"}
+  POST /user/get_markazes           -> {"html": "<option>...</option>"}
+  POST /user/get_schools            -> {"html": "<option>...</option>"}
 
-New strategy:
-  1. Fetch raw HTML with requests → extract ALL inline <script> blocks
-  2. Find AJAX URLs inside those scripts
-  3. Find Highcharts series data embedded in the page
-  4. Use Playwright to find custom div dropdowns and click them
-  5. Intercept ALL network responses (not just JSON content-type)
+Site uses CodeIgniter with CSRF token.
+We get the token from the session cookie, then POST it with every request.
+
+Data collected per school:
+  - School name, EMIS/ID
+  - District, Tehsil, Markaz
+  - Total students, Boys, Girls
+  - Grade-wise enrollment (KG–10, boys/girls)
+  - Teachers allocated
+  - E-Transfer status (homepage)
 """
 
 import json, csv, re, time, requests
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
-BASE    = "https://sis.pesrp.edu.pk"
-URL     = f"{BASE}/str/analysis"
+BASE = "https://sis.pesrp.edu.pk"
 
-SESSION = requests.Session()
-SESSION.headers.update({
-    "User-Agent":      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                       "(KHTML, like Gecko) Chrome/124 Safari/537.36",
-    "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-    "Referer":         BASE,
+# ── Session with persistent cookies (needed for CSRF) ─────────────────────────
+S = requests.Session()
+S.headers.update({
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124 Safari/537.36",
+    "Accept":     "application/json, text/javascript, */*; q=0.01",
+    "X-Requested-With": "XMLHttpRequest",
+    "Referer":    f"{BASE}/str/analysis",
 })
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def clean(t): return re.sub(r"\s+", " ", (t or "")).strip()
+def get_csrf():
+    """Load the main page to get CSRF cookie from CodeIgniter."""
+    try:
+        r = S.get(f"{BASE}/str/analysis", timeout=20)
+        # CSRF token is in cookie
+        csrf = S.cookies.get("csrf_test_name", "")
+        # Also check meta tag
+        if not csrf:
+            m = re.search(r'csrf_test_name["\s:\']+([a-f0-9]+)', r.text)
+            if m: csrf = m.group(1)
+        # Also check hidden inputs
+        if not csrf:
+            soup = BeautifulSoup(r.text, "html.parser")
+            inp = soup.find("input", {"name": "csrf_test_name"})
+            if inp: csrf = inp.get("value","")
+        print(f"CSRF token: {csrf[:20] if csrf else 'NOT FOUND'}")
+        return csrf
+    except Exception as e:
+        print(f"get_csrf error: {e}")
+        return ""
+
+def post_data(url, payload, csrf):
+    """POST with CSRF token included."""
+    if csrf:
+        payload["csrf_test_name"] = csrf
+    try:
+        r = S.post(url, data=payload, timeout=15)
+        # Update CSRF token from response (CodeIgniter rotates it)
+        new_csrf = S.cookies.get("csrf_test_name", csrf)
+        return r, new_csrf
+    except Exception as e:
+        print(f"  POST error {url}: {e}")
+        return None, csrf
+
+def parse_options(html_str):
+    """Parse <option value='id'>Name</option> from HTML string."""
+    opts = []
+    soup = BeautifulSoup(html_str or "", "html.parser")
+    for opt in soup.find_all("option"):
+        val  = opt.get("value","").strip()
+        name = opt.get_text(strip=True)
+        skip = {"","0","select","all","--","select district",
+                "select tehsil","select markaz","select school"}
+        if val and name.lower() not in skip:
+            opts.append((val, name))
+    return opts
+
+def clean(t): return re.sub(r"\s+"," ",(t or "")).strip()
 def num(v):
-    try: return int(re.sub(r"[^\d]", "", str(v or 0)) or 0)
+    try: return int(re.sub(r"[^\d]","",str(v or 0)) or 0)
     except: return 0
 
-# ── Step 1: Fetch raw HTML and extract inline scripts ─────────────────────────
-def get_inline_scripts(url):
-    print(f"Fetching {url} with requests ...")
+# ── E-Transfer status from homepage ──────────────────────────────────────────
+def get_etransfer():
+    print("\nFetching E-Transfer status ...")
     try:
-        r = SESSION.get(url, timeout=30)
-        html = r.text
-        print(f"  Got {len(html)} chars, status {r.status_code}")
+        r = S.get(BASE, timeout=20)
+        text = r.text
+        open_  = "applications are being accepted" in text.lower() \
+                 and "not being accepted" not in text.lower()
+        status = "OPEN" if open_ else "CLOSED"
+        # Extract dates
+        m = re.search(
+            r'from\s+(\d{1,2}-\w{3}-\d{2,4})\s+to\s+(\d{1,2}-\w{3}-\d{2,4})',
+            text, re.IGNORECASE)
+        start = m.group(1) if m else ""
+        end   = m.group(2) if m else ""
+        # Last updated
+        u = re.search(r'Last Updated.*?(\d{1,2}\s+\w+\s+\d{4}.*?)(?:\n|<)', text, re.IGNORECASE)
+        updated = u.group(1).strip() if u else ""
+        print(f"  E-Transfer: {status}  |  Last round: {start} to {end}")
+        return {"status": status, "accepting": open_,
+                "last_round_start": start, "last_round_end": end,
+                "site_updated": updated}
     except Exception as e:
-        print(f"  Error: {e}")
-        return "", []
+        print(f"  E-Transfer error: {e}")
+        return {"status":"UNKNOWN","accepting":False}
 
-    soup = BeautifulSoup(html, "html.parser")
+# ── Get enrollment data for a school ─────────────────────────────────────────
+def get_school_enrollment(school_id, district_id, tehsil_id, markaz_id, csrf):
+    """
+    Try multiple endpoints to get per-school enrollment + grade breakdown.
+    The /str/analysis page loads chart data via AJAX when filters are applied.
+    """
+    enrollment = {
+        "total_students": 0, "boys": 0, "girls": 0, "teachers": 0,
+        "grades": {}
+    }
 
-    scripts = []
-    for tag in soup.find_all("script", src=False):
-        content = tag.string or tag.get_text() or ""
-        if content.strip():
-            scripts.append(content)
-
-    print(f"  Found {len(scripts)} inline script blocks")
-    for i, s in enumerate(scripts):
-        print(f"  Script[{i}]: {len(s)} chars | preview: {s[:120].strip()!r}")
-
-    return html, scripts
-
-# ── Step 2: Extract AJAX URLs from inline scripts ─────────────────────────────
-def extract_ajax_urls(scripts):
-    urls = set()
-    combined = "\n".join(scripts)
-
-    patterns = [
-        r"""url\s*:\s*['"`]([^'"`\s]+)['"`]""",
-        r"""\$\.(post|get|ajax|getJSON)\s*\(\s*['"`]([^'"`\s]+)['"`]""",
-        r"""fetch\s*\(\s*['"`]([^'"`\s]+)['"`]""",
-        r"""(?:base_url|site_url)\s*\+?\s*\(?\s*['"`]([^'"`]+)['"`]""",
-        r"""action\s*[:=]\s*['"`](/[^'"`\s]+)['"`]""",
-        r"""['"`](/(?:str|stats|api|school|district|tehsil|enroll|get|fetch|load|data)[^'"`\s]{2,50})['"`]""",
+    # Common enrollment endpoints for CodeIgniter SIS systems
+    endpoints = [
+        f"{BASE}/str/get_school_stats",
+        f"{BASE}/str/get_enrollment",
+        f"{BASE}/str/get_school_data",
+        f"{BASE}/str/analysis/get_data",
+        f"{BASE}/str/get_stats",
+        f"{BASE}/str/school_stats",
+        f"{BASE}/str/get_grade_data",
     ]
 
-    for pat in patterns:
-        for m in re.finditer(pat, combined, re.IGNORECASE):
-            ep = m.group(m.lastindex or 1).strip()
-            if ep and not ep.startswith("//") and len(ep) > 3:
-                if ep.startswith("/"):
-                    ep = BASE + ep
-                if ep.startswith("http") and "pesrp" in ep:
-                    urls.add(ep)
+    payload = {
+        "school_id":   school_id,
+        "district_id": district_id,
+        "tehsil_id":   tehsil_id,
+        "markaz_id":   markaz_id,
+        "school":      school_id,
+        "district":    district_id,
+        "tehsil":      tehsil_id,
+        "markaz":      markaz_id,
+        "type":        "school",
+        "tab":         "enrollment",
+    }
 
-    print(f"\nAJAX URLs found in inline scripts: {len(urls)}")
-    for u in sorted(urls):
-        print(f"  {u}")
-
-    return list(urls)
-
-# ── Step 3: Extract Highcharts data from page ─────────────────────────────────
-def extract_highcharts_data(scripts, html):
-    combined = "\n".join(scripts) + html
-    rows = []
-
-    cats_matches = re.findall(
-        r"""categories\s*:\s*\[([^\]]{10,})\]""", combined, re.DOTALL
-    )
-    series_matches = re.findall(
-        r"""series\s*:\s*\[(.{20,5000}?)\](?:\s*[,}])""", combined, re.DOTALL
-    )
-
-    categories = []
-    for m in cats_matches:
-        items = re.findall(r"""['"`]([^'"`]+)['"`]""", m)
-        if items:
-            categories = items
-            print(f"  Highcharts categories: {len(categories)} items")
-            break
-
-    all_series = []
-    for m in series_matches:
-        name_m = re.search(r"""name\s*:\s*['"`]([^'"`]+)['"`]""", m)
-        data_m = re.search(r"""data\s*:\s*\[([^\]]+)\]""", m)
-        if name_m and data_m:
-            name  = name_m.group(1)
-            nums  = [num(x.strip()) for x in data_m.group(1).split(",") if x.strip()]
-            all_series.append({"name": name, "data": nums})
-            print(f"  Series '{name}': {len(nums)} values")
-
-    if categories and all_series:
-        boys_data    = next((s["data"] for s in all_series if "boy"   in s["name"].lower()), [])
-        girls_data   = next((s["data"] for s in all_series if "girl"  in s["name"].lower()), [])
-        total_data   = next((s["data"] for s in all_series if "total" in s["name"].lower()
-                             or "enrol" in s["name"].lower()), [])
-        teacher_data = next((s["data"] for s in all_series if "teach" in s["name"].lower()), [])
-
-        for i, cat in enumerate(categories):
-            b = boys_data[i]    if i < len(boys_data)    else 0
-            g = girls_data[i]   if i < len(girls_data)   else 0
-            t = total_data[i]   if i < len(total_data)   else b + g
-            rows.append({
-                "school_id": "", "school_name": cat,
-                "district": "", "tehsil": "", "markaz": "",
-                "total_students": t, "boys": b, "girls": g,
-                "teachers": teacher_data[i] if i < len(teacher_data) else 0,
-            })
-        print(f"  Built {len(rows)} rows from Highcharts data")
-
-    return rows
-
-# ── Step 4: Probe endpoints ───────────────────────────────────────────────────
-GUESSED = [
-    "/str/get_districts", "/str/get_tehsils", "/str/get_markazs",
-    "/str/get_schools",   "/str/get_school_data", "/str/get_enrollment",
-    "/str/school_data",   "/str/analysis/data",   "/str/analysis/get",
-    "/str/stats",         "/str/chart_data",      "/str/get_chart_data",
-    "/str/get_data",      "/str/schools",
-    "/stats/get_district","/stats/schools",       "/stats/enrollment",
-    "/api/schools",       "/api/districts",       "/api/enrollment",
-    "/home/get_stats",    "/home/stats",
-    "/str/get_schools?district_id=1",
-    "/str/get_schools?district=1",
-]
-
-def probe(urls):
-    found_data = []
-    found_districts = []
-    all_urls = list(set(urls + [BASE + g for g in GUESSED]))
-    print(f"\nProbing {len(all_urls)} endpoints ...")
-
-    for ep in all_urls:
-        for method, data in [
-            ("GET",  None),
-            ("POST", {"district_id": "", "district": "", "type": "school"}),
-            ("POST", {"district_id": "1", "district": "1"}),
-        ]:
-            try:
-                hdrs = {**SESSION.headers,
-                        "X-Requested-With": "XMLHttpRequest",
-                        "Accept": "application/json, text/javascript, */*"}
-                if method == "GET":
-                    r = SESSION.get(ep, headers=hdrs, timeout=10)
-                else:
-                    r = SESSION.post(ep, data=data, headers=hdrs, timeout=10)
-
-                if r.status_code != 200:
-                    continue
-                body = r.text.strip()
-                if not body or body[0] not in ("[", "{"):
-                    continue
-
-                parsed = r.json()
-                rows   = parse_school_json(parsed)
-                if rows:
-                    print(f"  OK {method} {ep} -> {len(rows)} school rows!")
-                    found_data.extend(rows)
-                    break
-                elif isinstance(parsed, list) and parsed:
-                    first = parsed[0]
-                    if isinstance(first, dict):
-                        ks = {k.lower() for k in first}
-                        if any(k in ks for k in ["district_id","district_name","dist_id"]):
-                            print(f"  ~ {method} {ep} -> district list ({len(parsed)})")
-                            found_districts = parsed
-                        elif any(k in ks for k in ["tehsil_id","tehsil_name"]):
-                            print(f"  ~ {method} {ep} -> tehsil list ({len(parsed)})")
-                        else:
-                            print(f"  ? {method} {ep} -> list of {len(parsed)}, keys={list(first.keys())[:5]}")
-                    break
-                elif isinstance(parsed, dict):
-                    print(f"  ? {method} {ep} -> dict, keys={list(parsed.keys())[:6]}")
-                    break
-
-            except Exception:
-                pass
-
-    return found_data, found_districts
-
-# ── Step 5: Playwright deep scan ──────────────────────────────────────────────
-captured = []
-
-def capture_all(resp):
-    try:
-        body = resp.text()
-        if body and len(body) > 20 and body.strip()[0] in ("[", "{"):
-            captured.append({"url": resp.url, "status": resp.status, "body": body[:30000]})
-            print(f"  [NET] {resp.status} {resp.url[:90]}")
-    except Exception:
-        pass
-
-def playwright_deep(ts):
-    print("\n--- Playwright deep scan ---")
-    rows = []
-
-    with sync_playwright() as pw:
-        br  = pw.chromium.launch(headless=True)
-        ctx = br.new_context(user_agent=SESSION.headers["User-Agent"])
-        pg  = ctx.new_page()
-        pg.on("response", capture_all)
-
-        pg.goto(URL, wait_until="networkidle", timeout=90000)
-        time.sleep(6)
-
-        clickables = pg.evaluate("""() => {
-            const results = [];
-            const selectors = [
-                '[data-value]','[data-id]','[data-district]',
-                '.dropdown-item','[role=option]','[role=listbox]',
-                '.select2-selection','[class*=dropdown]',
-                '[class*=district]','[class*=tehsil]','[class*=school]',
-                'li[onclick]','div[onclick]','span[onclick]','a[data-value]',
-            ];
-            selectors.forEach(sel => {
-                document.querySelectorAll(sel).forEach(el => {
-                    results.push({
-                        tag: el.tagName,
-                        cls: el.className,
-                        text: el.innerText ? el.innerText.slice(0,50) : '',
-                        val: el.getAttribute('data-value') || el.getAttribute('data-id') || '',
-                        onclick: el.getAttribute('onclick') ? el.getAttribute('onclick').slice(0,80) : '',
-                    });
-                });
-            });
-            return results.slice(0, 50);
-        }""")
-
-        print(f"  Custom clickable elements: {len(clickables)}")
-        for el in clickables[:20]:
-            print(f"    <{el['tag']} cls='{el['cls'][:40]}' val='{el['val']}' "
-                  f"text='{el['text']}' onclick='{el['onclick']}'")
-
-        js_vars = pg.evaluate("""() => {
-            const found = {};
-            for (const key of Object.keys(window)) {
-                try {
-                    const val = window[key];
-                    if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
-                        found[key] = val.slice(0, 3);
-                    }
-                } catch(e) {}
-            }
-            return found;
-        }""")
-
-        print(f"  JS window arrays: {list(js_vars.keys())[:20]}")
-        for k, v in list(js_vars.items())[:10]:
-            print(f"    window.{k} = {str(v)[:120]}")
-
-        for el in clickables[:10]:
-            try:
-                if el['val']:
-                    pg.click(f"[data-value='{el['val']}']", timeout=2000)
-                    time.sleep(2)
-                    print(f"  Clicked data-value={el['val']}")
-            except Exception:
-                pass
-
-        html = pg.content()
-        br.close()
-
-    for entry in captured:
+    for ep in endpoints:
+        r, csrf = post_data(ep, {**payload}, csrf)
+        if not r or r.status_code != 200:
+            continue
+        body = r.text.strip()
+        if not body or body[0] not in ("[","{"): 
+            continue
         try:
-            parsed = json.loads(entry["body"])
-            r = parse_school_json(parsed)
-            if r:
-                print(f"  Captured {len(r)} school rows from {entry['url'][:70]}")
-                rows.extend(r)
+            data = r.json()
+            parsed = parse_enrollment_json(data)
+            if parsed:
+                enrollment.update(parsed)
+                print(f"      Got enrollment from {ep.split('/')[-1]}")
+                break
         except Exception:
             pass
 
-    return rows, html
+    return enrollment, csrf
 
-# ── Parse school JSON ─────────────────────────────────────────────────────────
-NAME_K  = ["school_name","name","school","sch_name","school_title","sname","s_name"]
-TOT_K   = ["total","total_students","enrollment","students","enrolled","total_enrol","tot","enrol"]
-BOYS_K  = ["boys","male","male_enrollment","boy_count","male_count","boys_enrol","male_enrol"]
-GIRLS_K = ["girls","female","female_enrollment","girl_count","female_count","girls_enrol","female_enrol"]
-TCH_K   = ["teachers","teacher_count","allocated_teachers","staff","tch_count","tch"]
-DIST_K  = ["district","district_name","dist_name","dname","dist"]
-TEH_K   = ["tehsil","tehsil_name","teh_name","tname","teh"]
-MRK_K   = ["markaz","markaz_name","mrk_name","mrk"]
-ID_K    = ["school_id","id","emis","emis_code","school_code","scode","s_id"]
-
-def gf(row, keys):
-    rl = {k.lower(): v for k, v in row.items()}
-    for k in keys: 
-        if k in rl: return rl[k]
-    return ""
-
-def parse_school_json(data, dist="", teh=""):
-    rows = []
+def parse_enrollment_json(data):
+    """Extract enrollment numbers from various JSON shapes."""
+    result = {}
     if isinstance(data, dict):
-        for key in ("data","result","schools","rows","records","items","list","response"):
-            if key in data and isinstance(data[key], list):
-                data = data[key]; break
-        else:
-            return rows
-    if not isinstance(data, list): return rows
+        # Unwrap common wrappers
+        for key in ("data","result","school","stats","enrollment"):
+            if key in data and isinstance(data[key], (dict,list)):
+                inner = data[key]
+                if isinstance(inner, dict):
+                    data = inner
+                    break
 
-    for item in data:
-        if not isinstance(item, dict): continue
-        ks = {k.lower() for k in item}
-        has_school = any(k in ks for k in ["school_name","school","emis","sch_name","sname"])
-        has_data   = any(k in ks for k in ["enrollment","students","boys","girls","total","enrol"])
-        if not (has_school or has_data): continue
-        b = num(gf(item, BOYS_K))
-        g = num(gf(item, GIRLS_K))
-        t = num(gf(item, TOT_K)) or b + g
-        rows.append({
-            "school_id":      str(gf(item, ID_K) or ""),
-            "school_name":    clean(gf(item, NAME_K)) or "Unknown",
-            "district":       clean(gf(item, DIST_K)) or dist,
-            "tehsil":         clean(gf(item, TEH_K))  or teh,
-            "markaz":         clean(gf(item, MRK_K)),
-            "total_students": t, "boys": b, "girls": g,
-            "teachers":       num(gf(item, TCH_K)),
-        })
-    return rows
+        # Direct keys
+        key_map = {
+            "total_students": ["total","total_students","enrollment","enrolled","total_enrol"],
+            "boys":           ["boys","male","male_enrollment","boys_enrol"],
+            "girls":          ["girls","female","female_enrollment","girls_enrol"],
+            "teachers":       ["teachers","teacher_count","allocated_teachers","tch"],
+        }
+        for field, keys in key_map.items():
+            for k in keys:
+                if k in data:
+                    result[field] = num(data[k])
+                    break
 
-# ── Save ──────────────────────────────────────────────────────────────────────
-FIELDS = ["school_id","school_name","district","tehsil","markaz",
-          "total_students","boys","girls","teachers","scraped_at"]
+        # Grade-wise data
+        grades = {}
+        grade_labels = ["KG","1","2","3","4","5","6","7","8","9","10"]
+        for g in grade_labels:
+            key_b = f"grade_{g}_boys" if g != "KG" else "grade_kg_boys"
+            key_g = f"grade_{g}_girls" if g != "KG" else "grade_kg_girls"
+            key_t = f"grade_{g}" if g != "KG" else "grade_kg"
+            # Try various naming patterns
+            for kb in [key_b, f"g{g}b", f"grade{g}boys", f"class_{g}_boys"]:
+                if kb.lower() in {k.lower() for k in data}:
+                    b_val = data.get(kb) or data.get(kb.lower()) or 0
+                    g_val = data.get(key_g) or data.get(key_g.lower()) or 0
+                    grades[f"grade_{g}"] = {
+                        "boys": num(b_val), "girls": num(g_val),
+                        "total": num(b_val) + num(g_val)
+                    }
+                    break
+        if grades:
+            result["grades"] = grades
 
-def save(rows, ts):
-    for r in rows: r["scraped_at"] = ts
+    return result
+
+# ── Main scraper ──────────────────────────────────────────────────────────────
+def scrape():
+    ts      = datetime.now(timezone.utc).isoformat()
+    schools = []
+
+    # Step 0: CSRF token
+    csrf = get_csrf()
+
+    # Step 1: E-Transfer status
+    etransfer = get_etransfer()
+
+    # Step 2: Districts
+    print("\nFetching districts ...")
+    r = S.get(f"{BASE}/user/get_districts", timeout=15)
+    resp_data = r.json() if r.text.strip().startswith("{") else {}
+    html_str  = resp_data.get("html", r.text)
+    districts = parse_options(html_str)
+    print(f"  {len(districts)} districts found")
+
+    if not districts:
+        print("  No districts found — check CSRF or endpoint")
+        return schools, etransfer, ts
+
+    for d_id, d_name in districts:
+        print(f"\nDistrict: {d_name} (id={d_id})")
+
+        # Step 3: Tehsils for this district
+        r2, csrf = post_data(f"{BASE}/user/get_tehsils",
+                             {"district_id": d_id}, csrf)
+        tehsils = []
+        if r2 and r2.status_code == 200:
+            try:
+                td = r2.json()
+                tehsils = parse_options(td.get("html", r2.text))
+            except Exception:
+                tehsils = parse_options(r2.text)
+        print(f"  {len(tehsils)} tehsils")
+        if not tehsils:
+            tehsils = [("", "")]
+
+        for t_id, t_name in tehsils:
+
+            # Step 4: Markazs for this tehsil
+            r3, csrf = post_data(f"{BASE}/user/get_markazes",
+                                 {"tehsil_id": t_id, "district_id": d_id}, csrf)
+            markazs = []
+            if r3 and r3.status_code == 200:
+                try:
+                    md = r3.json()
+                    markazs = parse_options(md.get("html", r3.text))
+                except Exception:
+                    markazs = parse_options(r3.text)
+            if not markazs:
+                markazs = [("", "")]
+
+            for m_id, m_name in markazs:
+
+                # Step 5: Schools for this markaz
+                r4, csrf = post_data(f"{BASE}/user/get_schools", {
+                    "markaz_id":   m_id,
+                    "tehsil_id":   t_id,
+                    "district_id": d_id,
+                }, csrf)
+                school_opts = []
+                if r4 and r4.status_code == 200:
+                    try:
+                        sd = r4.json()
+                        school_opts = parse_options(sd.get("html", r4.text))
+                    except Exception:
+                        school_opts = parse_options(r4.text)
+
+                print(f"  {t_name}/{m_name}: {len(school_opts)} schools")
+
+                for s_id, s_name in school_opts:
+                    # Step 6: Enrollment data for this school
+                    enr, csrf = get_school_enrollment(
+                        s_id, d_id, t_id, m_id, csrf)
+
+                    row = {
+                        "school_id":      s_id,
+                        "school_name":    s_name,
+                        "district":       d_name,
+                        "tehsil":         t_name,
+                        "markaz":         m_name,
+                        "total_students": enr.get("total_students", 0),
+                        "boys":           enr.get("boys", 0),
+                        "girls":          enr.get("girls", 0),
+                        "teachers":       enr.get("teachers", 0),
+                        # Grade-wise
+                        "grade_KG_boys":  enr.get("grades",{}).get("grade_KG",{}).get("boys",0),
+                        "grade_KG_girls": enr.get("grades",{}).get("grade_KG",{}).get("girls",0),
+                        "grade_1_boys":   enr.get("grades",{}).get("grade_1",{}).get("boys",0),
+                        "grade_1_girls":  enr.get("grades",{}).get("grade_1",{}).get("girls",0),
+                        "grade_2_boys":   enr.get("grades",{}).get("grade_2",{}).get("boys",0),
+                        "grade_2_girls":  enr.get("grades",{}).get("grade_2",{}).get("girls",0),
+                        "grade_3_boys":   enr.get("grades",{}).get("grade_3",{}).get("boys",0),
+                        "grade_3_girls":  enr.get("grades",{}).get("grade_3",{}).get("girls",0),
+                        "grade_4_boys":   enr.get("grades",{}).get("grade_4",{}).get("boys",0),
+                        "grade_4_girls":  enr.get("grades",{}).get("grade_4",{}).get("girls",0),
+                        "grade_5_boys":   enr.get("grades",{}).get("grade_5",{}).get("boys",0),
+                        "grade_5_girls":  enr.get("grades",{}).get("grade_5",{}).get("girls",0),
+                        "grade_6_boys":   enr.get("grades",{}).get("grade_6",{}).get("boys",0),
+                        "grade_6_girls":  enr.get("grades",{}).get("grade_6",{}).get("girls",0),
+                        "grade_7_boys":   enr.get("grades",{}).get("grade_7",{}).get("boys",0),
+                        "grade_7_girls":  enr.get("grades",{}).get("grade_7",{}).get("girls",0),
+                        "grade_8_boys":   enr.get("grades",{}).get("grade_8",{}).get("boys",0),
+                        "grade_8_girls":  enr.get("grades",{}).get("grade_8",{}).get("girls",0),
+                        "grade_9_boys":   enr.get("grades",{}).get("grade_9",{}).get("boys",0),
+                        "grade_9_girls":  enr.get("grades",{}).get("grade_9",{}).get("girls",0),
+                        "grade_10_boys":  enr.get("grades",{}).get("grade_10",{}).get("boys",0),
+                        "grade_10_girls": enr.get("grades",{}).get("grade_10",{}).get("girls",0),
+                        "etransfer_status": etransfer.get("status",""),
+                        "scraped_at":     ts,
+                    }
+                    schools.append(row)
+                    time.sleep(0.3)  # polite delay
+
+    return schools, etransfer, ts
+
+# ── Save CSV ──────────────────────────────────────────────────────────────────
+CSV_FIELDS = [
+    "school_id","school_name","district","tehsil","markaz",
+    "total_students","boys","girls","teachers",
+    "grade_KG_boys","grade_KG_girls",
+    "grade_1_boys","grade_1_girls",
+    "grade_2_boys","grade_2_girls",
+    "grade_3_boys","grade_3_girls",
+    "grade_4_boys","grade_4_girls",
+    "grade_5_boys","grade_5_girls",
+    "grade_6_boys","grade_6_girls",
+    "grade_7_boys","grade_7_girls",
+    "grade_8_boys","grade_8_girls",
+    "grade_9_boys","grade_9_girls",
+    "grade_10_boys","grade_10_girls",
+    "etransfer_status","scraped_at",
+]
+
+def save(schools, etransfer, ts):
+    # CSV
     with open("schools.csv","w",newline="",encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-        w.writeheader(); w.writerows(rows)
-    tot = sum(r.get("total_students",0) for r in rows)
+        w = csv.DictWriter(f, fieldnames=CSV_FIELDS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(schools)
+    print(f"schools.csv  -- {len(schools)} rows")
+
+    # JSON
+    tot  = sum(s.get("total_students",0) for s in schools)
+    boys = sum(s.get("boys",0)           for s in schools)
+    gls  = sum(s.get("girls",0)          for s in schools)
+    tch  = sum(s.get("teachers",0)       for s in schools)
+
     out = {
-        "scraped_at": ts, "source": BASE,
+        "scraped_at": ts,
+        "source":     BASE,
+        "etransfer":  etransfer,
         "summary": {
-            "total_schools":  len(rows),
+            "total_schools":  len(schools),
             "total_students": tot,
-            "total_boys":     sum(r.get("boys",0)     for r in rows),
-            "total_girls":    sum(r.get("girls",0)    for r in rows),
-            "total_teachers": sum(r.get("teachers",0) for r in rows),
+            "total_boys":     boys,
+            "total_girls":    gls,
+            "total_teachers": tch,
         },
-        "schools": rows,
-        "captured_endpoints": [{"url":e["url"],"status":e["status"]} for e in captured],
+        "schools": schools,
     }
     with open("data.json","w",encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    print(f"\nschools.csv  -- {len(rows)} rows")
-    print(f"data.json    -- {len(rows)} schools | {tot:,} students")
+    print(f"data.json    -- {len(schools)} schools | {tot:,} students")
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ── Entry ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    ts = datetime.now(timezone.utc).isoformat()
     print("="*55)
-    print("  SIS PESRP Scraper v3")
+    print("  SIS PESRP Scraper v4 — FINAL")
     print("="*55)
-    all_rows = []
+    schools, etransfer, ts = scrape()
+    print(f"\nTotal schools collected: {len(schools)}")
+    save(schools, etransfer, ts)
 
-    html, scripts = get_inline_scripts(URL)
-    ajax_urls = extract_ajax_urls(scripts)
-
-    print("\n--- Highcharts data scan ---")
-    all_rows.extend(extract_highcharts_data(scripts, html))
-
-    found_rows, _ = probe(ajax_urls)
-    all_rows.extend(found_rows)
-
-    if not all_rows:
-        pw_rows, pw_html = playwright_deep(ts)
-        all_rows.extend(pw_rows)
-        if not all_rows:
-            print("\n--- Highcharts scan on rendered HTML ---")
-            all_rows.extend(extract_highcharts_data([], pw_html))
-
-    seen, unique = set(), []
-    for r in all_rows:
-        k = (r.get("school_name",""), r.get("district",""))
-        if k not in seen:
-            seen.add(k); unique.append(r)
-
-    print(f"\nTotal unique rows: {len(unique)}")
-    save(unique, ts)
-
-    if not unique:
-        print("\nStill 0 rows. Check log above for:")
-        print("  Script[N] previews -- shows inline JS content")
-        print("  Custom clickable elements -- shows dropdown structure")
-        print("  JS window arrays -- shows if data is in window variables")
+    if not schools:
+        print("\nStill 0 — printing full response from /user/get_districts:")
+        csrf = get_csrf()
+        r = S.get(f"{BASE}/user/get_districts", timeout=15)
+        print(f"  Status: {r.status_code}")
+        print(f"  Response: {r.text[:500]}")
