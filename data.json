@@ -1,9 +1,6 @@
 {
-  "scraped_at": "2026-06-27T02:53:56.158827+00:00",
+  "scraped_at": "2026-06-27T04:02:08.595947+00:00",
   "source": "https://sis.pesrp.edu.pk",
-  "discovered_apis": [],
-  "districts": [],
-  "schools": [],
   "summary": {
     "total_schools": 0,
     "total_students": 0,
@@ -11,5 +8,11 @@
     "total_girls": 0,
     "total_teachers": 0
   },
-  "error": "No district dropdown found. Check captured_requests for raw API data."
+  "schools": [],
+  "ajax_endpoints": [
+    {
+      "url": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
+      "status": 200
+    }
+  ]
 }
