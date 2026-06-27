@@ -228,6 +228,7 @@ def scrape():
 
                     schools.append({
     "school_id": s_id,
+    "emis_code": emis_code,
     "school_name": s_name,
     "district_id": d_id,        # <--- ADD THIS
     "district": d_name,
@@ -275,7 +276,7 @@ def scrape():
 # ----------------------------------------------------------------------
 
 FIELDS = [
-    "school_id", "school_name", 
+    "school_id","emis_code", "school_name", 
     "district_id", "district",    # added district_id
     "tehsil_id", "tehsil",        # added tehsil_id
     "markaz_id", "markaz",        # added markaz_id
