@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch.py — SIS PESRP Scraper (HAR‑corrected + retry + safe number parsing)
+fetch.py — SIS PESRP Scraper (HAR‑corrected + retry + safe parsing)
 =======================================================================
 """
 
@@ -132,7 +132,7 @@ def get_schools(d_id, t_id, m_id, csrf):
 
 
 # ----------------------------------------------------------------------
-# Enrollment data – with safe number conversion
+# Enrollment data – with safe number conversion and type checking
 # ----------------------------------------------------------------------
 
 def get_enrollment(s_id, d_id, t_id, m_id, csrf):
@@ -163,6 +163,12 @@ def get_enrollment(s_id, d_id, t_id, m_id, csrf):
                 r = S.get(endpoint, params=params, timeout=30)
                 if r and r.status_code == 200:
                     data = r.json()
+                    # --- CRITICAL FIX: check data type ---
+                    if not isinstance(data, dict):
+                        print(f"  ⚠️  {endpoint} returned unexpected type ({type(data)}), skipping")
+                        # Skip this attempt – maybe try again later?
+                        continue
+
                     if endpoint.endswith("get_gender_summary_pie"):
                         enr["total_students"] = to_int(data.get("total"))
                         enr["boys"] = to_int(data.get("male_count"))
@@ -190,6 +196,11 @@ def get_enrollment(s_id, d_id, t_id, m_id, csrf):
                     print(f"  ⚠️  {endpoint} returned {r.status_code if r else 'None'}, retry {attempt+1}")
             except (requests.Timeout, requests.ConnectionError) as e:
                 print(f"  ⚠️  {endpoint} timeout (attempt {attempt+1}): {e}")
+                if attempt == 2:
+                    print(f"  ❌ Skipping school {s_id} after 3 failed attempts")
+                time.sleep(2 ** attempt)
+            except Exception as e:
+                print(f"  ⚠️  {endpoint} unexpected error: {e}, retry {attempt+1}")
                 if attempt == 2:
                     print(f"  ❌ Skipping school {s_id} after 3 failed attempts")
                 time.sleep(2 ** attempt)
@@ -336,7 +347,7 @@ def save(schools, ts):
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("  SIS PESRP Scraper (HAR‑corrected + retry + safe int)")
+    print("  SIS PESRP Scraper (HAR‑corrected + retry + safe int + type guard)")
     print("=" * 50)
     schools, ts = scrape()
     print(f"\nTotal: {len(schools)} schools")
