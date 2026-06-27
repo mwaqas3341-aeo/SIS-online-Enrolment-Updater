@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-fetch.py — SIS PESRP Scraper (HAR‑corrected version)
+fetch.py — SIS PESRP Scraper (HAR‑corrected + retry)
 ======================================================
-Based on real network traffic captured from the site.
-All dropdown fetches are now GET requests with proper query parameters.
-Enrollment data is pulled from the dashboard_revamp endpoints.
+Adds retry logic and longer timeout to handle server slowness.
 """
 
 import json
@@ -14,11 +12,16 @@ import time
 import requests
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE = "https://sis.pesrp.edu.pk"
 
-# Session with browser‑like headers
+# --- Session with retries ---
 S = requests.Session()
+retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+S.mount('https://', HTTPAdapter(max_retries=retries))
+
 S.headers.update({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0",
     "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -29,11 +32,9 @@ S.headers.update({
 
 def get_csrf():
     """Fetch the CSRF token from the main page."""
-    r = S.get(f"{BASE}/str/analysis", timeout=20)
-    # The token is stored in a cookie named 'csrf_cookie_name'
+    r = S.get(f"{BASE}/str/analysis", timeout=30)
     csrf = S.cookies.get("csrf_cookie_name", "")
     if not csrf:
-        # Fallback: scrape from HTML if cookie not present
         m = re.search(r'csrf_cookie_name["\s:\']+([a-f0-9]+)', r.text)
         if m:
             csrf = m.group(1)
@@ -42,7 +43,7 @@ def get_csrf():
 
 
 def parse_options(html_str):
-    """Extract (value, name) pairs from <option> tags inside an HTML string."""
+    """Extract (value, name) pairs from <option> tags."""
     opts = []
     soup = BeautifulSoup(html_str or "", "html.parser")
     skip = {
@@ -59,10 +60,7 @@ def parse_options(html_str):
 
 
 def parse_resp(r):
-    """
-    Extract HTML options from a response.
-    Handles both plain HTML and JSON wrappers like {"html": "..."}.
-    """
+    """Extract options from response (handles JSON wrapper)."""
     if not r or r.status_code != 200:
         return []
     body = r.text.strip()
@@ -79,55 +77,47 @@ def parse_resp(r):
 
 
 # ----------------------------------------------------------------------
-# Dropdown fetches – all use GET with specific query parameters
+# Dropdown fetches – GET with query parameters
 # ----------------------------------------------------------------------
 
 def get_tehsils(d_id, csrf):
-    """Fetch tehsils for a given district ID."""
     params = {
         "district": d_id,
         "selectedTehsil": "false",
         "all": "All",
         "csrf_test_name": csrf
     }
-    r = S.get(f"{BASE}/user/get_tehsils", params=params, timeout=15)
+    r = S.get(f"{BASE}/user/get_tehsils", params=params, timeout=30)
     return parse_resp(r), csrf
 
 
 def get_markazs(d_id, t_id, csrf):
-    """Fetch markazs for a given tehsil ID."""
     params = {
         "tehsil": t_id,
         "selectedMarkaz": "false",
         "all": "All",
         "csrf_test_name": csrf
     }
-    r = S.get(f"{BASE}/user/get_markazes", params=params, timeout=15)
+    r = S.get(f"{BASE}/user/get_markazes", params=params, timeout=30)
     return parse_resp(r), csrf
 
 
 def get_schools(d_id, t_id, m_id, csrf):
-    """Fetch schools for a given markaz ID."""
     params = {
         "markaz": m_id,
         "selectedSchool": "false",
         "all": "All",
         "csrf_test_name": csrf
     }
-    r = S.get(f"{BASE}/user/get_schools", params=params, timeout=15)
+    r = S.get(f"{BASE}/user/get_schools", params=params, timeout=30)
     return parse_resp(r), csrf
 
 
 # ----------------------------------------------------------------------
-# Enrollment data – from dashboard_revamp endpoints
+# Enrollment data – with per-request retry wrapper
 # ----------------------------------------------------------------------
 
 def get_enrollment(s_id, d_id, t_id, m_id, csrf):
-    """
-    Fetch enrollment totals and grade‑wise breakdown for a specific school.
-    Returns a dictionary with keys:
-      total_students, boys, girls, teachers (currently 0), grades (dict)
-    """
     params = {
         "district": d_id,
         "tehsil": t_id,
@@ -145,49 +135,47 @@ def get_enrollment(s_id, d_id, t_id, m_id, csrf):
         "grades": {}
     }
 
-    # 1. Get summary totals (gender pie)
-    r = S.get(f"{BASE}/dashboard_revamp/get_gender_summary_pie",
-              params=params, timeout=15)
-    if r and r.status_code == 200:
-        try:
-            data = r.json()
-            enr["total_students"] = int(data.get("total", "0").replace(",", ""))
-            enr["boys"] = int(data.get("male_count", "0").replace(",", ""))
-            enr["girls"] = int(data.get("female_count", "0").replace(",", ""))
-        except Exception:
-            pass
+    # Try both endpoints with up to 3 retries each
+    for endpoint in [
+        f"{BASE}/dashboard_revamp/get_gender_summary_pie",
+        f"{BASE}/dashboard_revamp/get_gender_bar_class"
+    ]:
+        for attempt in range(3):
+            try:
+                r = S.get(endpoint, params=params, timeout=30)
+                if r and r.status_code == 200:
+                    data = r.json()
+                    if endpoint.endswith("get_gender_summary_pie"):
+                        enr["total_students"] = int(data.get("total", "0").replace(",", ""))
+                        enr["boys"] = int(data.get("male_count", "0").replace(",", ""))
+                        enr["girls"] = int(data.get("female_count", "0").replace(",", ""))
+                    else:  # gender_bar_class
+                        categories = data.get("categories", [])
+                        male_vals = data.get("male", [])
+                        female_vals = data.get("female", [])
+                        grade_map = {
+                            "ECE": "KG", "Nursery": "KG",
+                            "1": "1", "2": "2", "3": "3", "4": "4", "5": "5",
+                            "6": "6", "7": "7", "8": "8", "9": "9", "10": "10"
+                        }
+                        grades = {}
+                        for i, cat in enumerate(categories):
+                            if i >= len(male_vals) or i >= len(female_vals):
+                                break
+                            grade_key = grade_map.get(cat)
+                            if grade_key:
+                                grades[f"grade_{grade_key}_boys"] = male_vals[i]
+                                grades[f"grade_{grade_key}_girls"] = female_vals[i]
+                        enr["grades"] = grades
+                    break  # success, exit retry loop
+                else:
+                    print(f"  ⚠️  {endpoint} returned {r.status_code if r else 'None'}, retry {attempt+1}")
+            except (requests.Timeout, requests.ConnectionError) as e:
+                print(f"  ⚠️  {endpoint} timeout (attempt {attempt+1}): {e}")
+                if attempt == 2:
+                    print(f"  ❌ Skipping school {s_id} after 3 failed attempts")
+                time.sleep(2 ** attempt)  # exponential backoff
 
-    # 2. Get grade‑wise breakdown (bar chart data)
-    r2 = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class",
-               params=params, timeout=15)
-    if r2 and r2.status_code == 200:
-        try:
-            data = r2.json()
-            categories = data.get("categories", [])   # e.g. ["ECE","Nursery","1","2",...]
-            male_vals = data.get("male", [])
-            female_vals = data.get("female", [])
-
-            # Map API category names to our grade keys (KG, 1–10)
-            grade_map = {
-                "ECE": "KG",
-                "Nursery": "KG",
-                "1": "1", "2": "2", "3": "3", "4": "4", "5": "5",
-                "6": "6", "7": "7", "8": "8", "9": "9", "10": "10"
-            }
-            grades = {}
-            for i, cat in enumerate(categories):
-                if i >= len(male_vals) or i >= len(female_vals):
-                    break
-                grade_key = grade_map.get(cat)
-                if grade_key:
-                    grades[f"grade_{grade_key}_boys"] = male_vals[i]
-                    grades[f"grade_{grade_key}_girls"] = female_vals[i]
-            enr["grades"] = grades
-        except Exception:
-            pass
-
-    # Note: Teacher count is not available from these endpoints.
-    # You may need to find another endpoint; for now we leave it 0.
     return enr, csrf
 
 
@@ -199,8 +187,7 @@ def scrape():
     ts = datetime.now(timezone.utc).isoformat()
     csrf = get_csrf()
 
-    # Fetch districts (this endpoint still works as GET)
-    r = S.get(f"{BASE}/user/get_districts", timeout=15)
+    r = S.get(f"{BASE}/user/get_districts", timeout=30)
     districts = parse_resp(r)
     print(f"Districts: {len(districts)}")
 
@@ -211,7 +198,7 @@ def scrape():
 
         tehsils, csrf = get_tehsils(d_id, csrf)
         if not tehsils:
-            tehsils = [("", "All")]   # fallback
+            tehsils = [("", "All")]
 
         for t_id, t_name in tehsils:
             markazs, csrf = get_markazs(d_id, t_id, csrf)
@@ -223,14 +210,13 @@ def scrape():
                 print(f"  {t_name}/{m_name}: {len(school_opts)} schools")
 
                 for s_id, s_name in school_opts:
-                    # --- EXTRACT EMIS CODE AND CLEAN SCHOOL NAME ---
+                    # Extract EMIS code and clean name
                     emis_code = ""
                     school_name_clean = s_name
                     if " - " in s_name:
                         parts = s_name.split(" - ", 1)
                         emis_code = parts[0].strip()
                         school_name_clean = parts[1].strip() if len(parts) > 1 else s_name
-                    # -------------------------------------------------
 
                     enr, csrf = get_enrollment(s_id, d_id, t_id, m_id, csrf)
                     g = enr.get("grades", {})
@@ -274,7 +260,7 @@ def scrape():
                         "etransfer_status": "UNKNOWN",
                         "scraped_at": ts,
                     })
-                    time.sleep(0.05)   # polite delay
+                    time.sleep(0.1)   # slightly longer delay
 
     return schools, ts
 
@@ -284,10 +270,10 @@ def scrape():
 # ----------------------------------------------------------------------
 
 FIELDS = [
-    "school_id", "emis_code", "school_name", 
-    "district_id", "district",    # added district_id
-    "tehsil_id", "tehsil",        # added tehsil_id
-    "markaz_id", "markaz",        # added markaz_id
+    "school_id", "emis_code", "school_name",
+    "district_id", "district",
+    "tehsil_id", "tehsil",
+    "markaz_id", "markaz",
     "total_students", "boys", "girls", "teachers",
     "grade_KG_boys", "grade_KG_girls",
     "grade_1_boys", "grade_1_girls", "grade_2_boys", "grade_2_girls",
@@ -332,7 +318,7 @@ def save(schools, ts):
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("  SIS PESRP Scraper (HAR‑corrected)")
+    print("  SIS PESRP Scraper (HAR‑corrected + retry)")
     print("=" * 50)
     schools, ts = scrape()
     print(f"\nTotal: {len(schools)} schools")
