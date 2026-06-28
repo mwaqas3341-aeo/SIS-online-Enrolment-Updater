@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-fetch.py — SIS PESRP Scraper (50-THREAD FULL RUN)
+fetch.py — SIS PESRP Scraper (50-THREAD)
+Fixed Issue: Strict Label Parsing (Zero Guessing)
 =======================================================================
 """
 
@@ -23,7 +24,6 @@ thread_local = threading.local()
 def get_session():
     if not hasattr(thread_local, "session"):
         s = requests.Session()
-        # Retry logic will kick in hard if the server blocks the 50 threads
         retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504, 429])
         adapter = HTTPAdapter(max_retries=retries, pool_connections=10, pool_maxsize=10)
         s.mount('https://', adapter)
@@ -36,9 +36,7 @@ def get_session():
         thread_local.session = s
     return thread_local.session
 
-csv_lock           = threading.Lock()
-DEBUG_FIRST_SCHOOL = True
-_debug_printed     = False
+csv_lock = threading.Lock()
 
 ALL_GRADES = ["ECE", "Nursery", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
 
@@ -64,47 +62,27 @@ FIELDS = [
 ]
 
 GRADE_MAP = {
-    "ECE":        "ECE",
-    "Nursery":    "Nursery", "nursery": "Nursery",
-    "KG":         "Nursery", "katchi":  "Nursery", "Katchi": "Nursery",
-    "Pre-School": "Nursery", "Prep":    "Nursery",
-    "1": "1",  "2": "2",  "3": "3",  "4": "4",  "5": "5",
-    "6": "6",  "7": "7",  "8": "8",  "9": "9",  "10": "10",
-    "11": "11", "12": "12",
-    "Class 1": "1",   "Class 2": "2",   "Class 3": "3",
-    "Class 4": "4",   "Class 5": "5",   "Class 6": "6",
-    "Class 7": "7",   "Class 8": "8",   "Class 9": "9",
-    "Class 10": "10", "Class 11": "11", "Class 12": "12",
-    "Grade 1": "1",   "Grade 2": "2",   "Grade 3": "3",
-    "Grade 4": "4",   "Grade 5": "5",   "Grade 6": "6",
-    "Grade 7": "7",   "Grade 8": "8",   "Grade 9": "9",
-    "Grade 10": "10", "Grade 11": "11", "Grade 12": "12",
-    "I":  "11", "II": "12", "XI": "11", "XII": "12",
-    "Inter I": "11", "Inter II": "12",
-    "F.Sc I": "11", "F.Sc II": "12",
-    "FA I": "11",   "FA II": "12",
+    "ece": "ECE", "early childhood education": "ECE",
+    "nursery": "Nursery", "katchi": "Nursery", "kachi": "Nursery", "kg": "Nursery", "pre-school": "Nursery", "prep": "Nursery",
+    "1": "1", "class 1": "1", "grade 1": "1", "one": "1",
+    "2": "2", "class 2": "2", "grade 2": "2", "two": "2",
+    "3": "3", "class 3": "3", "grade 3": "3", "three": "3",
+    "4": "4", "class 4": "4", "grade 4": "4", "four": "4",
+    "5": "5", "class 5": "5", "grade 5": "5", "five": "5",
+    "6": "6", "class 6": "6", "grade 6": "6", "six": "6",
+    "7": "7", "class 7": "7", "grade 7": "7", "seven": "7",
+    "8": "8", "class 8": "8", "grade 8": "8", "eight": "8",
+    "9": "9", "class 9": "9", "grade 9": "9", "nine": "9",
+    "10": "10", "class 10": "10", "grade 10": "10", "ten": "10",
+    "11": "11", "class 11": "11", "grade 11": "11", "xi": "11", "i": "11", "inter i": "11", "f.sc i": "11", "fa i": "11",
+    "12": "12", "class 12": "12", "grade 12": "12", "xii": "12", "ii": "12", "inter ii": "12", "f.sc ii": "12", "fa ii": "12",
 }
-
-PRIMARY   = ["1","2","3","4","5","6","7","8","9","10"]
-INTER     = ["11","12"]
-
-def positional_grade_keys(n):
-    if   n == 14: return ["ECE", "Nursery"] + PRIMARY + INTER
-    elif n == 13: return ["Nursery"] + PRIMARY + INTER
-    elif n == 12: return ["ECE", "Nursery"] + PRIMARY
-    elif n == 11: return ["Nursery"] + PRIMARY
-    elif n == 10: return PRIMARY[:]
-    elif n < 10:  return PRIMARY[:n]
-    else:
-        extras = [str(i) for i in range(13, n + 1)]
-        return ["ECE", "Nursery"] + PRIMARY + INTER + extras
 
 def to_int(value):
     if value is None: return 0
     if isinstance(value, int): return value
     if isinstance(value, float): return int(value)
-    if isinstance(value, dict):
-        return to_int(value.get("y") or value.get("value") or 0)
+    if isinstance(value, dict): return to_int(value.get("y") or value.get("value") or 0)
     if isinstance(value, str):
         clean = re.sub(r'[^\d]', '', value)
         return int(clean) if clean else 0
@@ -112,17 +90,14 @@ def to_int(value):
 
 def get_csrf():
     session = get_session()
-    print("[Network] Requesting CSRF token from server...", flush=True)
     try:
         r = session.get(f"{BASE}/str/analysis", timeout=15)
         csrf = session.cookies.get("csrf_cookie_name", "")
         if not csrf:
             m = re.search(r'csrf_cookie_name["\s:\']+([a-f0-9]+)', r.text)
             if m: csrf = m.group(1)
-        print(f"[Network] CSRF Token received: {csrf[:10]}...", flush=True)
         return csrf
-    except Exception as e:
-        print(f"[Error] Failed to connect to server: {e}", flush=True)
+    except Exception:
         return ""
 
 def parse_options(html_str):
@@ -152,25 +127,13 @@ def parse_resp(r):
     return parse_options(body)
 
 def get_tehsils(d_id, csrf):
-    return parse_resp(get_session().get(
-        f"{BASE}/user/get_tehsils",
-        params={"district": d_id, "selectedTehsil": "false", "all": "All", "csrf_test_name": csrf},
-        timeout=15
-    ))
+    return parse_resp(get_session().get(f"{BASE}/user/get_tehsils", params={"district": d_id, "selectedTehsil": "false", "all": "All", "csrf_test_name": csrf}, timeout=15))
 
 def get_markazs(d_id, t_id, csrf):
-    return parse_resp(get_session().get(
-        f"{BASE}/user/get_markazes",
-        params={"tehsil": t_id, "selectedMarkaz": "false", "all": "All", "csrf_test_name": csrf},
-        timeout=15
-    ))
+    return parse_resp(get_session().get(f"{BASE}/user/get_markazes", params={"tehsil": t_id, "selectedMarkaz": "false", "all": "All", "csrf_test_name": csrf}, timeout=15))
 
 def get_schools(d_id, t_id, m_id, csrf):
-    return parse_resp(get_session().get(
-        f"{BASE}/user/get_schools",
-        params={"markaz": m_id, "selectedSchool": "false", "all": "All", "csrf_test_name": csrf},
-        timeout=15
-    ))
+    return parse_resp(get_session().get(f"{BASE}/user/get_schools", params={"markaz": m_id, "selectedSchool": "false", "all": "All", "csrf_test_name": csrf}, timeout=15))
 
 def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
     d_id, d_name, t_id, t_name, m_id, m_name = markaz_info
@@ -195,42 +158,77 @@ def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
         schools_found.append(base_school)
     return schools_found
 
+# ── STRICT PARSER: ZERO GUESSING ───────────────────────────────────────────
 def apply_grade_data(school_info, data2):
-    if not isinstance(data2, dict): return False, 0
-    categories  = data2.get("categories", [])
-    male_vals   = data2.get("male")   or data2.get("Male")
-    female_vals = data2.get("female") or data2.get("Female")
+    if not data2: return False, 0
+    
+    categories, male_vals, female_vals = [], [], []
 
-    if not male_vals and "series" in data2:
-        for series in data2["series"]:
-            name = (series.get("name") or "").strip().lower()
-            if name in ("male","boys","m"): male_vals = series.get("data", [])
-            elif name in ("female","girls","f"): female_vals = series.get("data", [])
+    # Format 1: Direct List of Dictionaries
+    if isinstance(data2, list) and len(data2) > 0 and isinstance(data2[0], dict):
+        categories  = [str(r.get("class") or r.get("grade") or r.get("name") or "") for r in data2]
+        male_vals   = [to_int(r.get("male")   or r.get("boys") or r.get("m"))  for r in data2]
+        female_vals = [to_int(r.get("female") or r.get("girls") or r.get("f")) for r in data2]
 
-    if not male_vals and isinstance(data2.get("data"), list):
-        rows = data2["data"]
-        if rows and isinstance(rows[0], dict):
-            categories  = [r.get("class") or r.get("grade") or r.get("category") or r.get("name") for r in rows]
-            male_vals   = [to_int(r.get("male")   or r.get("boys"))  for r in rows]
-            female_vals = [to_int(r.get("female") or r.get("girls")) for r in rows]
+    # Format 2: Highcharts JSON Object
+    elif isinstance(data2, dict):
+        # Hunt for explicit class labels
+        if "categories" in data2: categories = data2["categories"]
+        elif "labels" in data2: categories = data2["labels"]
+        elif "xAxis" in data2 and isinstance(data2["xAxis"], dict):
+            categories = data2["xAxis"].get("categories", [])
+            
+        male_vals   = data2.get("male")   or data2.get("Male") or []
+        female_vals = data2.get("female") or data2.get("Female") or []
+        
+        # Hunt inside the 'series' array if root arrays are empty
+        if (not male_vals or not female_vals) and "series" in data2:
+            for series in data2["series"]:
+                name = str(series.get("name", "")).strip().lower()
+                data_array = series.get("data", [])
+                
+                # If data_array contains dicts like {"name": "Class 1", "y": 10}
+                if data_array and isinstance(data_array[0], dict):
+                    if not categories: 
+                        categories = [str(item.get("name", "")) for item in data_array]
+                    vals = [to_int(item.get("y") or item.get("value")) for item in data_array]
+                else:
+                    vals = [to_int(v) for v in data_array]
+                    
+                if name in ("male", "boys", "m"): male_vals = vals
+                elif name in ("female", "girls", "f"): female_vals = vals
 
-    if not male_vals or not female_vals: return False, 0
+    # DO NOT GUESS. If the server fails to provide explicit labels, skip assigning grades.
+    if not categories or (not male_vals and not female_vals):
+        return False, 0
 
     n = max(len(male_vals), len(female_vals))
-    grade_keys = [GRADE_MAP.get(str(c).strip()) for c in categories] if categories else positional_grade_keys(n)
 
-    for i, g_key in enumerate(grade_keys):
-        if g_key is None: continue
-        if i >= len(male_vals) or i >= len(female_vals): break
-        school_info[f"grade_{g_key}_boys"]  = to_int(male_vals[i])
-        school_info[f"grade_{g_key}_girls"] = to_int(female_vals[i])
+    for i, c_name in enumerate(categories):
+        clean_c = str(c_name).strip().lower()
+        if not clean_c: continue
+        
+        # Exact match mapping
+        mapped = GRADE_MAP.get(clean_c)
+        
+        # If no exact match, extract the core class identifier via Regex 
+        # (e.g., "Class 4 (Afternoon)" extracts to "4")
+        if not mapped:
+            match = re.search(r'\b(ece|katchi|nursery|kg|\d+)\b', clean_c)
+            if match: mapped = GRADE_MAP.get(match.group(1))
+            
+        # Write to the specific grade column based purely on the explicit label
+        if mapped:
+            b = to_int(male_vals[i]) if i < len(male_vals) else 0
+            f = to_int(female_vals[i]) if i < len(female_vals) else 0
+            school_info[f"grade_{mapped}_boys"]  += b
+            school_info[f"grade_{mapped}_girls"] += f
 
     return True, n
+# ───────────────────────────────────────────────────────────────────────────
 
 def worker_fetch_school_data(school_info, ts, csv_writer):
-    global _debug_printed
     session = get_session() 
-
     params = {
         "district":       school_info["district_id"],
         "tehsil":         school_info["tehsil_id"],
@@ -248,47 +246,21 @@ def worker_fetch_school_data(school_info, ts, csv_writer):
                 school_info["total_students"] = to_int(data1.get("total"))
                 school_info["boys"]           = to_int(data1.get("male_count"))
                 school_info["girls"]          = to_int(data1.get("female_count"))
-    except Exception:
-        pass
+    except Exception: pass
 
     try:
         r2 = session.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
         if r2.status_code == 200:
             raw = r2.json()
-            data2 = raw if isinstance(raw, dict) else {}
+            # Wrap list responses into dicts for the parser
+            data2 = {"data": raw} if isinstance(raw, list) else (raw if isinstance(raw, dict) else {})
             if data2: apply_grade_data(school_info, data2)
-    except Exception:
-        pass
+    except Exception: pass
 
     with csv_lock:
         csv_writer.writerow(school_info)
 
     return school_info
-
-def verify_ece_school(inventory):
-    TARGET_EMIS = "37110221"
-    match = next((s for s in inventory if s.get("emis_code") == TARGET_EMIS), None)
-    candidates = [match] if match else [s for s in inventory if s.get("district","").upper() == "ATTOCK"][:10]
-
-    session = get_session()
-    for school in candidates:
-        params = {
-            "district": school["district_id"], "tehsil": school["tehsil_id"],
-            "markaz": school["markaz_id"], "school": school["school_id"],
-            "classes": "", "s_id_emis_code": ""
-        }
-        try:
-            r = session.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
-            data = r.json()
-            if not isinstance(data, dict): continue
-            male, female = data.get("male", []), data.get("female", [])
-            n = len(male)
-
-            if n in (11, 12):
-                print(f"  ✅ ECE/Nursery confirmed for testing (array_len={n})\n", flush=True)
-                break
-        except Exception:
-            pass
 
 def scrape():
     ts = datetime.now(timezone.utc).isoformat()
@@ -297,7 +269,6 @@ def scrape():
     print("[Network] Requesting Districts list...", flush=True)
     r = get_session().get(f"{BASE}/user/get_districts", timeout=15)
     districts = parse_resp(r)
-    print(f"[Success] Found {len(districts)} Districts.", flush=True)
 
     markaz_list = []
     print("\nPhase 1a: Mapping Tehsils and Markazs sequentially...", flush=True)
@@ -311,7 +282,6 @@ def scrape():
     print(f"\nPhase 1b: Fetching school lists across {len(markaz_list)} Markazs...", flush=True)
     inventory, completed_markazs = [], 0
 
-    # Increased Phase 1 to 50 concurrent markazs to match Phase 2 speeds
     with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         futures = {executor.submit(worker_fetch_schools_in_markaz, m, csrf, ts): m for m in markaz_list}
         for future in concurrent.futures.as_completed(futures):
@@ -321,7 +291,6 @@ def scrape():
                 print(f"  -> Processed {completed_markazs} / {len(markaz_list)} Markazs...", flush=True)
 
     print(f"\nPhase 1 Complete! Discovered exactly {len(inventory)} schools.", flush=True)
-    verify_ece_school(inventory)
 
     with open("schools.csv", "w", newline="", encoding="utf-8") as f:
         csv.DictWriter(f, fieldnames=FIELDS).writeheader()
@@ -332,7 +301,6 @@ def scrape():
     f_csv = open("schools.csv", "a", newline="", encoding="utf-8")
     csv_writer = csv.DictWriter(f_csv, fieldnames=FIELDS, extrasaction="ignore")
 
-    # INCREASED TO 50 CONCURRENT THREADS
     with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         futures = {executor.submit(worker_fetch_school_data, s, ts, csv_writer): s for s in inventory}
         for future in concurrent.futures.as_completed(futures):
@@ -342,12 +310,11 @@ def scrape():
                 print(f"  -> Fetched data for {completed_schools} / {len(inventory)} schools...", flush=True)
 
     f_csv.close()
-
     return final_schools, ts
 
 if __name__ == "__main__":
     print("=" * 65, flush=True)
-    print("  SIS PESRP Scraper — 50 THREAD FULL RUN", flush=True)
+    print("  SIS PESRP Scraper — Strict Label Parser", flush=True)
     print("=" * 65, flush=True)
     start_time = time.time()
 
@@ -370,18 +337,6 @@ if __name__ == "__main__":
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
 
-    graded      = sum(1 for s in schools if any(s.get(f"grade_{g}_{sex}", 0) > 0 for g in ALL_GRADES for sex in ["boys","girls"]))
-    ece_schools = sum(1 for s in schools if s.get("grade_ECE_boys",0)>0 or s.get("grade_ECE_girls",0)>0)
-    nur_schools = sum(1 for s in schools if s.get("grade_Nursery_boys",0)>0 or s.get("grade_Nursery_girls",0)>0)
-    hs_schools  = sum(1 for s in schools if s.get("grade_11_boys",0)>0 or s.get("grade_11_girls",0)>0 or s.get("grade_12_boys",0)>0 or s.get("grade_12_girls",0)>0)
-
     elapsed = (time.time() - start_time) / 60
     print(f"\n{'='*65}", flush=True)
     print(f"✅ FULL RUN COMPLETE in {elapsed:.1f} minutes!", flush=True)
-    print(f"{'='*65}", flush=True)
-    print(f"   Total schools         : {len(schools):,}", flush=True)
-    print(f"   Total students        : {tot:,}", flush=True)
-    print(f"   Schools with grade data : {graded:,}", flush=True)
-    print(f"   Schools with ECE      : {ece_schools:,}", flush=True)
-    print(f"   Schools with Nursery  : {nur_schools:,}", flush=True)
-    print(f"   Schools with Gr 11-12 : {hs_schools:,}", flush=True)
