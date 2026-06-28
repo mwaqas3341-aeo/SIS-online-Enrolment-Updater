@@ -24,7 +24,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-si
 
 /* header */
 header{background:var(--s);border-bottom:1px solid var(--bd);padding:16px 20px}
-.hdr{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;
+.hdr{max-width:100%;margin:0 auto;display:flex;justify-content:space-between;
   align-items:center;flex-wrap:wrap;gap:12px}
 h1{font-size:18px;font-weight:700;color:var(--g)}
 .sub{font-size:12px;color:var(--mt);margin-top:2px}
@@ -32,7 +32,7 @@ h1{font-size:18px;font-weight:700;color:var(--g)}
 #ts{font-size:11px;color:var(--mt);font-family:'JetBrains Mono',monospace}
 
 /* main */
-main{max-width:1300px;margin:18px auto;padding:0 20px 60px}
+main{max-width:100%;margin:18px auto;padding:0 20px 60px}
 
 /* summary cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:18px}
@@ -57,11 +57,11 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
   cursor:pointer;border:1px solid;white-space:nowrap;transition:.15s;font-family:inherit}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-r{background:var(--rl);color:var(--r);border-color:var(--r)}
-.btn-r:hover{background:var(--r);color:#fff}
+.btn-r:hover:not(:disabled){background:var(--r);color:#fff}
 .btn-g{background:var(--gl);color:var(--g);border-color:var(--g)}
-.btn-g:hover{background:var(--g);color:#fff}
+.btn-g:hover:not(:disabled){background:var(--g);color:#fff}
 .btn-b{background:var(--bl);color:var(--b);border-color:var(--b)}
-.btn-b:hover{background:var(--b);color:#fff}
+.btn-b:hover:not(:disabled){background:var(--b);color:#fff}
 
 /* table wrap */
 .tw{background:var(--s);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
@@ -69,17 +69,19 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .tt{font-size:14px;font-weight:600}
 .tc{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--mt)}
+
+/* simple table */
 .scr{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px;min-width:800px}
-th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+.simple-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:800px}
+.simple-tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
   color:var(--mt);font-weight:600;padding:9px 12px;border-bottom:2px solid var(--bd);
   background:#FAFBFC;white-space:nowrap;cursor:pointer;user-select:none}
-th:hover{color:var(--g)}
-th.asc::after{content:" ▲";font-size:9px}
-th.desc::after{content:" ▼";font-size:9px}
-td{padding:8px 12px;border-bottom:1px solid var(--bd);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#F2FAF6}
+.simple-tbl th:hover{color:var(--g)}
+.simple-tbl th.asc::after{content:" ▲";font-size:9px}
+.simple-tbl th.desc::after{content:" ▼";font-size:9px}
+.simple-tbl td{padding:8px 12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.simple-tbl tr:last-child td{border-bottom:none}
+.simple-tbl tbody tr:hover td{background:#F2FAF6}
 .badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;
   font-family:'JetBrains Mono',monospace;background:var(--bl);color:var(--b);font-weight:500}
 .bar-row{display:flex;align-items:center;gap:6px}
@@ -104,9 +106,116 @@ tr:hover td{background:#F2FAF6}
 @keyframes sp{to{transform:rotate(360deg)}}
 .warn{background:var(--aul);border:1px solid var(--au);border-radius:7px;
   padding:12px 16px;color:#5a4000;font-size:13px;margin:16px;line-height:1.7}
-.warn code{background:rgba(0,0,0,.07);border-radius:3px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:12px}
+.warn code{background:rgba(0,0,0,.07);border-radius:3px;padding:1px 5px;
+  font-family:'JetBrains Mono',monospace;font-size:12px}
 .err{background:var(--rl);border:1px solid var(--r);border-radius:7px;
   padding:12px 16px;color:var(--r);font-size:13px;margin:16px}
+
+/* ════════════════════════════════════════════════════════════════════
+   DETAILED LANDSCAPE TABLE
+   ════════════════════════════════════════════════════════════════════ */
+.dt-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dt-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:8.5px;
+  font-family:'JetBrains Mono',monospace;
+  table-layout:fixed;
+}
+
+/* ── header cells ─────────────────────────────────────────────────── */
+.dt-table thead th{
+  padding:3px 2px;
+  text-align:center;
+  border:1px solid #0b4a28;
+  font-weight:700;
+  word-break:break-word;
+  white-space:normal;
+  line-height:1.3;
+  vertical-align:middle;
+}
+
+/* tier 1: section banners */
+.dt-h-sec{background:#063e1e;color:#fff;font-size:8.5px;letter-spacing:.06em}
+/* tier 2: grade name */
+.dt-h-grade{background:#135d34;color:#fff;font-size:8px}
+/* tier 3: B / G labels */
+.dt-h-bg{background:#1a7a4a;color:#d0f0e0;font-size:7.5px;letter-spacing:.04em}
+/* section subtotal */
+.dt-h-sub{background:#2d5a1b;color:#cff0b0;font-size:7.5px}
+/* fixed left cols */
+.dt-h-fix{background:#03291a;color:#fff;font-size:8px}
+/* right totals */
+.dt-h-totb{background:#0d3d7a;color:#cce0ff;font-size:8px}
+.dt-h-totg{background:#7a0d0d;color:#ffe0e0;font-size:8px}
+.dt-h-gtot{background:#3d0d7a;color:#e8d0ff;font-size:8px}
+
+/* ── body cells ───────────────────────────────────────────────────── */
+.dt-table tbody td{
+  padding:2px 3px;
+  border:1px solid #d8dfe8;
+  text-align:center;
+  font-size:8.5px;
+  overflow:hidden;
+  white-space:nowrap;
+}
+.dt-table tbody tr:nth-child(even) td{background:#f5fbf8}
+.dt-table tbody tr:nth-child(odd) td{background:#fff}
+.dt-table tbody tr:hover td{background:#e8f5ee!important}
+
+.dt-emis{
+  text-align:center;
+  color:#444;
+  font-size:8px;
+}
+.dt-name{
+  text-align:left!important;
+  font-family:'Inter',sans-serif;
+  font-size:8px;
+  color:#1A2035;
+  font-weight:500;
+  white-space:normal!important;
+  word-break:break-word;
+  line-height:1.3;
+}
+.dt-b{color:#1254a0!important;font-weight:600}
+.dt-g{color:#a01515!important;font-weight:600}
+.dt-sub{
+  background:#dff0e8!important;
+  color:#063e1e!important;
+  font-weight:700;
+  border-left:2px solid #8cc!important;
+  border-right:2px solid #8cc!important;
+}
+.dt-totb{background:#deeeff!important;color:#0d3d7a!important;font-weight:700}
+.dt-totg{background:#fce8e6!important;color:#7a0d0d!important;font-weight:700}
+.dt-gtot{background:#ede7f6!important;color:#3d0d7a!important;font-weight:700}
+
+/* ── footer row ───────────────────────────────────────────────────── */
+.dt-table tfoot tr td{
+  padding:3px 3px;
+  border:1px solid #0b4a28;
+  text-align:center;
+  font-size:8.5px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.dt-f-label{background:#063e1e;color:#fff}
+.dt-f-b{background:#1254a0;color:#fff}
+.dt-f-g{background:#a01515;color:#fff}
+.dt-f-sub{background:#2d5a1b;color:#d0f5b0}
+.dt-f-totb{background:#0d3d7a;color:#cce0ff}
+.dt-f-totg{background:#7a0d0d;color:#ffe0e0}
+.dt-f-gtot{background:#3d0d7a;color:#e8d0ff}
+
+/* legend strip */
+.dt-legend{
+  display:flex;gap:12px;align-items:center;padding:8px 16px;
+  border-top:1px solid var(--bd);font-size:10px;flex-wrap:wrap;color:var(--mt)
+}
+.dt-leg-dot{
+  width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle
+}
 </style>
 </head>
 <body>
@@ -123,8 +232,8 @@ tr:hover td{background:#F2FAF6}
     <div>
       <h1>School-wise Enrollment Dashboard</h1>
       <p class="sub">Source: <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank"
-        style="color:var(--g)">sis.pesrp.edu.pk</a> · Scraped every 3 hours · One JSON file per district in <code
-        style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--gl);
+        style="color:var(--g)">sis.pesrp.edu.pk</a> · Scraped every 3 hours · Per-district JSON files in
+        <code style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--gl);
         color:var(--g);padding:1px 5px;border-radius:3px">data/</code></p>
     </div>
     <div class="hdr-r">
@@ -135,11 +244,11 @@ tr:hover td{background:#F2FAF6}
 
 <main>
 
-  <!-- Summary cards: Total Schools, Total Male, Total Female, Total (Male+Female) -->
+  <!-- Summary cards -->
   <div class="cards">
-    <div class="card">   <div class="cl">Total Schools</div> <div class="cv" id="c0">—</div><div class="cs" id="cs0">Across Punjab</div></div>
-    <div class="card b"> <div class="cl">Total Male</div>    <div class="cv" id="c1">—</div><div class="cs">Male students</div></div>
-    <div class="card a"> <div class="cl">Total Female</div>  <div class="cv" id="c2">—</div><div class="cs">Female students</div></div>
+    <div class="card">   <div class="cl">Total Schools</div><div class="cv" id="c0">—</div><div class="cs" id="cs0">Across Punjab</div></div>
+    <div class="card b"> <div class="cl">Total Male</div>   <div class="cv" id="c1">—</div><div class="cs">Male students</div></div>
+    <div class="card a"> <div class="cl">Total Female</div> <div class="cv" id="c2">—</div><div class="cs">Female students</div></div>
     <div class="card r"> <div class="cl">Total Students</div><div class="cv" id="c3">—</div><div class="cs">Male + Female</div></div>
   </div>
 
@@ -158,10 +267,10 @@ tr:hover td{background:#F2FAF6}
       <select id="sm" disabled><option value="">All Markaz</option></select>
     </div>
     <button class="btn btn-g" onclick="runFilterButton()" id="btnFilter" disabled>🔎 Filter</button>
-    <button class="btn btn-b" onclick="exportExcel()" id="btnExport" disabled>⬇ Export as Excel</button>
+    <button class="btn btn-b" onclick="exportExcel()"    id="btnExport" disabled>⬇ Export Excel</button>
   </div>
 
-  <!-- Table -->
+  <!-- Table container -->
   <div class="tw">
     <div class="th2">
       <div class="tt" id="tt">📋 School Enrollment Records</div>
@@ -175,50 +284,109 @@ tr:hover td{background:#F2FAF6}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-let INDEX=null, ALL=[], FLT=[], PG=1, PER=100, SORT="tot_d";
-let appliedTehsil="", appliedMarkaz="";
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════ */
+let INDEX = null, ALL = [], FLT = [], PG = 1, PER = 100, SORT = 'tot_d';
+let appliedTehsil = '', appliedMarkaz = '';
+let DETAILED = false;   // true → show per-grade landscape table
 
-// clock
-setInterval(()=>{
+/* ═══════════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════════ */
+setInterval(() => {
   document.getElementById('clock').textContent =
-    new Date().toUTCString().replace('GMT','UTC');
-},1000);
+    new Date().toUTCString().replace('GMT', 'UTC');
+}, 1000);
 
-const fmt  = n => Number(n||0).toLocaleString();
-const esc  = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const fdt  = iso => {
-  try{ return new Date(iso).toLocaleString('en-PK',{timeZone:'Asia/Karachi',
-    day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+' PKT'; }
-  catch{ return iso; }
+const fmt = n => Number(n || 0).toLocaleString();
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fdt = iso => {
+  try {
+    return new Date(iso).toLocaleString('en-PK', {
+      timeZone: 'Asia/Karachi', day: '2-digit', month: 'short',
+      year: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) + ' PKT';
+  } catch { return iso; }
 };
 
-function setCards(schools, male, female){
+function setCards(schools, male, female) {
   document.getElementById('c0').textContent = fmt(schools);
   document.getElementById('c1').textContent = fmt(male);
   document.getElementById('c2').textContent = fmt(female);
-  document.getElementById('c3').textContent = fmt((male||0)+(female||0));
+  document.getElementById('c3').textContent = fmt((male || 0) + (female || 0));
 }
 
-// ── Step 1: load the small master index (district list + global totals) ──────
+/* ═══════════════════════════════════════════════════════════════════
+   GRADE ORDERING & SECTION MAPPING
+   ═══════════════════════════════════════════════════════════════════ */
+function gradeIdx(name) {
+  const n = (name || '').toLowerCase().trim();
+  if (/ecce|ece/.test(n))                                        return 0;
+  if (/nursery|kachi|katchi|prep\b|pre.?primary|pre.?school/.test(n)) return 1;
+  if (/\bone\b|grade\s*1\b|class\s*1\b|^1$/.test(n))            return 2;
+  if (/\btwo\b|grade\s*2\b|class\s*2\b|^2$/.test(n))            return 3;
+  if (/\bthree\b|grade\s*3\b|class\s*3\b|^3$/.test(n))          return 4;
+  if (/\bfour\b|grade\s*4\b|class\s*4\b|^4$/.test(n))           return 5;
+  if (/\bfive\b|grade\s*5\b|class\s*5\b|^5$/.test(n))           return 6;
+  if (/\bsix\b|grade\s*6\b|class\s*6\b|^6$/.test(n))            return 7;
+  if (/\bseven\b|grade\s*7\b|class\s*7\b|^7$/.test(n))          return 8;
+  if (/\beight\b|grade\s*8\b|class\s*8\b|^8$/.test(n))          return 9;
+  if (/\bnine\b|grade\s*9\b|class\s*9\b|^9$/.test(n))           return 10;
+  if (/\bten\b|grade\s*10\b|class\s*10\b|^10$/.test(n))         return 11;
+  if (/\beleven\b|grade\s*11\b|class\s*11\b|^11$/.test(n))      return 12;
+  if (/\btwelve\b|grade\s*12\b|class\s*12\b|^12$/.test(n))      return 13;
+  return 999;
+}
+
+function gradeSectionIdx(gradeName) {
+  const i = gradeIdx(gradeName);
+  if (i <= 6)  return 0; // PRIMARY  (ECE – 5)
+  if (i <= 9)  return 1; // MIDDLE   (6 – 8)
+  if (i <= 11) return 2; // HIGH     (9 – 10)
+  if (i <= 13) return 3; // HIGHER SECONDARY (11 – 12)
+  return 4;
+}
+
+const SEC_LABELS     = ['PRIMARY PORTION', 'MIDDLE SECTION', 'HIGH SECTION', 'HIGHER SECONDARY', 'OTHER'];
+const SEC_SUB_LABELS = ['TOTAL (P)', 'TOTAL (M)', 'TOTAL (H)', 'TOTAL (HS)', 'TOTAL (O)'];
+
+/* Get boys or girls from a grade object — tries multiple field name conventions */
+function gradeVal(school, gradeName, field) {
+  const g = (school.grades || []).find(g => g.grade_name === gradeName);
+  if (!g) return 0;
+  if (field === 'b')
+    return +(g.boys || g.total_boys || g.male || g.male_count || g.male_students || 0);
+  return +(g.girls || g.total_girls || g.female || g.female_count || g.female_students || 0);
+}
+
+/* Build the active section structure from a list of grade names */
+function buildSections(grades) {
+  const buckets = SEC_LABELS.map(() => []);
+  grades.forEach(g => buckets[gradeSectionIdx(g)].push(g));
+  return buckets
+    .map((gs, i) => ({ label: SEC_LABELS[i], subLabel: SEC_SUB_LABELS[i], grades: gs }))
+    .filter(s => s.grades.length > 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEP 1 — load index.json
+   ═══════════════════════════════════════════════════════════════════ */
 fetch(`data/index.json?t=${Date.now()}`)
-  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(d=>initIndex(d))
-  .catch(err=>{
-    document.getElementById('body').innerHTML=`
-      <div class="err">
-        ⚠ <strong>Cannot load data/index.json</strong> — ${esc(err.message)}<br><br>
-        Go to your GitHub repo → <strong>Actions</strong> →
-        <strong>Scrape SIS PESRP</strong> → <strong>Run workflow</strong>
-        to generate the data for the first time.
-      </div>`;
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(d => initIndex(d))
+  .catch(err => {
+    document.getElementById('body').innerHTML = `
+      <div class="err">⚠ <strong>Cannot load data/index.json</strong> — ${esc(err.message)}<br><br>
+      Go to your GitHub repo → <strong>Actions</strong> → <strong>Scrape SIS PESRP</strong>
+      → <strong>Run workflow</strong> to generate data for the first time.</div>`;
     document.getElementById('rc').textContent = '0 rows';
   });
 
-function initIndex(d){
+function initIndex(d) {
   INDEX = d;
-  document.getElementById('ts').textContent = 'Scraped: '+fdt(d.scraped_at);
-
-  const s = d.summary||{};
+  document.getElementById('ts').textContent = 'Scraped: ' + fdt(d.scraped_at);
+  const s = d.summary || {};
   setCards(s.total_schools, s.total_boys, s.total_girls);
   document.getElementById('cs0').textContent = `Across ${fmt(s.total_districts)} districts`;
 
@@ -226,20 +394,17 @@ function initIndex(d){
   const sel = document.getElementById('sd');
   sel.innerHTML = '<option value="">Select a district…</option>';
 
-  if(!districts.length){
-    document.getElementById('body').innerHTML=`
-      <div class="warn">
-        <strong>No district data yet.</strong><br>
-        Run the GitHub Actions workflow once to populate <code>data/index.json</code>
-        and the per-district files.<br><br>
-        Repo → <strong>Actions</strong> → <strong>Scrape SIS PESRP</strong> →
-        <strong>Run workflow</strong>
-      </div>`;
+  if (!districts.length) {
+    document.getElementById('body').innerHTML = `
+      <div class="warn"><strong>No district data yet.</strong><br>
+      Run the GitHub Actions workflow once to populate <code>data/index.json</code>
+      and the per-district files.<br><br>
+      Repo → <strong>Actions</strong> → <strong>Scrape SIS PESRP</strong> → <strong>Run workflow</strong></div>`;
     document.getElementById('rc').textContent = '0 districts';
     return;
   }
 
-  districts.forEach(e=>{
+  districts.forEach(e => {
     const o = document.createElement('option');
     o.value = e.slug;
     o.textContent = `${e.district} (${fmt(e.total_schools)} schools)`;
@@ -252,14 +417,16 @@ function initIndex(d){
     `<div class="center">👆 Select a district above to load its schools.</div>`;
 }
 
-// ── Step 2: load ONE district's JSON when the user picks it ───────────────────
-function onDistrictChange(){
+/* ═══════════════════════════════════════════════════════════════════
+   STEP 2 — load one district
+   ═══════════════════════════════════════════════════════════════════ */
+function onDistrictChange() {
   const sel  = document.getElementById('sd');
   const opt  = sel.options[sel.selectedIndex];
   const slug = sel.value;
 
-  if(!slug){
-    ALL = []; FLT = [];
+  if (!slug) {
+    ALL = []; FLT = []; DETAILED = false;
     setControlsEnabled(false);
     const s = INDEX?.summary || {};
     setCards(s.total_schools, s.total_boys, s.total_girls);
@@ -268,137 +435,150 @@ function onDistrictChange(){
     document.getElementById('body').innerHTML =
       `<div class="center">👆 Select a district above to load its schools.</div>`;
     document.getElementById('rc').textContent =
-      `${fmt((INDEX?.districts||[]).length)} districts available`;
+      `${fmt((INDEX?.districts || []).length)} districts available`;
     return;
   }
 
   const file = opt.dataset.file || `data/${slug}.json`;
-
+  DETAILED = false;
   document.getElementById('body').innerHTML =
     `<div class="center"><div class="spin"></div>Loading ${esc(opt.textContent)}…</div>`;
   document.getElementById('rc').textContent = 'Loading…';
   setControlsEnabled(false);
 
   fetch(`${file}?t=${Date.now()}`)
-    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(d=>initDistrict(d))
-    .catch(err=>{
-      document.getElementById('body').innerHTML = `
-        <div class="err">⚠ <strong>Cannot load ${esc(file)}</strong> — ${esc(err.message)}</div>`;
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => initDistrict(d))
+    .catch(err => {
+      document.getElementById('body').innerHTML =
+        `<div class="err">⚠ <strong>Cannot load ${esc(file)}</strong> — ${esc(err.message)}</div>`;
       document.getElementById('rc').textContent = '0 rows';
     });
 }
 
-function initDistrict(d){
+function initDistrict(d) {
   document.getElementById('ts').textContent = `${d.district} updated: ${fdt(d.scraped_at)}`;
   document.getElementById('tt').textContent = `📋 ${d.district} — Enrollment Records`;
 
-  ALL = (d.schools || []).map(r=>({
+  ALL = (d.schools || []).map(r => ({
     ...r,
     total_students: r.total_school_students || 0,
     boys:           r.total_school_boys || 0,
     girls:          r.total_school_girls || 0,
-    grades_count:   (r.grades||[]).filter(g=>g.grade_name!=='No Data').length,
+    grades_count:   (r.grades || []).filter(g => g.grade_name !== 'No Data').length,
   }));
 
-  // Reset cascading dropdowns for the newly loaded district
-  appliedTehsil = ""; appliedMarkaz = "";
+  appliedTehsil = ''; appliedMarkaz = ''; DETAILED = false;
 
-  const tehs = [...new Set(ALL.map(r=>r.tehsil||''))].filter(Boolean).sort();
+  const tehs = [...new Set(ALL.map(r => r.tehsil || ''))].filter(Boolean).sort();
   const tSel = document.getElementById('st');
   tSel.innerHTML = '<option value="">All Tehsils</option>';
-  tehs.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; tSel.appendChild(o); });
+  tehs.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v; tSel.appendChild(o);
+  });
 
-  populateMarkazOptions('');  // all markazes in the district to start
-
+  populateMarkaz('');
   setControlsEnabled(true);
   SORT = 'tot_d';
   recompute();
 }
 
-// Markaz options depend on the currently selected Tehsil (cascading)
-function onTehsilChange(){
-  populateMarkazOptions(document.getElementById('st').value);
-}
+function onTehsilChange() { populateMarkaz(document.getElementById('st').value); }
 
-function populateMarkazOptions(tehsilFilter){
-  const pool = tehsilFilter ? ALL.filter(r=>r.tehsil===tehsilFilter) : ALL;
-  const markazes = [...new Set(pool.map(r=>r.markaz||''))].filter(Boolean).sort();
-  const mSel = document.getElementById('sm');
+function populateMarkaz(tehsil) {
+  const pool   = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
+  const items  = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
+  const mSel   = document.getElementById('sm');
   mSel.innerHTML = '<option value="">All Markaz</option>';
-  markazes.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; mSel.appendChild(o); });
+  items.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v; mSel.appendChild(o);
+  });
 }
 
-function setControlsEnabled(on){
-  ['st','sm','btnFilter','btnExport'].forEach(id=>{
+function setControlsEnabled(on) {
+  ['st', 'sm', 'btnFilter', 'btnExport'].forEach(id => {
     document.getElementById(id).disabled = !on;
   });
 }
 
-// ── Filter button: apply the currently selected Tehsil/Markaz to the table ────
-function runFilterButton(){
+/* ═══════════════════════════════════════════════════════════════════
+   FILTER BUTTON
+   ═══════════════════════════════════════════════════════════════════ */
+function runFilterButton() {
   appliedTehsil = document.getElementById('st').value;
   appliedMarkaz = document.getElementById('sm').value;
+  DETAILED = true;   // switch to landscape per-grade view
   recompute();
 }
 
-// ── Recompute FLT from ALL using the last-APPLIED tehsil/markaz + current sort ─
-function recompute(){
-  FLT = ALL.filter(r=>{
-    if(appliedTehsil && r.tehsil !== appliedTehsil) return false;
-    if(appliedMarkaz && r.markaz !== appliedMarkaz) return false;
+/* ═══════════════════════════════════════════════════════════════════
+   RECOMPUTE — filter + sort + draw
+   ═══════════════════════════════════════════════════════════════════ */
+function recompute() {
+  FLT = ALL.filter(r => {
+    if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
+    if (appliedMarkaz && r.markaz !== appliedMarkaz) return false;
     return true;
   });
 
-  FLT.sort((a,b)=>{
-    if(SORT==='tot_d')   return (b.total_students||0)-(a.total_students||0);
-    if(SORT==='tot_a')   return (a.total_students||0)-(b.total_students||0);
-    if(SORT==='boys_d')  return (b.boys||0)-(a.boys||0);
-    if(SORT==='girls_d') return (b.girls||0)-(a.girls||0);
+  FLT.sort((a, b) => {
+    if (SORT === 'tot_d')   return (b.total_students || 0) - (a.total_students || 0);
+    if (SORT === 'tot_a')   return (a.total_students || 0) - (b.total_students || 0);
+    if (SORT === 'boys_d')  return (b.boys || 0) - (a.boys || 0);
+    if (SORT === 'girls_d') return (b.girls || 0) - (a.girls || 0);
     return 0;
   });
 
-  const male   = FLT.reduce((sum,r)=>sum+(r.boys||0),0);
-  const female = FLT.reduce((sum,r)=>sum+(r.girls||0),0);
-  setCards(FLT.length, male, female);
-  document.getElementById('cs0').textContent = 'Currently filtered';
-
-  PG=1; draw();
+  PG = 1;
+  if (DETAILED) drawDetailed();
+  else          drawSimple();
 }
 
-// ── Draw table ────────────────────────────────────────────────────────────────
-function draw(){
+/* ═══════════════════════════════════════════════════════════════════
+   SIMPLE TABLE  (before filter is applied)
+   ═══════════════════════════════════════════════════════════════════ */
+function drawSimple() {
+  const male   = FLT.reduce((s, r) => s + (r.boys  || 0), 0);
+  const female = FLT.reduce((s, r) => s + (r.girls || 0), 0);
+  setCards(FLT.length, male, female);
+  document.getElementById('cs0').textContent = appliedTehsil || appliedMarkaz
+    ? 'Currently filtered' : 'Loaded district';
+
   const total = FLT.length;
-  const pages = Math.ceil(total/PER)||1;
-  PG = Math.min(PG,pages);
-  const start = (PG-1)*PER;
-  const slice = FLT.slice(start, start+PER);
+  const pages = Math.ceil(total / PER) || 1;
+  PG = Math.min(PG, pages);
+  const start = (PG - 1) * PER;
+  const slice = FLT.slice(start, start + PER);
 
   document.getElementById('rc').textContent =
-    `${fmt(total)} school${total!==1?'s':''} · page ${PG}/${pages}`;
+    `${fmt(total)} school${total !== 1 ? 's' : ''} · page ${PG}/${pages}`;
 
-  if(!slice.length){
-    document.getElementById('body').innerHTML='<div class="center">No schools match your filters.</div>';
-    document.getElementById('pager').style.display='none';
+  if (!slice.length) {
+    document.getElementById('body').innerHTML =
+      `<div class="center">No schools match your filters.<br>
+       <small style="font-size:12px;margin-top:6px;display:block">
+         Select a Tehsil / Markaz and click Filter to view the grade-level detail.</small></div>`;
+    document.getElementById('pager').style.display = 'none';
     return;
   }
 
-  const maxT = Math.max(...slice.map(r=>r.total_students||0), 1);
-
-  const rows = slice.map((r,i)=>{
-    const tot = r.total_students||0;
-    const b   = r.boys||0, g=r.girls||0;
-    const bPct = tot ? Math.round(b/tot*100) : 0;
-    const gPct = tot ? Math.round(g/tot*100) : 0;
-    const bw   = tot ? Math.round(tot/maxT*100) : 0;
+  const maxT = Math.max(...slice.map(r => r.total_students || 0), 1);
+  const rows = slice.map((r, i) => {
+    const tot = r.total_students || 0;
+    const b = r.boys || 0, g = r.girls || 0;
+    const bPct = tot ? Math.round(b / tot * 100) : 0;
+    const gPct = tot ? Math.round(g / tot * 100) : 0;
+    const bw   = tot ? Math.round(tot / maxT * 100) : 0;
     return `<tr>
-      <td style="color:var(--mt);font-family:'JetBrains Mono',monospace;font-size:11px">${start+i+1}</td>
+      <td style="color:var(--mt);font-family:'JetBrains Mono',monospace;font-size:11px">${start + i + 1}</td>
       <td>
-        <strong>${esc(r.school_name||'—')}</strong>
-        ${r.emis_code?`<br><span style="font-size:10px;color:var(--mt);font-family:'JetBrains Mono',monospace">EMIS ${esc(r.emis_code)}</span>`:''}
+        <strong>${esc(r.school_name || '—')}</strong>
+        ${r.emis_code ? `<br><span style="font-size:10px;color:var(--mt);font-family:'JetBrains Mono',monospace">EMIS ${esc(r.emis_code)}</span>` : ''}
       </td>
-      <td style="font-size:12px;color:var(--mt)">${esc(r.tehsil||'—')}</td>
-      <td style="font-size:12px;color:var(--mt)">${esc(r.markaz||'—')}</td>
+      <td style="font-size:12px;color:var(--mt)">${esc(r.tehsil || '—')}</td>
+      <td style="font-size:12px;color:var(--mt)">${esc(r.markaz || '—')}</td>
       <td>
         <div class="bar-row">
           <div class="bar"><div class="bar-f" style="width:${bw}%"></div></div>
@@ -407,12 +587,12 @@ function draw(){
       </td>
       <td><span class="boys">${fmt(b)}</span> <span class="pct">(${bPct}%)</span></td>
       <td><span class="girls">${fmt(g)}</span> <span class="pct">(${gPct}%)</span></td>
-      <td><span class="badge">${r.grades_count} grade${r.grades_count!==1?'s':''}</span></td>
+      <td><span class="badge">${r.grades_count} grade${r.grades_count !== 1 ? 's' : ''}</span></td>
     </tr>`;
   }).join('');
 
-  document.getElementById('body').innerHTML=`
-    <div class="scr"><table>
+  document.getElementById('body').innerHTML = `
+    <div class="scr"><table class="simple-tbl">
       <thead><tr>
         <th style="cursor:default">#</th>
         <th style="cursor:default">School Name</th>
@@ -424,48 +604,360 @@ function draw(){
         <th style="cursor:default">Grade Data</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>`;
+    </table></div>
+    <div style="padding:10px 16px;font-size:11px;color:var(--mt);border-top:1px solid var(--bd);text-align:center">
+      ℹ️ Select a Tehsil / Markaz and click <strong>🔎 Filter</strong> to switch to the detailed grade-level view.
+    </div>`;
 
-  // Pager
-  const pg = document.getElementById('pager');
-  if(pages<=1){ pg.style.display='none'; return; }
-  pg.style.display='flex';
-  let h = `<button class="pb" onclick="go(${PG-1})" ${PG<=1?'disabled':''}>‹ Prev</button>`;
-  const lo=Math.max(1,PG-2), hi=Math.min(pages,PG+2);
-  if(lo>1) h+=`<button class="pb" onclick="go(1)">1</button>${lo>2?'<span class="pi">…</span>':''}`;
-  for(let p=lo;p<=hi;p++) h+=`<button class="pb${p===PG?' on':''}" onclick="go(${p})">${p}</button>`;
-  if(hi<pages) h+=`${hi<pages-1?'<span class="pi">…</span>':''}<button class="pb" onclick="go(${pages})">${pages}</button>`;
-  h+=`<button class="pb" onclick="go(${PG+1})" ${PG>=pages?'disabled':''}>Next ›</button>`;
-  h+=`<span class="pi">${fmt(total)} total</span>`;
-  pg.innerHTML=h;
+  buildPager(total, pages);
 }
 
-function go(p){ PG=p; draw(); window.scrollTo({top:0,behavior:'smooth'}); }
-function setSort(asc, desc){
-  SORT = (SORT===asc&&desc) ? desc : asc;
+function buildPager(total, pages) {
+  const pg = document.getElementById('pager');
+  if (pages <= 1) { pg.style.display = 'none'; return; }
+  pg.style.display = 'flex';
+  let h = `<button class="pb" onclick="go(${PG - 1})" ${PG <= 1 ? 'disabled' : ''}>‹ Prev</button>`;
+  const lo = Math.max(1, PG - 2), hi = Math.min(pages, PG + 2);
+  if (lo > 1) h += `<button class="pb" onclick="go(1)">1</button>${lo > 2 ? '<span class="pi">…</span>' : ''}`;
+  for (let p = lo; p <= hi; p++)
+    h += `<button class="pb${p === PG ? ' on' : ''}" onclick="go(${p})">${p}</button>`;
+  if (hi < pages) h += `${hi < pages - 1 ? '<span class="pi">…</span>' : ''}<button class="pb" onclick="go(${pages})">${pages}</button>`;
+  h += `<button class="pb" onclick="go(${PG + 1})" ${PG >= pages ? 'disabled' : ''}>Next ›</button>`;
+  h += `<span class="pi">${fmt(total)} total</span>`;
+  pg.innerHTML = h;
+}
+
+function go(p) { PG = p; drawSimple(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function setSort(asc, desc) { SORT = (SORT === asc && desc) ? desc : asc; recompute(); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   DETAILED LANDSCAPE TABLE  (after filter applied)
+   ═══════════════════════════════════════════════════════════════════ */
+function drawDetailed() {
+  document.getElementById('pager').style.display = 'none';
+
+  if (!FLT.length) {
+    document.getElementById('body').innerHTML =
+      '<div class="center">No schools match your filters.</div>';
+    return;
+  }
+
+  /* ── collect unique grade names ─────────────────────────────── */
+  const gradeSet = new Set();
+  FLT.forEach(r => (r.grades || []).forEach(g => {
+    if (g.grade_name && g.grade_name !== 'No Data') gradeSet.add(g.grade_name);
+  }));
+
+  if (!gradeSet.size) {
+    document.getElementById('body').innerHTML =
+      '<div class="center">⚠ No grade data found in the filtered schools.<br><small>The JSON may not include a <code>grades</code> array per school.</small></div>';
+    return;
+  }
+
+  const allGrades = [...gradeSet].sort((a, b) => gradeIdx(a) - gradeIdx(b));
+  const sections  = buildSections(allGrades);
+
+  /* ── compute total column count for colgroup ─────────────────── */
+  // 2 (EMIS+Name) + Σ(sec.grades*2+1) + 3 (totB,totG,gTot)
+  const gradeColCount = sections.reduce((s, sec) => s + sec.grades.length * 2 + 1, 0);
+  const totalCols     = 2 + gradeColCount + 3;
+
+  /* ── column widths ───────────────────────────────────────────── */
+  // EMIS: 55px, Name: 120px, grade-B/G: 22px each, subtot: 28px,
+  // totB/totG: 32px, gTot: 36px
+  let colgroup = '<colgroup>';
+  colgroup += `<col style="width:55px">`;   // EMIS
+  colgroup += `<col style="width:120px">`;  // Name
+  sections.forEach(sec => {
+    sec.grades.forEach(() => {
+      colgroup += `<col style="width:22px"><col style="width:22px">`;
+    });
+    colgroup += `<col style="width:28px">`;
+  });
+  colgroup += `<col style="width:32px"><col style="width:32px"><col style="width:36px">`;
+  colgroup += '</colgroup>';
+
+  /* ── HEADER ROW 1  (section banners + fixed cols) ────────────── */
+  let h1 = `
+    <th rowspan="3" class="dt-h-fix">EMIS CODE</th>
+    <th rowspan="3" class="dt-h-fix" style="text-align:left;padding-left:4px">NAME OF SCHOOL</th>`;
+  sections.forEach(sec => {
+    const span = sec.grades.length * 2 + 1;
+    h1 += `<th colspan="${span}" class="dt-h-sec">${esc(sec.label)}</th>`;
+  });
+  h1 += `
+    <th rowspan="3" class="dt-h-totb">TOTAL<br>BOYS</th>
+    <th rowspan="3" class="dt-h-totg">TOTAL<br>GIRLS</th>
+    <th rowspan="3" class="dt-h-gtot">GRAND<br>TOTAL</th>`;
+
+  /* ── HEADER ROW 2  (grade names, section subtotal) ───────────── */
+  let h2 = '';
+  sections.forEach(sec => {
+    sec.grades.forEach(g => {
+      h2 += `<th colspan="2" class="dt-h-grade">${esc(g)}</th>`;
+    });
+    h2 += `<th rowspan="2" class="dt-h-sub">${esc(sec.subLabel)}</th>`;
+  });
+
+  /* ── HEADER ROW 3  (B / G labels) ───────────────────────────── */
+  let h3 = '';
+  sections.forEach(sec => {
+    sec.grades.forEach(() => {
+      h3 += `<th class="dt-h-bg">B</th><th class="dt-h-bg">G</th>`;
+    });
+    // subtotal cell already covered by rowspan=2 above
+  });
+
+  /* ── ACCUMULATORS ────────────────────────────────────────────── */
+  const gradeTot = {}; // grade → {b, g}
+  allGrades.forEach(g => { gradeTot[g] = { b: 0, g: 0 }; });
+  const secTot = sections.map(() => 0);
+  let grandB = 0, grandG = 0;
+
+  /* ── DATA ROWS ───────────────────────────────────────────────── */
+  const rows = FLT.map(r => {
+    let cells = `<td class="dt-emis">${esc(r.emis_code || '')}</td>
+                 <td class="dt-name" title="${esc(r.school_name || '')}">${esc(r.school_name || '')}</td>`;
+
+    sections.forEach((sec, si) => {
+      let secSum = 0;
+      sec.grades.forEach(g => {
+        const b  = gradeVal(r, g, 'b');
+        const gv = gradeVal(r, g, 'g');
+        cells += `<td class="dt-b">${b  || ''}</td>`;
+        cells += `<td class="dt-g">${gv || ''}</td>`;
+        secSum += b + gv;
+        gradeTot[g].b += b;
+        gradeTot[g].g += gv;
+      });
+      secTot[si] += secSum;
+      cells += `<td class="dt-sub">${secSum || ''}</td>`;
+    });
+
+    const rowB = r.boys || 0;
+    const rowG = r.girls || 0;
+    grandB += rowB;
+    grandG += rowG;
+    cells += `<td class="dt-totb">${fmt(rowB)}</td>`;
+    cells += `<td class="dt-totg">${fmt(rowG)}</td>`;
+    cells += `<td class="dt-gtot">${fmt(rowB + rowG)}</td>`;
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  /* ── FOOTER ROW ──────────────────────────────────────────────── */
+  let foot = `<td colspan="2" class="dt-f-label">GRAND TOTAL</td>`;
+  sections.forEach((sec, si) => {
+    sec.grades.forEach(g => {
+      foot += `<td class="dt-f-b">${fmt(gradeTot[g].b)}</td>`;
+      foot += `<td class="dt-f-g">${fmt(gradeTot[g].g)}</td>`;
+    });
+    foot += `<td class="dt-f-sub">${fmt(secTot[si])}</td>`;
+  });
+  foot += `<td class="dt-f-totb">${fmt(grandB)}</td>`;
+  foot += `<td class="dt-f-totg">${fmt(grandG)}</td>`;
+  foot += `<td class="dt-f-gtot">${fmt(grandB + grandG)}</td>`;
+
+  /* ── LEGEND ──────────────────────────────────────────────────── */
+  const legend = `
+    <div class="dt-legend">
+      <span><span class="dt-leg-dot" style="background:#1254a0"></span>Boys (B)</span>
+      <span><span class="dt-leg-dot" style="background:#a01515"></span>Girls (G)</span>
+      <span><span class="dt-leg-dot" style="background:#2d5a1b"></span>Section Total</span>
+      <span><span class="dt-leg-dot" style="background:#0d3d7a"></span>Total Boys</span>
+      <span><span class="dt-leg-dot" style="background:#7a0d0d"></span>Total Girls</span>
+      <span><span class="dt-leg-dot" style="background:#3d0d7a"></span>Grand Total</span>
+      <span style="margin-left:auto">
+        <button class="btn btn-r" onclick="resetToSimple()" style="font-size:11px;padding:4px 10px">
+          ✕ Back to Summary View
+        </button>
+      </span>
+    </div>`;
+
+  /* ── ASSEMBLE ─────────────────────────────────────────────────── */
+  document.getElementById('body').innerHTML = `
+    <div class="dt-wrap">
+      <table class="dt-table">
+        ${colgroup}
+        <thead>
+          <tr>${h1}</tr>
+          <tr>${h2}</tr>
+          <tr>${h3}</tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>${foot}</tr></tfoot>
+      </table>
+    </div>
+    ${legend}`;
+
+  document.getElementById('rc').textContent =
+    `${fmt(FLT.length)} school${FLT.length !== 1 ? 's' : ''} · ${allGrades.length} grades · detailed view`;
+
+  setCards(FLT.length, grandB, grandG);
+  document.getElementById('cs0').textContent = 'Currently filtered';
+
+  /* store for export */
+  window._detailExport = { sections, allGrades, gradeTot, secTot, grandB, grandG };
+}
+
+function resetToSimple() {
+  DETAILED = false;
   recompute();
 }
 
-// ── Export currently filtered results (FLT) as an Excel file ──────────────────
-function exportExcel(){
-  if(!FLT.length){ alert('No rows to export — load a district and apply a filter first.'); return; }
+/* ═══════════════════════════════════════════════════════════════════
+   EXCEL EXPORT
+   ═══════════════════════════════════════════════════════════════════ */
+function exportExcel() {
+  if (!FLT.length) {
+    alert('No rows to export — load a district and apply a filter first.');
+    return;
+  }
 
   const sel  = document.getElementById('sd');
   const dist = sel.options[sel.selectedIndex]?.textContent || 'district';
 
+  if (DETAILED && window._detailExport) {
+    exportDetailed(dist);
+  } else {
+    exportSimple(dist);
+  }
+}
+
+/* ── Simple export ───────────────────────────────────────────────── */
+function exportSimple(dist) {
   const headers = ['EMIS Code','School ID','School Name','District','Tehsil','Markaz',
-                    'Total Students','Boys','Girls'];
-  const rows = FLT.map(r=>[
+                   'Total Students','Boys','Girls'];
+  const rows = FLT.map(r => [
     r.emis_code, r.school_id, r.school_name, r.district, r.tehsil, r.markaz,
     r.total_students, r.boys, r.girls
   ]);
-
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   ws['!cols'] = [{wch:12},{wch:10},{wch:32},{wch:16},{wch:16},{wch:16},{wch:14},{wch:10},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Schools');
-  XLSX.writeFile(wb, `sis_pesrp_${dist.replace(/[^a-z0-9]+/gi,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb, `sis_pesrp_${_slug(dist)}_${_today()}.xlsx`);
 }
+
+/* ── Detailed export (landscape, per-grade) ─────────────────────── */
+function exportDetailed(dist) {
+  const { sections, allGrades, gradeTot, secTot, grandB, grandG } = window._detailExport;
+
+  /* calculate total column count */
+  const gradeColCount = sections.reduce((s, sec) => s + sec.grades.length * 2 + 1, 0);
+  const totalCols = 2 + gradeColCount + 3;
+  const emptyRow  = () => new Array(totalCols).fill('');
+
+  /* --- build 3-row header + data using merge tracking --- */
+  const aoa    = [];
+  const merges = [];
+
+  /* Row 0 — section banners */
+  const r0 = emptyRow();
+  r0[0] = 'EMIS CODE';   merges.push({ s:{r:0,c:0}, e:{r:2,c:0} });
+  r0[1] = 'NAME OF SCHOOL'; merges.push({ s:{r:0,c:1}, e:{r:2,c:1} });
+
+  let c = 2;
+  sections.forEach((sec, si) => {
+    const secStart = c;
+    r0[c] = sec.label;
+    sec.grades.forEach(g => {
+      // grade name spans 2 cols (B+G)
+      c += 2;
+    });
+    // subtotal
+    c++;
+    merges.push({ s:{r:0,c:secStart}, e:{r:0,c:c-1} }); // section span in row 0
+  });
+  const totBCol = c, totGCol = c + 1, gTotCol = c + 2;
+  r0[totBCol] = 'TOTAL BOYS';   merges.push({ s:{r:0,c:totBCol}, e:{r:2,c:totBCol} });
+  r0[totGCol] = 'TOTAL GIRLS';  merges.push({ s:{r:0,c:totGCol}, e:{r:2,c:totGCol} });
+  r0[gTotCol] = 'GRAND TOTAL';  merges.push({ s:{r:0,c:gTotCol}, e:{r:2,c:gTotCol} });
+
+  /* Row 1 — grade names */
+  const r1 = emptyRow();
+  c = 2;
+  sections.forEach((sec, si) => {
+    sec.grades.forEach(g => {
+      r1[c] = g;
+      merges.push({ s:{r:1,c:c}, e:{r:1,c:c+1} }); // grade name colspan=2
+      c += 2;
+    });
+    r1[c] = sec.subLabel;
+    merges.push({ s:{r:1,c:c}, e:{r:2,c:c} }); // subtotal rowspan=2
+    c++;
+  });
+
+  /* Row 2 — B / G labels */
+  const r2 = emptyRow();
+  c = 2;
+  sections.forEach(sec => {
+    sec.grades.forEach(() => {
+      r2[c] = 'Boys'; r2[c + 1] = 'Girls';
+      c += 2;
+    });
+    c++; // skip subtotal (rowspan from row 1)
+  });
+
+  aoa.push(r0, r1, r2);
+
+  /* Data rows */
+  FLT.forEach(r => {
+    const row = [r.emis_code || '', r.school_name || ''];
+    sections.forEach((sec, si) => {
+      let secSum = 0;
+      sec.grades.forEach(g => {
+        const b  = gradeVal(r, g, 'b');
+        const gv = gradeVal(r, g, 'g');
+        row.push(b || 0, gv || 0);
+        secSum += b + gv;
+      });
+      row.push(secSum || 0);
+    });
+    const rowB = r.boys || 0, rowG = r.girls || 0;
+    row.push(rowB, rowG, rowB + rowG);
+    aoa.push(row);
+  });
+
+  /* Footer row */
+  const footRow = ['GRAND TOTAL', ''];
+  sections.forEach((sec, si) => {
+    sec.grades.forEach(g => {
+      footRow.push(gradeTot[g].b || 0, gradeTot[g].g || 0);
+    });
+    footRow.push(secTot[si] || 0);
+  });
+  footRow.push(grandB, grandG, grandB + grandG);
+  aoa.push(footRow);
+
+  /* Build sheet */
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges'] = merges;
+
+  /* Column widths */
+  const colWidths = [{ wch: 12 }, { wch: 28 }];
+  sections.forEach(sec => {
+    sec.grades.forEach(() => { colWidths.push({ wch: 7 }, { wch: 7 }); });
+    colWidths.push({ wch: 11 });
+  });
+  colWidths.push({ wch: 13 }, { wch: 13 }, { wch: 13 });
+  ws['!cols'] = colWidths;
+
+  /* Landscape page setup */
+  ws['!pageSetup'] = {
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    paperSize: 9  // A4
+  };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Grade Enrollment');
+  XLSX.writeFile(wb, `sis_pesrp_detailed_${_slug(dist)}_${_today()}.xlsx`);
+}
+
+const _slug  = s => s.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+const _today = () => new Date().toISOString().slice(0, 10);
 </script>
 </body>
 </html>
