@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch.py — SIS PESRP Scraper
+fetch.py — SIS PESRP Scraper (FULL RUN)
 =======================================================================
 Grade mapping (confirmed from live website screenshot):
   Chart columns: ECE | Nursery | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
@@ -10,8 +10,6 @@ Grade mapping (confirmed from live website screenshot):
     11 values  →  Nursery, 1–10
     10 values  →  1–10
     <10 values →  1 … n
-
-Remove `inventory[:50]` for the full 38k-school run.
 """
 
 import json
@@ -194,20 +192,10 @@ def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
     return schools_found
 
 
-def fetch_grade_bar_raw(params):
-    """Return (raw_dict, array_len) for the grade bar endpoint."""
-    r = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
-    if r.status_code != 200:
-        return None, 0
-    data = r.json()
-    male = data.get("male") or []
-    return data, len(male)
-
-
 def apply_grade_data(school_info, data2):
-    """Parse data2 and write grade values into school_info. Returns True if data was found."""
+    """Parse data2 and write grade values into school_info. Returns (ok, array_len)."""
     if not isinstance(data2, dict):
-        return False
+        return False, 0
 
     categories  = data2.get("categories", [])
     male_vals   = data2.get("male")   or data2.get("Male")
@@ -229,7 +217,7 @@ def apply_grade_data(school_info, data2):
             female_vals = [to_int(r.get("female") or r.get("girls")) for r in rows]
 
     if not male_vals or not female_vals:
-        return False
+        return False, 0
 
     n = max(len(male_vals), len(female_vals))
     grade_keys = [GRADE_MAP.get(str(c).strip()) for c in categories] if categories else positional_grade_keys(n)
@@ -240,7 +228,7 @@ def apply_grade_data(school_info, data2):
         school_info[f"grade_{g_key}_boys"]  = to_int(male_vals[i])
         school_info[f"grade_{g_key}_girls"] = to_int(female_vals[i])
 
-    return True
+    return True, n
 
 
 def worker_fetch_school_data(school_info, ts):
@@ -269,22 +257,24 @@ def worker_fetch_school_data(school_info, ts):
 
     # ── 2. Grade-wise breakdown ─────────────────────────────────────────────
     try:
-        data2, n = fetch_grade_bar_raw(params)
+        r2 = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
+        if r2.status_code == 200:
+            data2 = r2.json()
 
-        if DEBUG_FIRST_SCHOOL and not _debug_printed:
-            _debug_printed = True
-            print("\n" + "=" * 65, flush=True)
-            print(f"[DEBUG] Raw grade bar (first school, array_len={n}):", flush=True)
-            print(json.dumps(data2, indent=2)[:1500], flush=True)
-            print("=" * 65 + "\n", flush=True)
+            if DEBUG_FIRST_SCHOOL and not _debug_printed:
+                _debug_printed = True
+                male_len = len(data2.get("male") or [])
+                print("\n" + "=" * 65, flush=True)
+                print(f"[DEBUG] Raw grade bar (first school, array_len={male_len}):", flush=True)
+                print(json.dumps(data2, indent=2)[:1500], flush=True)
+                print("=" * 65 + "\n", flush=True)
 
-        if data2:
-            ok = apply_grade_data(school_info, data2)
+            ok, n = apply_grade_data(school_info, data2)
+
             if not ok:
-                print(f"[WARN] No male/female data for school {school_info['school_id']}: "
+                print(f"[WARN] No grade data for school {school_info['school_id']}: "
                       f"keys={list(data2.keys())}", flush=True)
             else:
-                # Sanity check
                 grade_sum = sum(
                     school_info.get(f"grade_{g}_boys",  0) +
                     school_info.get(f"grade_{g}_girls", 0)
@@ -298,11 +288,10 @@ def worker_fetch_school_data(school_info, ts):
                         f"grade_sum={grade_sum}, reported={reported}, array_len={n}",
                         flush=True
                     )
-
     except Exception as e:
         print(f"[WARN] grade bar failed for school {school_info['school_id']}: {e}", flush=True)
 
-    # ── 3. Write row to CSV ─────────────────────────────────────────────────
+    # ── 3. Write row to CSV (thread-safe) ───────────────────────────────────
     with csv_lock:
         with open("schools.csv", "a", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
@@ -311,28 +300,16 @@ def worker_fetch_school_data(school_info, ts):
     return school_info
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# ECE/Nursery verification — finds the school from the screenshot by EMIS code
-# and prints its raw API response so we can confirm the 12-value mapping.
-# ═══════════════════════════════════════════════════════════════════════════════
-def verify_ece_school(inventory, csrf):
-    """
-    Search the full inventory for EMIS code 37110221 (the ATTOCK school
-    visible in the user's screenshot that has ECE + Nursery students).
-    Print its raw grade bar response and the mapped result.
-    """
+def verify_ece_school(inventory):
+    """Spot-check the ATTOCK school from the screenshot to confirm ECE/Nursery mapping."""
     TARGET_EMIS = "37110221"
     match = next((s for s in inventory if s.get("emis_code") == TARGET_EMIS), None)
+    candidates = [match] if match else [
+        s for s in inventory if s.get("district","").upper() == "ATTOCK"
+    ][:10]
 
-    if not match:
-        # Fallback: find ANY school in ATTOCK that might have ECE
-        attock = [s for s in inventory if s.get("district","").upper() == "ATTOCK"]
-        print(f"\n[ECE-CHECK] EMIS {TARGET_EMIS} not found. "
-              f"Checking first 10 ATTOCK schools ({len(attock)} total)...", flush=True)
-        candidates = attock[:10]
-    else:
-        print(f"\n[ECE-CHECK] Found EMIS {TARGET_EMIS}: {match['school_name']}", flush=True)
-        candidates = [match]
+    label = f"EMIS {TARGET_EMIS}" if match else "first 10 ATTOCK schools"
+    print(f"\n[ECE-CHECK] Verifying {label}...", flush=True)
 
     for school in candidates:
         params = {
@@ -344,20 +321,15 @@ def verify_ece_school(inventory, csrf):
             "s_id_emis_code": ""
         }
         try:
-            r = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
+            r    = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
             data = r.json()
             male   = data.get("male",   [])
             female = data.get("female", [])
-            n = len(male)
+            n      = len(male)
+            keys   = positional_grade_keys(n)
 
-            print(f"\n[ECE-CHECK] School: {school['school_name']} "
-                  f"(EMIS: {school['emis_code']}, ID: {school['school_id']})", flush=True)
-            print(f"  array_len={n}  →  mapped as: {positional_grade_keys(n)}", flush=True)
-            print(f"  male  : {male}",   flush=True)
-            print(f"  female: {female}", flush=True)
-
-            # Show what we'd write for each grade
-            keys = positional_grade_keys(n)
+            print(f"  School : {school['school_name']} (EMIS: {school['emis_code']})", flush=True)
+            print(f"  array_len={n}  →  {keys}", flush=True)
             for i, g_key in enumerate(keys):
                 b  = to_int(male[i])   if i < len(male)   else 0
                 f_ = to_int(female[i]) if i < len(female) else 0
@@ -365,22 +337,10 @@ def verify_ece_school(inventory, csrf):
                     print(f"    grade_{g_key:>7}: boys={b}  girls={f_}", flush=True)
 
             if n in (11, 12):
-                print(f"  ✅ ECE/Nursery detected! array_len={n}", flush=True)
-                break   # found what we needed
+                print(f"  ✅ ECE/Nursery confirmed! (array_len={n})\n", flush=True)
+                break
         except Exception as e:
-            print(f"[ECE-CHECK] Error for {school['school_id']}: {e}", flush=True)
-
-
-def parse_resp(r):
-    if not r or r.status_code != 200: return []
-    body = r.text.strip()
-    if not body: return []
-    if body.startswith("{"):
-        try:
-            d = r.json()
-            return parse_options(d.get("html") or d.get("data") or d.get("options") or "")
-        except: pass
-    return parse_options(body)
+            print(f"  [ECE-CHECK] Error: {e}", flush=True)
 
 
 def scrape():
@@ -405,7 +365,7 @@ def scrape():
     print(f"\n[Success] Mapped exactly {len(markaz_list)} Markazs.", flush=True)
 
     print(f"\nPhase 1b: Fetching school lists across {len(markaz_list)} Markazs concurrently...", flush=True)
-    inventory        = []
+    inventory         = []
     completed_markazs = 0
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
@@ -418,44 +378,42 @@ def scrape():
 
     print(f"\nPhase 1 Complete! Discovered exactly {len(inventory)} schools.", flush=True)
 
-    # ── Verify ECE/Nursery mapping against known school ─────────────────────
-    verify_ece_school(inventory, csrf)
+    # Spot-check ECE/Nursery mapping before full run
+    verify_ece_school(inventory)
 
-    # ── TEST MODE: first 50 schools ──────────────────────────────────────────
-    # Change to `test_inventory = inventory` for the full run.
-    test_inventory = inventory[:50]
-    print(f"\n[TEST MODE] Limiting to first {len(test_inventory)} of {len(inventory)} schools.", flush=True)
-    # ────────────────────────────────────────────────────────────────────────
-
+    # Write CSV header
     with open("schools.csv", "w", newline="", encoding="utf-8") as f:
         csv.DictWriter(f, fieldnames=FIELDS).writeheader()
 
-    print("\nPhase 2: Fetching enrollment data concurrently...", flush=True)
+    # ── FULL RUN: all schools ───────────────────────────────────────────────
+    print(f"\nPhase 2: Fetching enrollment data for ALL {len(inventory)} schools...", flush=True)
     completed_schools = 0
     final_schools     = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        futures = {executor.submit(worker_fetch_school_data, s, ts): s for s in test_inventory}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+        futures = {executor.submit(worker_fetch_school_data, s, ts): s for s in inventory}
         for future in concurrent.futures.as_completed(futures):
             completed_schools += 1
             final_schools.append(future.result())
-            if completed_schools % 10 == 0:
-                print(f"  -> Fetched data for {completed_schools} / {len(test_inventory)} schools...", flush=True)
+            if completed_schools % 1000 == 0:
+                print(f"  -> Fetched data for {completed_schools} / {len(inventory)} schools...", flush=True)
 
     return final_schools, ts
 
 
 if __name__ == "__main__":
     print("=" * 65, flush=True)
-    print("  SIS PESRP Scraper — TEST MODE (first 50 schools)", flush=True)
+    print("  SIS PESRP Scraper — FULL RUN (all schools)", flush=True)
     print("=" * 65, flush=True)
     start_time = time.time()
 
     schools, ts = scrape()
 
+    # ── Save JSON ───────────────────────────────────────────────────────────
     tot = sum(s.get("total_students", 0) for s in schools)
     out = {
-        "scraped_at": ts, "source": BASE, "test_mode": True,
+        "scraped_at": ts,
+        "source":     BASE,
         "summary": {
             "total_schools":  len(schools),
             "total_students": tot,
@@ -468,27 +426,22 @@ if __name__ == "__main__":
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
 
+    # ── Final stats ─────────────────────────────────────────────────────────
     graded      = sum(1 for s in schools if any(
         s.get(f"grade_{g}_{sex}", 0) > 0 for g in ALL_GRADES for sex in ["boys","girls"]))
-    ece_schools = sum(1 for s in schools if s.get("grade_ECE_boys",0)>0 or s.get("grade_ECE_girls",0)>0)
-    nur_schools = sum(1 for s in schools if s.get("grade_Nursery_boys",0)>0 or s.get("grade_Nursery_girls",0)>0)
-
-    print(f"\n📊 Sanity check:", flush=True)
-    print(f"   {graded}/{len(schools)} schools have non-zero grade data", flush=True)
-    print(f"   {ece_schools}/{len(schools)} schools have ECE students", flush=True)
-    print(f"   {nur_schools}/{len(schools)} schools have Nursery students", flush=True)
-
-    if schools:
-        s = schools[0]
-        print(f"\n📋 Sample — {s['school_name']} (ID: {s['school_id']})", flush=True)
-        print(f"   Total: {s['total_students']}  Boys: {s['boys']}  Girls: {s['girls']}", flush=True)
-        for g in ALL_GRADES:
-            b  = s.get(f"grade_{g}_boys",  0)
-            f_ = s.get(f"grade_{g}_girls", 0)
-            if b or f_:
-                print(f"   Grade {g:>7}: boys={b}  girls={f_}", flush=True)
+    ece_schools = sum(1 for s in schools
+                      if s.get("grade_ECE_boys",0)>0 or s.get("grade_ECE_girls",0)>0)
+    nur_schools = sum(1 for s in schools
+                      if s.get("grade_Nursery_boys",0)>0 or s.get("grade_Nursery_girls",0)>0)
 
     elapsed = (time.time() - start_time) / 60
-    print(f"\n✅ Finished in {elapsed:.1f} minutes!", flush=True)
-    print(f"   → schools.csv  (rows: {len(schools)})", flush=True)
+    print(f"\n{'='*65}", flush=True)
+    print(f"✅ FULL RUN COMPLETE in {elapsed:.1f} minutes!", flush=True)
+    print(f"{'='*65}", flush=True)
+    print(f"   Total schools  : {len(schools)}", flush=True)
+    print(f"   Total students : {tot:,}", flush=True)
+    print(f"   With grade data: {graded}/{len(schools)}", flush=True)
+    print(f"   With ECE       : {ece_schools}", flush=True)
+    print(f"   With Nursery   : {nur_schools}", flush=True)
+    print(f"   → schools.csv", flush=True)
     print(f"   → data.json", flush=True)
