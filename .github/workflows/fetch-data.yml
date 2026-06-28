@@ -2,8 +2,15 @@ name: Scrape SIS PESRP
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # daily 6:00 AM PKT
+    - cron: '0 */3 * * *'   # every 3 hours
   workflow_dispatch:        # manual trigger
+
+# Prevent overlapping runs: if a run is ever still going when the next
+# trigger fires, cancel the stale one instead of letting them collide
+# on data/*.json writes.
+concurrency:
+  group: scrape-sis-pesrp
+  cancel-in-progress: true
 
 jobs:
   scrape:
@@ -22,8 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install playwright requests beautifulsoup4
-          playwright install chromium --with-deps
+          pip install requests beautifulsoup4
 
       - name: Run scraper
         run: python fetch.py
@@ -32,7 +38,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.json schools.csv
+          git add data/
           git diff --cached --quiet || git commit -m \
             "scrape: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
