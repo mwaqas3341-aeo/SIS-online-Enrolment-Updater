@@ -2,14 +2,18 @@
 """
 fetch.py — SIS PESRP Scraper (FULL RUN)
 =======================================================================
-Grade mapping (confirmed from live website screenshot):
-  Chart columns: ECE | Nursery | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+Grade mapping (confirmed from live website + log analysis):
+
+  Full school sequence: ECE | Nursery | 1 | 2 | … | 10 | 11 | 12
+  (Grades 11-12 = Intermediate / Higher Secondary)
 
   Positional array length → grade keys:
-    12 values  →  ECE, Nursery, 1–10
-    11 values  →  Nursery, 1–10
-    10 values  →  1–10
-    <10 values →  1 … n
+    14 values  →  ECE, Nursery, 1-10, 11, 12   (full Higher Secondary)
+    13 values  →  Nursery, 1-10, 11, 12         (HS without ECE)
+    12 values  →  ECE, Nursery, 1-10            (primary/middle, both pre-primary)
+    11 values  →  Nursery, 1-10                 (primary/middle, Nursery only)
+    10 values  →  1-10                          (no pre-primary)
+    <10 values →  1 … n                         (primary-only)
 """
 
 import json
@@ -41,24 +45,32 @@ csv_lock           = threading.Lock()
 DEBUG_FIRST_SCHOOL = True
 _debug_printed     = False
 
-ALL_GRADES = ["ECE", "Nursery", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+# Full grade sequence including Intermediate (11, 12)
+ALL_GRADES = ["ECE", "Nursery", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
 
 FIELDS = [
     "school_id", "emis_code", "school_name", "district_id", "district",
     "tehsil_id", "tehsil", "markaz_id", "markaz",
     "total_students", "boys", "girls", "teachers",
+    # Pre-primary
     "grade_ECE_boys",     "grade_ECE_girls",
     "grade_Nursery_boys", "grade_Nursery_girls",
+    # Primary
     "grade_1_boys",  "grade_1_girls",
     "grade_2_boys",  "grade_2_girls",
     "grade_3_boys",  "grade_3_girls",
     "grade_4_boys",  "grade_4_girls",
     "grade_5_boys",  "grade_5_girls",
+    # Middle
     "grade_6_boys",  "grade_6_girls",
     "grade_7_boys",  "grade_7_girls",
     "grade_8_boys",  "grade_8_girls",
+    # Secondary
     "grade_9_boys",  "grade_9_girls",
     "grade_10_boys", "grade_10_girls",
+    # Higher Secondary / Intermediate
+    "grade_11_boys", "grade_11_girls",
+    "grade_12_boys", "grade_12_girls",
     "etransfer_status", "scraped_at",
 ]
 
@@ -69,24 +81,49 @@ GRADE_MAP = {
     "Pre-School": "Nursery", "Prep":    "Nursery",
     "1": "1",  "2": "2",  "3": "3",  "4": "4",  "5": "5",
     "6": "6",  "7": "7",  "8": "8",  "9": "9",  "10": "10",
-    "Class 1": "1",  "Class 2": "2",  "Class 3": "3",
-    "Class 4": "4",  "Class 5": "5",  "Class 6": "6",
-    "Class 7": "7",  "Class 8": "8",  "Class 9": "9",  "Class 10": "10",
-    "Grade 1": "1",  "Grade 2": "2",  "Grade 3": "3",
-    "Grade 4": "4",  "Grade 5": "5",  "Grade 6": "6",
-    "Grade 7": "7",  "Grade 8": "8",  "Grade 9": "9",  "Grade 10": "10",
+    "11": "11", "12": "12",
+    "Class 1": "1",   "Class 2": "2",   "Class 3": "3",
+    "Class 4": "4",   "Class 5": "5",   "Class 6": "6",
+    "Class 7": "7",   "Class 8": "8",   "Class 9": "9",
+    "Class 10": "10", "Class 11": "11", "Class 12": "12",
+    "Grade 1": "1",   "Grade 2": "2",   "Grade 3": "3",
+    "Grade 4": "4",   "Grade 5": "5",   "Grade 6": "6",
+    "Grade 7": "7",   "Grade 8": "8",   "Grade 9": "9",
+    "Grade 10": "10", "Grade 11": "11", "Grade 12": "12",
+    # Intermediate labels sometimes used
+    "I":  "11", "II": "12",
+    "XI": "11", "XII": "12",
+    "Inter I": "11", "Inter II": "12",
+    "F.Sc I": "11", "F.Sc II": "12",
+    "FA I": "11",   "FA II": "12",
 }
+
+PRIMARY   = ["1","2","3","4","5","6","7","8","9","10"]
+INTER     = ["11","12"]
 
 
 def positional_grade_keys(n):
-    primary = ["1","2","3","4","5","6","7","8","9","10"]
-    if   n == 12: return ["ECE","Nursery"] + primary
-    elif n == 11: return ["Nursery"] + primary
-    elif n == 10: return primary
-    elif n <  10: return primary[:n]
+    """
+    Map array length → ordered grade key list.
+
+    Confirmed sequences from live site:
+      14 = ECE, Nursery, 1-10, 11, 12  (full Higher Secondary)
+      13 = Nursery, 1-10, 11, 12       (HS without ECE)
+      12 = ECE, Nursery, 1-10          (no Intermediate)
+      11 = Nursery, 1-10
+      10 = 1-10
+      <10 = 1 … n
+    """
+    if   n == 14: return ["ECE", "Nursery"] + PRIMARY + INTER
+    elif n == 13: return ["Nursery"] + PRIMARY + INTER
+    elif n == 12: return ["ECE", "Nursery"] + PRIMARY
+    elif n == 11: return ["Nursery"] + PRIMARY
+    elif n == 10: return PRIMARY[:]
+    elif n < 10:  return PRIMARY[:n]
     else:
-        extras = [str(i) for i in range(11, n - 1)]
-        return ["ECE","Nursery"] + primary + extras
+        # n > 14: extend gracefully
+        extras = [str(i) for i in range(13, n + 1)]
+        return ["ECE", "Nursery"] + PRIMARY + INTER + extras
 
 
 def to_int(value):
@@ -193,7 +230,10 @@ def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
 
 
 def apply_grade_data(school_info, data2):
-    """Parse data2 and write grade values into school_info. Returns (ok, array_len)."""
+    """
+    Parse data2 (dict) and write grade values into school_info.
+    Returns (ok: bool, array_len: int).
+    """
     if not isinstance(data2, dict):
         return False, 0
 
@@ -201,6 +241,7 @@ def apply_grade_data(school_info, data2):
     male_vals   = data2.get("male")   or data2.get("Male")
     female_vals = data2.get("female") or data2.get("Female")
 
+    # Highcharts series array
     if not male_vals and "series" in data2:
         for series in data2["series"]:
             name = (series.get("name") or "").strip().lower()
@@ -209,6 +250,7 @@ def apply_grade_data(school_info, data2):
             elif name in ("female","girls","f"):
                 female_vals = series.get("data", [])
 
+    # List-of-dicts rows
     if not male_vals and isinstance(data2.get("data"), list):
         rows = data2["data"]
         if rows and isinstance(rows[0], dict):
@@ -259,35 +301,41 @@ def worker_fetch_school_data(school_info, ts):
     try:
         r2 = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
         if r2.status_code == 200:
-            data2 = r2.json()
+            raw   = r2.json()
+            # Guard: API can return a list instead of dict for some schools
+            data2 = raw if isinstance(raw, dict) else {}
 
             if DEBUG_FIRST_SCHOOL and not _debug_printed:
                 _debug_printed = True
-                male_len = len(data2.get("male") or [])
+                male_len = len(data2.get("male") or []) if data2 else 0
                 print("\n" + "=" * 65, flush=True)
                 print(f"[DEBUG] Raw grade bar (first school, array_len={male_len}):", flush=True)
-                print(json.dumps(data2, indent=2)[:1500], flush=True)
+                print(json.dumps(raw, indent=2)[:1500], flush=True)
                 print("=" * 65 + "\n", flush=True)
 
-            ok, n = apply_grade_data(school_info, data2)
-
-            if not ok:
-                print(f"[WARN] No grade data for school {school_info['school_id']}: "
-                      f"keys={list(data2.keys())}", flush=True)
+            if not data2:
+                print(f"[WARN] Unexpected response type for school "
+                      f"{school_info['school_id']}: {type(raw).__name__}", flush=True)
             else:
-                grade_sum = sum(
-                    school_info.get(f"grade_{g}_boys",  0) +
-                    school_info.get(f"grade_{g}_girls", 0)
-                    for g in ALL_GRADES
-                )
-                reported = school_info.get("total_students", 0)
-                if reported > 0 and abs(grade_sum - reported) > 5:
-                    print(
-                        f"[WARN] Sum mismatch — school {school_info['school_id']} "
-                        f"({school_info['school_name']}): "
-                        f"grade_sum={grade_sum}, reported={reported}, array_len={n}",
-                        flush=True
+                ok, n = apply_grade_data(school_info, data2)
+                if not ok:
+                    print(f"[WARN] No grade data for school {school_info['school_id']}: "
+                          f"keys={list(data2.keys())}", flush=True)
+                else:
+                    grade_sum = sum(
+                        school_info.get(f"grade_{g}_boys",  0) +
+                        school_info.get(f"grade_{g}_girls", 0)
+                        for g in ALL_GRADES
                     )
+                    reported = school_info.get("total_students", 0)
+                    if reported > 0 and abs(grade_sum - reported) > 5:
+                        print(
+                            f"[WARN] Sum mismatch — school {school_info['school_id']} "
+                            f"({school_info['school_name']}): "
+                            f"grade_sum={grade_sum}, reported={reported}, array_len={n}",
+                            flush=True
+                        )
+
     except Exception as e:
         print(f"[WARN] grade bar failed for school {school_info['school_id']}: {e}", flush=True)
 
@@ -323,6 +371,8 @@ def verify_ece_school(inventory):
         try:
             r    = S.get(f"{BASE}/dashboard_revamp/get_gender_bar_class", params=params, timeout=15)
             data = r.json()
+            if not isinstance(data, dict):
+                continue
             male   = data.get("male",   [])
             female = data.get("female", [])
             n      = len(male)
@@ -378,14 +428,13 @@ def scrape():
 
     print(f"\nPhase 1 Complete! Discovered exactly {len(inventory)} schools.", flush=True)
 
-    # Spot-check ECE/Nursery mapping before full run
     verify_ece_school(inventory)
 
     # Write CSV header
     with open("schools.csv", "w", newline="", encoding="utf-8") as f:
         csv.DictWriter(f, fieldnames=FIELDS).writeheader()
 
-    # ── FULL RUN: all schools ───────────────────────────────────────────────
+    # ── FULL RUN ────────────────────────────────────────────────────────────
     print(f"\nPhase 2: Fetching enrollment data for ALL {len(inventory)} schools...", flush=True)
     completed_schools = 0
     final_schools     = []
@@ -433,15 +482,19 @@ if __name__ == "__main__":
                       if s.get("grade_ECE_boys",0)>0 or s.get("grade_ECE_girls",0)>0)
     nur_schools = sum(1 for s in schools
                       if s.get("grade_Nursery_boys",0)>0 or s.get("grade_Nursery_girls",0)>0)
+    hs_schools  = sum(1 for s in schools
+                      if s.get("grade_11_boys",0)>0 or s.get("grade_11_girls",0)>0
+                      or s.get("grade_12_boys",0)>0 or s.get("grade_12_girls",0)>0)
 
     elapsed = (time.time() - start_time) / 60
     print(f"\n{'='*65}", flush=True)
     print(f"✅ FULL RUN COMPLETE in {elapsed:.1f} minutes!", flush=True)
     print(f"{'='*65}", flush=True)
-    print(f"   Total schools  : {len(schools)}", flush=True)
-    print(f"   Total students : {tot:,}", flush=True)
-    print(f"   With grade data: {graded}/{len(schools)}", flush=True)
-    print(f"   With ECE       : {ece_schools}", flush=True)
-    print(f"   With Nursery   : {nur_schools}", flush=True)
+    print(f"   Total schools         : {len(schools):,}", flush=True)
+    print(f"   Total students        : {tot:,}", flush=True)
+    print(f"   Schools with grade data : {graded:,}", flush=True)
+    print(f"   Schools with ECE      : {ece_schools:,}", flush=True)
+    print(f"   Schools with Nursery  : {nur_schools:,}", flush=True)
+    print(f"   Schools with Gr 11-12 : {hs_schools:,}", flush=True)
     print(f"   → schools.csv", flush=True)
     print(f"   → data.json", flush=True)
