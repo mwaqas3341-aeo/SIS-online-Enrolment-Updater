@@ -112,20 +112,20 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
   padding:12px 16px;color:var(--r);font-size:13px;margin:16px}
 
 /* ════════════════════════════════════════════════════════════════════
-   DETAILED LANDSCAPE TABLE
+   DETAILED LANDSCAPE TABLE - FONT SIZES UPDATED FOR READABILITY
    ════════════════════════════════════════════════════════════════════ */
 .dt-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .dt-table{
   width:100%;
   border-collapse:collapse;
-  font-size:8.5px;
+  font-size:10px;
   font-family:'JetBrains Mono',monospace;
   table-layout:fixed;
 }
 
 /* ── header cells ─────────────────────────────────────────────────── */
 .dt-table thead th{
-  padding:3px 2px;
+  padding:4px 3px;
   text-align:center;
   border:1px solid #0b4a28;
   font-weight:700;
@@ -136,26 +136,26 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
 }
 
 /* tier 1: section banners */
-.dt-h-sec{background:#063e1e;color:#fff;font-size:8.5px;letter-spacing:.06em}
+.dt-h-sec{background:#063e1e;color:#fff;font-size:10px;letter-spacing:.06em}
 /* tier 2: grade name */
-.dt-h-grade{background:#135d34;color:#fff;font-size:8px}
+.dt-h-grade{background:#135d34;color:#fff;font-size:9.5px}
 /* tier 3: B / G labels */
-.dt-h-bg{background:#1a7a4a;color:#d0f0e0;font-size:7.5px;letter-spacing:.04em}
+.dt-h-bg{background:#1a7a4a;color:#d0f0e0;font-size:9px;letter-spacing:.04em}
 /* section subtotal */
-.dt-h-sub{background:#2d5a1b;color:#cff0b0;font-size:7.5px}
+.dt-h-sub{background:#2d5a1b;color:#cff0b0;font-size:9px}
 /* fixed left cols */
-.dt-h-fix{background:#03291a;color:#fff;font-size:8px}
+.dt-h-fix{background:#03291a;color:#fff;font-size:10px}
 /* right totals */
-.dt-h-totb{background:#0d3d7a;color:#cce0ff;font-size:8px}
-.dt-h-totg{background:#7a0d0d;color:#ffe0e0;font-size:8px}
-.dt-h-gtot{background:#3d0d7a;color:#e8d0ff;font-size:8px}
+.dt-h-totb{background:#0d3d7a;color:#cce0ff;font-size:10px}
+.dt-h-totg{background:#7a0d0d;color:#ffe0e0;font-size:10px}
+.dt-h-gtot{background:#3d0d7a;color:#e8d0ff;font-size:10px}
 
 /* ── body cells ───────────────────────────────────────────────────── */
 .dt-table tbody td{
-  padding:2px 3px;
+  padding:4px 4px;
   border:1px solid #d8dfe8;
   text-align:center;
-  font-size:8.5px;
+  font-size:10.5px;
   overflow:hidden;
   white-space:nowrap;
 }
@@ -166,14 +166,14 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
 .dt-emis{
   text-align:center;
   color:#444;
-  font-size:8px;
+  font-size:10px;
 }
 .dt-name{
   text-align:left!important;
   font-family:'Inter',sans-serif;
-  font-size:8px;
+  font-size:11px;
   color:#1A2035;
-  font-weight:500;
+  font-weight:600;
   white-space:normal!important;
   word-break:break-word;
   line-height:1.3;
@@ -194,14 +194,14 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
 
 /* ── footer row ───────────────────────────────────────────────────── */
 .dt-table tfoot tr td{
-  padding:3px 3px;
+  padding:5px 4px;
   border:1px solid #0b4a28;
   text-align:center;
-  font-size:8.5px;
+  font-size:10.5px;
   font-weight:700;
   white-space:nowrap;
 }
-.dt-f-label{background:#063e1e;color:#fff}
+.dt-f-label{background:#063e1e;color:#fff;font-size:11px;}
 .dt-f-b{background:#1254a0;color:#fff}
 .dt-f-g{background:#a01515;color:#fff}
 .dt-f-sub{background:#2d5a1b;color:#d0f5b0}
@@ -212,10 +212,10 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
 /* legend strip */
 .dt-legend{
   display:flex;gap:12px;align-items:center;padding:8px 16px;
-  border-top:1px solid var(--bd);font-size:10px;flex-wrap:wrap;color:var(--mt)
+  border-top:1px solid var(--bd);font-size:11px;flex-wrap:wrap;color:var(--mt)
 }
 .dt-leg-dot{
-  width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle
+  width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle
 }
 </style>
 </head>
@@ -297,8 +297,8 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
    ═══════════════════════════════════════════════════════════════════ */
 let INDEX = null, ALL = [], FLT = [], PG = 1, PER = 100, SORT = 'tot_d';
 let appliedTehsil = '', appliedMarkaz = '';
-let DETAILED = false;   // true → show per-grade landscape table
-let VIEW_MODE = 'bg';   // 'bg' = boys/girls per class, 'total' = class total only
+let DETAILED = false;   
+let VIEW_MODE = 'bg';   
 
 /* ═══════════════════════════════════════════════════════════════════
    UTILITIES
@@ -331,7 +331,7 @@ function setCards(schools, male, female) {
    ═══════════════════════════════════════════════════════════════════ */
 function gradeIdx(name) {
   const n = (name || '').toLowerCase().trim();
-  if (/ecce|ece/.test(n))                                        return 0;
+  if (/ecce|ece/.test(n))                                       return 0;
   if (/nursery|kachi|katchi|prep\b|pre.?primary|pre.?school/.test(n)) return 1;
   if (/\bone\b|grade\s*1\b|class\s*1\b|^1$/.test(n))            return 2;
   if (/\btwo\b|grade\s*2\b|class\s*2\b|^2$/.test(n))            return 3;
@@ -360,7 +360,6 @@ function gradeSectionIdx(gradeName) {
 const SEC_LABELS     = ['PRIMARY PORTION', 'MIDDLE SECTION', 'HIGH SECTION', 'HIGHER SECONDARY', 'OTHER'];
 const SEC_SUB_LABELS = ['TOTAL (P)', 'TOTAL (M)', 'TOTAL (H)', 'TOTAL (HS)', 'TOTAL (O)'];
 
-/* Get boys or girls from a grade object — tries multiple field name conventions */
 function gradeVal(school, gradeName, field) {
   const g = (school.grades || []).find(g => g.grade_name === gradeName);
   if (!g) return 0;
@@ -369,7 +368,6 @@ function gradeVal(school, gradeName, field) {
   return +(g.girls || g.total_girls || g.female || g.female_count || g.female_students || 0);
 }
 
-/* Build the active section structure from a list of grade names */
 function buildSections(grades) {
   const buckets = SEC_LABELS.map(() => []);
   grades.forEach(g => buckets[gradeSectionIdx(g)].push(g));
@@ -518,22 +516,18 @@ function setControlsEnabled(on) {
 function runFilterButton() {
   appliedTehsil = document.getElementById('st').value;
   appliedMarkaz = document.getElementById('sm').value;
-  DETAILED = true;   // switch to landscape per-grade view
+  DETAILED = true;   
   recompute();
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   VIEW MODE TOGGLE  (B/G per class  ⇆  Class total only)
-   ═══════════════════════════════════════════════════════════════════ */
 function onViewModeChange() {
   VIEW_MODE = document.getElementById('vm').value;
-  if (DETAILED) drawDetailed();   // redraw immediately if already in detailed view
+  if (DETAILED) drawDetailed();   
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    RECOMPUTE — filter + sort + draw
    ═══════════════════════════════════════════════════════════════════ */
-/* EMIS-code ascending comparator — numeric-aware, blanks sorted last */
 function emisCompare(a, b) {
   const ae = a.emis_code, be = b.emis_code;
   const an = parseInt(String(ae ?? '').replace(/\D/g, ''), 10);
@@ -553,10 +547,7 @@ function recompute() {
     return true;
   });
 
-  if (DETAILED) {
-    // detailed / grade-wise table is always listed in EMIS code ascending order
-    FLT.sort(emisCompare);
-  } else {
+  if (!DETAILED) {
     FLT.sort((a, b) => {
       if (SORT === 'tot_d')   return (b.total_students || 0) - (a.total_students || 0);
       if (SORT === 'tot_a')   return (a.total_students || 0) - (b.total_students || 0);
@@ -572,7 +563,55 @@ function recompute() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   SIMPLE TABLE  (before filter is applied)
+   DATA AGGREGATION LOGIC (Tehsil / Markaz Level)
+   ═══════════════════════════════════════════════════════════════════ */
+function getAggregatedData(level) {
+  const map = new Map();
+  
+  FLT.forEach(r => {
+    const key = level === 'tehsil' ? (r.tehsil || 'Unknown Tehsil') : (r.markaz || 'Unknown Markaz');
+    
+    if (!map.has(key)) {
+      map.set(key, {
+        is_aggregate: true,
+        emis_code: '-',
+        school_name: key,
+        boys: 0,
+        girls: 0,
+        total_students: 0,
+        gradesMap: {} 
+      });
+    }
+    
+    const agg = map.get(key);
+    agg.boys += (r.boys || 0);
+    agg.girls += (r.girls || 0);
+    agg.total_students += (r.total_students || 0);
+    
+    (r.grades || []).forEach(g => {
+      if (g.grade_name && g.grade_name !== 'No Data') {
+        if (!agg.gradesMap[g.grade_name]) {
+          agg.gradesMap[g.grade_name] = { grade_name: g.grade_name, boys: 0, girls: 0 };
+        }
+        agg.gradesMap[g.grade_name].boys += +(g.boys || g.total_boys || g.male || 0);
+        agg.gradesMap[g.grade_name].girls += +(g.girls || g.total_girls || g.female || 0);
+      }
+    });
+  });
+
+  const result = Array.from(map.values()).map(agg => {
+    agg.grades = Object.values(agg.gradesMap);
+    delete agg.gradesMap;
+    return agg;
+  });
+
+  // Alphabetical sort for aggregated rows
+  result.sort((a, b) => a.school_name.localeCompare(b.school_name));
+  return result;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SIMPLE TABLE (Summary View)
    ═══════════════════════════════════════════════════════════════════ */
 function drawSimple() {
   const male   = FLT.reduce((s, r) => s + (r.boys  || 0), 0);
@@ -594,7 +633,7 @@ function drawSimple() {
     document.getElementById('body').innerHTML =
       `<div class="center">No schools match your filters.<br>
        <small style="font-size:12px;margin-top:6px;display:block">
-         Select a Tehsil / Markaz and click Filter to view the grade-level detail.</small></div>`;
+         Select parameters and click Filter to view detail.</small></div>`;
     document.getElementById('pager').style.display = 'none';
     return;
   }
@@ -641,7 +680,7 @@ function drawSimple() {
       <tbody>${rows}</tbody>
     </table></div>
     <div style="padding:10px 16px;font-size:11px;color:var(--mt);border-top:1px solid var(--bd);text-align:center">
-      ℹ️ Select a Tehsil / Markaz and click <strong>🔎 Filter</strong> to switch to the detailed grade-level view.
+      ℹ️ Click <strong>🔎 Filter</strong> to generate the aggregated grade-level view based on your selections.
     </div>`;
 
   buildPager(total, pages);
@@ -666,7 +705,7 @@ function go(p) { PG = p; drawSimple(); window.scrollTo({ top: 0, behavior: 'smoo
 function setSort(asc, desc) { SORT = (SORT === asc && desc) ? desc : asc; recompute(); }
 
 /* ═══════════════════════════════════════════════════════════════════
-   DETAILED LANDSCAPE TABLE  (after filter applied)
+   DETAILED LANDSCAPE TABLE (Dynamic Aggregation based on dropdowns)
    ═══════════════════════════════════════════════════════════════════ */
 function drawDetailed() {
   document.getElementById('pager').style.display = 'none';
@@ -677,7 +716,25 @@ function drawDetailed() {
     return;
   }
 
-  /* ── collect unique grade names ─────────────────────────────── */
+  /* ── Determine Data Level ────────────────────────────────────── */
+  let displayData;
+  let rowType;
+
+  if (!appliedTehsil && !appliedMarkaz) {
+    // District level view -> rows represent Tehsils
+    displayData = getAggregatedData('tehsil');
+    rowType = 'Tehsil';
+  } else if (appliedTehsil && !appliedMarkaz) {
+    // Tehsil level view -> rows represent Markazes
+    displayData = getAggregatedData('markaz');
+    rowType = 'Markaz';
+  } else {
+    // Markaz level view -> rows represent Schools
+    displayData = [...FLT].sort(emisCompare);
+    rowType = 'School';
+  }
+
+  /* ── collect unique grade names (using FLT for full alignment) ── */
   const gradeSet = new Set();
   FLT.forEach(r => (r.grades || []).forEach(g => {
     if (g.grade_name && g.grade_name !== 'No Data') gradeSet.add(g.grade_name);
@@ -685,39 +742,34 @@ function drawDetailed() {
 
   if (!gradeSet.size) {
     document.getElementById('body').innerHTML =
-      '<div class="center">⚠ No grade data found in the filtered schools.<br><small>The JSON may not include a <code>grades</code> array per school.</small></div>';
+      '<div class="center">⚠ No grade data found in the filtered schools.</div>';
     return;
   }
 
   const allGrades    = [...gradeSet].sort((a, b) => gradeIdx(a) - gradeIdx(b));
   const sections     = buildSections(allGrades);
-  const isTotal       = VIEW_MODE === 'total';   // class-total-only mode?
-  const perGradeCols  = isTotal ? 1 : 2;         // 1 col (Total) vs 2 cols (B,G)
-  const headerRowSpan = isTotal ? 2 : 3;         // 2 header rows in total mode, 3 in B/G mode
+  const isTotal      = VIEW_MODE === 'total';   
+  const perGradeCols = isTotal ? 1 : 2;         
+  const headerRowSpan = isTotal ? 2 : 3;        
 
-  /* ── compute total column count for colgroup ─────────────────── */
-  // 2 (EMIS+Name) + Σ(sec.grades*perGradeCols+1) + 3 (totB,totG,gTot)
-  const gradeColCount = sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0);
-  const totalCols     = 2 + gradeColCount + 3;
-
-  /* ── column widths ───────────────────────────────────────────── */
+  /* ── column widths (Bumped sizes for better readability) ──────── */
   let colgroup = '<colgroup>';
-  colgroup += `<col style="width:55px">`;   // EMIS
-  colgroup += `<col style="width:120px">`;  // Name
+  colgroup += `<col style="width:65px">`;   // EMIS
+  colgroup += `<col style="width:170px">`;  // Name
   sections.forEach(sec => {
     sec.grades.forEach(() => {
-      if (isTotal) colgroup += `<col style="width:30px">`;
-      else         colgroup += `<col style="width:22px"><col style="width:22px">`;
+      if (isTotal) colgroup += `<col style="width:40px">`;
+      else         colgroup += `<col style="width:30px"><col style="width:30px">`;
     });
-    colgroup += `<col style="width:28px">`;
+    colgroup += `<col style="width:38px">`; // Subtotal
   });
-  colgroup += `<col style="width:32px"><col style="width:32px"><col style="width:36px">`;
+  colgroup += `<col style="width:42px"><col style="width:42px"><col style="width:48px">`;
   colgroup += '</colgroup>';
 
-  /* ── HEADER ROW 1  (section banners + fixed cols) ────────────── */
+  /* ── HEADER ROW 1 ────────────────────────────────────────────── */
   let h1 = `
     <th rowspan="${headerRowSpan}" class="dt-h-fix">EMIS CODE ▲</th>
-    <th rowspan="${headerRowSpan}" class="dt-h-fix" style="text-align:left;padding-left:4px">NAME OF SCHOOL</th>`;
+    <th rowspan="${headerRowSpan}" class="dt-h-fix" style="text-align:left;padding-left:6px">NAME OF ${rowType.toUpperCase()}</th>`;
   sections.forEach(sec => {
     const span = sec.grades.length * perGradeCols + 1;
     h1 += `<th colspan="${span}" class="dt-h-sec">${esc(sec.label)}</th>`;
@@ -727,7 +779,7 @@ function drawDetailed() {
     <th rowspan="${headerRowSpan}" class="dt-h-totg">TOTAL<br>GIRLS</th>
     <th rowspan="${headerRowSpan}" class="dt-h-gtot">GRAND<br>TOTAL</th>`;
 
-  /* ── HEADER ROW 2  (grade names, section subtotal) ───────────── */
+  /* ── HEADER ROW 2 ────────────────────────────────────────────── */
   let h2 = '';
   sections.forEach(sec => {
     sec.grades.forEach(g => {
@@ -738,25 +790,24 @@ function drawDetailed() {
     h2 += `<th rowspan="${isTotal ? 1 : 2}" class="dt-h-sub">${esc(sec.subLabel)}</th>`;
   });
 
-  /* ── HEADER ROW 3  (B / G labels — B/G mode only) ─────────────── */
+  /* ── HEADER ROW 3 ────────────────────────────────────────────── */
   let h3 = '';
   if (!isTotal) {
     sections.forEach(sec => {
       sec.grades.forEach(() => {
         h3 += `<th class="dt-h-bg">B</th><th class="dt-h-bg">G</th>`;
       });
-      // subtotal cell already covered by rowspan=2 above
     });
   }
 
   /* ── ACCUMULATORS ────────────────────────────────────────────── */
-  const gradeTot = {}; // grade → {b, g}
+  const gradeTot = {};
   allGrades.forEach(g => { gradeTot[g] = { b: 0, g: 0 }; });
   const secTot = sections.map(() => 0);
   let grandB = 0, grandG = 0;
 
   /* ── DATA ROWS ───────────────────────────────────────────────── */
-  const rows = FLT.map(r => {
+  const rows = displayData.map(r => {
     let cells = `<td class="dt-emis">${esc(r.emis_code || '')}</td>
                  <td class="dt-name" title="${esc(r.school_name || '')}">${esc(r.school_name || '')}</td>`;
 
@@ -841,13 +892,13 @@ function drawDetailed() {
     ${legend}`;
 
   document.getElementById('rc').textContent =
-    `${fmt(FLT.length)} school${FLT.length !== 1 ? 's' : ''} · ${allGrades.length} grades · ${isTotal ? 'class total' : 'detailed'} view`;
+    `${fmt(displayData.length)} ${rowType.toLowerCase()}${displayData.length !== 1 ? 's' : ''} shown · ${allGrades.length} grades mapped`;
 
   setCards(FLT.length, grandB, grandG);
   document.getElementById('cs0').textContent = 'Currently filtered';
 
-  /* store for export */
-  window._detailExport = { sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal };
+  /* Store for export to exactly match what is displayed */
+  window._detailExport = { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal };
 }
 
 function resetToSimple() {
@@ -889,34 +940,31 @@ function exportSimple(dist) {
   XLSX.writeFile(wb, `sis_pesrp_${_slug(dist)}_${_today()}.xlsx`);
 }
 
-/* ── Detailed export (landscape, per-grade) ─────────────────────── */
+/* ── Detailed export (landscape, per-grade, dynamically aggregated) */
 function exportDetailed(dist) {
-  const { sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal } = window._detailExport;
+  const { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal } = window._detailExport;
   const perGradeCols = isTotal ? 1 : 2;
 
-  /* calculate total column count */
-  const gradeColCount = sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0);
-  const totalCols     = 2 + gradeColCount + 3;
+  const totalCols      = 2 + sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0) + 3;
   const emptyRow       = () => new Array(totalCols).fill('');
-  const lastHeaderRow  = isTotal ? 1 : 2;   // 0-indexed row count of the last header row
+  const lastHeaderRow  = isTotal ? 1 : 2; 
 
-  /* --- build header + data using merge tracking --- */
   const aoa    = [];
   const merges = [];
 
   /* Row 0 — section banners */
   const r0 = emptyRow();
-  r0[0] = 'EMIS CODE';      merges.push({ s:{r:0,c:0}, e:{r:lastHeaderRow,c:0} });
-  r0[1] = 'NAME OF SCHOOL'; merges.push({ s:{r:0,c:1}, e:{r:lastHeaderRow,c:1} });
+  r0[0] = 'EMIS CODE';                        merges.push({ s:{r:0,c:0}, e:{r:lastHeaderRow,c:0} });
+  r0[1] = `NAME OF ${rowType.toUpperCase()}`; merges.push({ s:{r:0,c:1}, e:{r:lastHeaderRow,c:1} });
 
   let c = 2;
   sections.forEach(sec => {
     const secStart = c;
     sec.grades.forEach(() => { c += perGradeCols; });
-    // subtotal
-    c++;
-    merges.push({ s:{r:0,c:secStart}, e:{r:0,c:c-1} }); // section span in row 0
+    c++; 
+    merges.push({ s:{r:0,c:secStart}, e:{r:0,c:c-1} }); 
   });
+  
   const totBCol = c, totGCol = c + 1, gTotCol = c + 2;
   r0[totBCol] = 'TOTAL BOYS';   merges.push({ s:{r:0,c:totBCol}, e:{r:lastHeaderRow,c:totBCol} });
   r0[totGCol] = 'TOTAL GIRLS';  merges.push({ s:{r:0,c:totGCol}, e:{r:lastHeaderRow,c:totGCol} });
@@ -928,11 +976,11 @@ function exportDetailed(dist) {
   sections.forEach(sec => {
     sec.grades.forEach(g => {
       r1[c] = g;
-      if (!isTotal) merges.push({ s:{r:1,c:c}, e:{r:1,c:c+1} }); // grade name colspan=2 in B/G mode
+      if (!isTotal) merges.push({ s:{r:1,c:c}, e:{r:1,c:c+1} }); 
       c += perGradeCols;
     });
     r1[c] = sec.subLabel;
-    if (!isTotal) merges.push({ s:{r:1,c:c}, e:{r:2,c:c} }); // subtotal rowspan=2 in B/G mode
+    if (!isTotal) merges.push({ s:{r:1,c:c}, e:{r:2,c:c} }); 
     c++;
   });
 
@@ -947,13 +995,13 @@ function exportDetailed(dist) {
         r2[c] = 'Boys'; r2[c + 1] = 'Girls';
         c += 2;
       });
-      c++; // skip subtotal (rowspan from row 1)
+      c++; 
     });
     aoa.push(r2);
   }
 
-  /* Data rows */
-  FLT.forEach(r => {
+  /* Data rows (Maps directly from current active view) */
+  displayData.forEach(r => {
     const row = [r.emis_code || '', r.school_name || ''];
     sections.forEach(sec => {
       let secSum = 0;
@@ -988,13 +1036,13 @@ function exportDetailed(dist) {
   ws['!merges'] = merges;
 
   /* Column widths */
-  const colWidths = [{ wch: 12 }, { wch: 28 }];
+  const colWidths = [{ wch: 12 }, { wch: 35 }]; // Bumped width for names
   sections.forEach(sec => {
     sec.grades.forEach(() => {
-      if (isTotal) colWidths.push({ wch: 9 });
-      else         colWidths.push({ wch: 7 }, { wch: 7 });
+      if (isTotal) colWidths.push({ wch: 10 });
+      else         colWidths.push({ wch: 8 }, { wch: 8 });
     });
-    colWidths.push({ wch: 11 });
+    colWidths.push({ wch: 13 });
   });
   colWidths.push({ wch: 13 }, { wch: 13 }, { wch: 13 });
   ws['!cols'] = colWidths;
@@ -1005,12 +1053,15 @@ function exportDetailed(dist) {
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
-    paperSize: 9  // A4
+    paperSize: 9  
   };
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Grade Enrollment');
-  XLSX.writeFile(wb, `sis_pesrp_detailed_${isTotal ? 'classtotal_' : ''}${_slug(dist)}_${_today()}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, `${rowType} Enrollment`);
+  
+  const prefix = isTotal ? 'classtotal_' : '';
+  const scope = appliedMarkaz ? 'markaz' : (appliedTehsil ? 'tehsil' : 'district');
+  XLSX.writeFile(wb, `sis_pesrp_${prefix}${scope}_${_slug(dist)}_${_today()}.xlsx`);
 }
 
 const _slug  = s => s.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
