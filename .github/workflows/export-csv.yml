@@ -1,35 +1,17 @@
 name: Export Enrolment CSV
 
 on:
-  workflow_run:
-    # Fires as soon as the scraper workflow finishes - regardless of whether
-    # its commit was made by the GITHUB_TOKEN (push-based triggers do NOT
-    # fire for GITHUB_TOKEN commits, which is why this wasn't running
-    # automatically before). This starts within ~1-2 minutes of completion.
-    workflows: ["Scrape SIS PESRP fetch data"]   # must match fetch-data.yml's name: exactly
-    types:
-      - completed
   workflow_dispatch: {}
-  schedule:
-    - cron: "30 */6 * * *"   # fallback safety net only, in case workflow_run is ever missed
 
 permissions:
   contents: write
 
 jobs:
   export-csv:
-    # Only run if this was triggered by a SUCCESSFUL scrape (skips if the
-    # scraper aborted due to the sanity check catching a bad partial run),
-    # or if it was triggered manually / by the schedule fallback.
-    if: >
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          ref: main   # ensures we check out the latest commit (incl. the scraper's just-pushed data)
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -45,5 +27,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/enrolment_summary.csv
           git diff --staged --quiet || git commit -m "Update enrolment_summary.csv [automated]"
-          git pull --rebase origin main
           git push
