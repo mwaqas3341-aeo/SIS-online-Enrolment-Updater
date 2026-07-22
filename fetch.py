@@ -141,12 +141,25 @@ def get_markazs(d_id, t_id, csrf):
     ))
 
 
-def get_schools(d_id, t_id, m_id, csrf):
-    return parse_resp(get_session().get(
-        f"{BASE}/user/get_schools",
-        params={"markaz": m_id, "selectedSchool": "false", "all": "All", "csrf_test_name": csrf},
-        timeout=15
-    ))
+def get_schools(d_id, t_id, m_id, csrf, retries=3):
+    """Fetch schools for one markaz, retrying on empty/failed responses.
+
+    An empty result can mean either "this markaz genuinely has 0 schools"
+    or "the request silently failed under concurrent load" (the same
+    issue that caused missing markazs back in Phase 1a). We retry a few
+    times with a short backoff before trusting an empty result as real.
+    """
+    for attempt in range(retries):
+        opts = parse_resp(get_session().get(
+            f"{BASE}/user/get_schools",
+            params={"markaz": m_id, "selectedSchool": "false", "all": "All", "csrf_test_name": csrf},
+            timeout=15
+        ))
+        if opts:
+            return opts
+        if attempt < retries - 1:
+            time.sleep(0.5 * (attempt + 1))
+    return []
 
 
 def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
@@ -253,9 +266,17 @@ def scrape():
     print(f"[Success] Mapped {len(markaz_list)} Markazs.", flush=True)
 
     # Phase 1b: get school lists
+    # NOTE: lowered from 20 -> 8 workers. The same silent-failure-under-load
+    # issue that forced Phase 1a (tehsils/markazs) to go sequential also
+    # affects this phase: get_schools() returns [] on a failed/empty
+    # response with no way to tell that apart from "genuinely 0 schools".
+    # High-markaz districts (GUJRAT, GUJRANWALA, MIANWALI, HAFIZABAD,
+    # NANKANA SAHIB) were losing 10-20% of schools this way. Combined with
+    # the retry added in get_schools(), lowering concurrency here reduces
+    # how often that silent failure gets triggered in the first place.
     print(f"\nPhase 1b: Fetching school lists across {len(markaz_list)} Markazs...", flush=True)
     inventory, done = [], 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = {executor.submit(worker_fetch_schools_in_markaz, m, csrf, ts): m for m in markaz_list}
         for future in concurrent.futures.as_completed(futures):
             done += 1
