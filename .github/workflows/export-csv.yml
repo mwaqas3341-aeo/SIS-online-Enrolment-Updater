@@ -6,7 +6,7 @@ on:
     # its commit was made by the GITHUB_TOKEN (push-based triggers do NOT
     # fire for GITHUB_TOKEN commits, which is why this wasn't running
     # automatically before). This starts within ~1-2 minutes of completion.
-    workflows: ["Fetch SIS PESRP Data"]   # <-- must match the `name:` in fetch-data.yml exactly
+    workflows: ["Scrape SIS PESRP fetch data"]   # must match fetch-data.yml's name: exactly
     types:
       - completed
   workflow_dispatch: {}
