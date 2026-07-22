@@ -51,7 +51,7 @@ import time
 import requests
 import threading
 import concurrent.futures
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -68,6 +68,22 @@ FULL_SCRAPE_RETRY_WAIT_SECONDS = 300   # 5 minutes between full-scrape retries
 
 SANITY_MIN_RATIO = 0.95          # refuse to overwrite existing data if the
                                   # new total is below 95% of yesterday's total
+
+# The source site appears to do maintenance roughly 1-3 AM Pakistan time
+# (PKT, UTC+5). The cron schedule is already set to avoid this window, but
+# GitHub Actions can occasionally delay a scheduled run under load - this
+# is a belt-and-suspenders check so the script refuses to scrape if it
+# somehow still starts inside the window, rather than burning 20-30 minutes
+# hitting a site that's likely down anyway.
+PKT = timezone(timedelta(hours=5))
+EXCLUDED_WINDOW_START_HOUR_PKT = 1   # 1:00 AM PKT
+EXCLUDED_WINDOW_END_HOUR_PKT = 3     # 3:00 AM PKT (exclusive)
+
+
+def in_excluded_window():
+    now_pkt = datetime.now(PKT)
+    return EXCLUDED_WINDOW_START_HOUR_PKT <= now_pkt.hour < EXCLUDED_WINDOW_END_HOUR_PKT
+
 
 thread_local = threading.local()
 
@@ -504,6 +520,15 @@ if __name__ == "__main__":
     print("=" * 65, flush=True)
     print("  SIS PESRP Scraper - FULL RUN (per-district JSON output)", flush=True)
     print("=" * 65, flush=True)
+
+    if in_excluded_window():
+        now_pkt = datetime.now(PKT)
+        print(f"[Skip] Current time is {now_pkt.strftime('%H:%M')} PKT, inside the "
+              f"excluded {EXCLUDED_WINDOW_START_HOUR_PKT}-{EXCLUDED_WINDOW_END_HOUR_PKT} AM "
+              f"PKT maintenance window. Skipping this run entirely - the next "
+              f"scheduled run will pick it up. This is not a failure.", flush=True)
+        sys.exit(0)
+
     start_time = time.time()
 
     prev_total = load_previous_total()
