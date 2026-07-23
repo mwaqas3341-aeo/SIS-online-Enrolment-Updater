@@ -633,16 +633,7 @@
                 <select id="st" onchange="onTehsilChange()" disabled><option value="">All Tehsils</option></select>
             </div>
 
-            <!-- WING FILTER -->
-            <div class="cg">
-                <div class="cl2">🏫 Wing</div>
-                <select id="sg" onchange="onGenderChange()">
-                    <option value="">All Wings</option>
-                    <option value="M-EE">M-EE</option>
-                    <option value="W-EE">W-EE</option>
-                    <option value="SE">SE</option>
-                </select>
-            </div>
+            <!-- WING FILTER REMOVED -->
 
             <div class="cg">
                 <div class="cl2">🏘 Markaz</div>
@@ -676,8 +667,7 @@
             ALL = [],
             FLT = [];
         let appliedTehsil = '',
-            appliedMarkaz = '',
-            appliedGender = '';
+            appliedMarkaz = '';
         let VIEW_MODE = 'bg';
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -843,10 +833,8 @@
 
             appliedTehsil = '';
             appliedMarkaz = '';
-            appliedGender = '';
             document.getElementById('st').value = '';
             document.getElementById('sm').value = '';
-            document.getElementById('sg').value = '';
 
             const tehs = [...new Set(ALL.map(r => r.tehsil || ''))].filter(Boolean).sort();
             const tSel = document.getElementById('st');
@@ -870,13 +858,6 @@
             recompute();
         }
 
-        function onGenderChange() {
-            appliedGender = document.getElementById('sg').value;
-            appliedMarkaz = '';
-            populateMarkaz(appliedTehsil);
-            recompute();
-        }
-
         function onMarkazChange() {
             appliedMarkaz = document.getElementById('sm').value;
             recompute();
@@ -888,61 +869,11 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════
-           PRECISE WING CLASSIFICATION ENGINE (fixed pattern)
+           POPULATE MARKAZ (simplified, no wing filter)
            ═══════════════════════════════════════════════════════════════════ */
-        function getSchoolWing(r) {
-            const raw = (r.school_name || '').toUpperCase();
-            // Normalize: remove all non-alphanumeric characters (keep letters and digits)
-            const name = raw.replace(/[^A-Z0-9]/g, '');
-
-            // 1. Female primary / elementary / middle
-            if (name.startsWith('GGPS') || name.startsWith('GGES') || name.startsWith('GGMS')) {
-                return 'W-EE';
-            }
-            // 2. Secondary (High / Higher Secondary) – both boys and girls high schools
-            if (name.startsWith('GHS') || name.startsWith('GGHS')) {
-                return 'SE';
-            }
-            // 3. Male primary / elementary
-            if (name.startsWith('GPS') || name.startsWith('GES')) {
-                return 'M-EE';
-            }
-
-            // Fallback: use the previous heuristics for schools that don't match the pattern
-            const markaz = String(r.markaz || '').toUpperCase();
-            if (/\bmale\b/.test(markaz)) return 'M-EE';
-            if (/\bfemale\b/.test(markaz)) return 'W-EE';
-
-            // Check name for gender clues
-            const nameUpper = raw; // keep original with spaces etc.
-            if (/\b(GGES|GGHS|G Girls|FEMALE)\b/.test(nameUpper)) return 'W-EE';
-            if (/\b(GPS|GES|GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(nameUpper)) {
-                // If it contains "GHS" or "GHSS" or "HIGH" it's secondary, but we already caught GHS
-                // However we might have missed due to normalization? We'll check again.
-                if (/\b(GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(nameUpper)) return 'SE';
-                return 'M-EE';
-            }
-
-            // If still undecided, use gender counts
-            if ((r.girls || 0) > (r.boys || 0) && (r.boys || 0) === 0) return 'W-EE';
-            return 'M-EE'; // default
-        }
-
         function populateMarkaz(tehsil) {
             const mSel = document.getElementById('sm');
-
-            if (appliedGender === 'SE') {
-                mSel.innerHTML = '<option value="">SECONDARY WING</option>';
-                appliedMarkaz = '';
-                mSel.disabled = true;
-                return;
-            }
-
             let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
-
-            if (appliedGender) {
-                pool = pool.filter(r => getSchoolWing(r) === appliedGender);
-            }
 
             let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
 
@@ -966,10 +897,9 @@
         }
 
         function setControlsEnabled(on) {
-            ['st', 'sg', 'vm', 'btnExport'].forEach(id => {
+            ['st', 'sm', 'vm', 'btnExport'].forEach(id => {
                 document.getElementById(id).disabled = !on;
             });
-            if (!on) document.getElementById('sm').disabled = true;
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -1038,10 +968,7 @@
         function recompute() {
             FLT = ALL.filter(r => {
                 if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
-                if (appliedMarkaz && r.markaz !== appliedMarkaz && appliedGender !== 'SE') return false;
-
-                if (appliedGender && getSchoolWing(r) !== appliedGender) return false;
-
+                if (appliedMarkaz && r.markaz !== appliedMarkaz) return false;
                 return true;
             });
 
@@ -1063,7 +990,7 @@
             if (!appliedTehsil) {
                 displayData = getAggregatedData('tehsil');
                 rowType = 'Tehsil';
-            } else if (!appliedMarkaz && appliedGender !== 'SE') {
+            } else if (!appliedMarkaz) {
                 displayData = getAggregatedData('markaz');
                 rowType = 'Markaz';
             } else {
