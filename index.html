@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIS PESRP — School Enrollment</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- ADDED: FontAwesome for WhatsApp and Phone Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root{
   --g:#1A7A4A;--gl:#E6F4ED;--b:#1565C0;--bl:#E3F0FF;
@@ -30,6 +32,94 @@ h1{font-size:18px;font-weight:700;color:var(--g)}
 .sub{font-size:12px;color:var(--mt);margin-top:2px}
 .hdr-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #ts{font-size:11px;color:var(--mt);font-family:'JetBrains Mono',monospace}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADDED: CONTACT CARD (Your Details)
+   ═══════════════════════════════════════════════════════════════════ */
+.contact-card {
+    background: #0d3b36; /* Deep teal from your screenshot */
+    color: #fff;
+    padding: 25px 20px;
+    text-align: center;
+    border-radius: 8px;
+    margin: 20px auto;
+    max-width: 1000px; /* Prevents it from stretching too wide on big screens */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: relative;
+}
+.prepared-label {
+    color: #c3a660; /* Gold */
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+.contact-name {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: #ffffff;
+}
+.contact-designation {
+    color: #a8beb9;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+.contact-item {
+    background: rgba(255,255,255,0.08);
+    max-width: 420px;
+    margin: 0 auto 10px auto;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.05);
+    font-weight: 600;
+    font-size: 15px;
+}
+.contact-item i {
+    color: #2ecc71;
+    margin-right: 12px;
+    font-size: 18px;
+}
+.contact-btn {
+    background: #2ecc71;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 28px;
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: #000;
+    display: inline-block;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.contact-btn:hover {
+    background: #27ae60;
+    color: #000;
+}
+.contact-channel-link {
+    margin-top: 18px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.contact-channel-link a {
+    color: #2ecc71;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 13px;
+}
+.contact-channel-link a:hover {
+    text-decoration: underline;
+}
+/* ═══════════════════════════════════════════════════════════════════ */
 
 /* main */
 main{max-width:100%;margin:18px auto;padding:0 20px 60px}
@@ -199,6 +289,32 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
     </div>
   </div>
 </header>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     ADDED: PREPARED BY CONTACT CARD
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="contact-card">
+    <div class="prepared-label">Prepared By</div>
+    <div class="contact-name">Muhammad Waqas</div>
+    <div class="contact-designation">Assistant Education Officer</div>
+    
+    <div class="contact-item">
+        <i class="fa-brands fa-whatsapp"></i> 0304-7392281
+    </div>
+    <div class="contact-item">
+        <i class="fa-brands fa-whatsapp"></i> 0346-6507640
+    </div>
+    
+    <a href="https://wa.me/923046507640?text=Hello%20Muhammad%20Waqas" class="contact-btn" target="_blank">
+        WhatsApp پر رابطہ کریں
+    </a>
+    
+    <div class="contact-channel-link">
+        <i class="fa-brands fa-whatsapp"></i> Join Our WhatsApp Channel: <br>
+        <a href="https://whatsapp.com/channel/0029VbCvSD6EwEjsKWnrzm1B" target="_blank">whatsapp.com/channel/0029VbCvSD6EwEjsKWnrzm1B</a>
+    </div>
+</div>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
 
 <main>
 
