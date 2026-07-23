@@ -66,6 +66,21 @@ MIN_ACCEPTABLE_SCHOOLS = 30000   # if a scrape finds fewer than this, treat it
 FULL_SCRAPE_MAX_ATTEMPTS = 2
 FULL_SCRAPE_RETRY_WAIT_SECONDS = 300   # 5 minutes between full-scrape retries
 
+EXPECTED_TOTAL_SCHOOLS = 38150   # known-good total (as of last full count). Used
+                                  # only for logging/visibility, not to abort.
+
+# Phase 1c: how many extra times to re-check a Markaz that came back with 0
+# schools, before trusting that it's genuinely empty rather than a dropped
+# request under concurrent load.
+MARKAZ_RECHECK_RETRIES = 6
+
+# Phase 2b: dedicated retry rounds for schools whose enrolment fetch failed
+# (not "zero enrolment" - actually failed/None after fetch_json_with_retry's
+# own retries). We wait between rounds since failures tend to be transient
+# server-side hiccups that clear up after a short pause.
+ENROLMENT_RETRY_MAX_ROUNDS = 3
+ENROLMENT_RETRY_WAIT_SECONDS = 30
+
 SANITY_MIN_RATIO = 0.95          # refuse to overwrite existing data if the
                                   # new total is below 95% of yesterday's total
 
@@ -250,9 +265,9 @@ def get_schools(d_id, t_id, m_id, csrf, retries=4):
     return []
 
 
-def worker_fetch_schools_in_markaz(markaz_info, csrf, ts):
+def worker_fetch_schools_in_markaz(markaz_info, csrf, ts, retries=4):
     d_id, d_name, t_id, t_name, m_id, m_name = markaz_info
-    school_opts = get_schools(d_id, t_id, m_id, csrf)
+    school_opts = get_schools(d_id, t_id, m_id, csrf, retries=retries)
     schools_found = []
     for s_id, s_name in school_opts:
         emis_code, school_name_clean = "", s_name
@@ -289,7 +304,7 @@ def fetch_json_with_retry(url, params, retries=3, backoff=1.5, timeout=15):
     return None  # caller treats None as "no data available after retries"
 
 
-def worker_fetch_school_data(school_info):
+def worker_fetch_school_data(school_info, retries=3, backoff=1.5, timeout=15):
     # params: classes=0 means "All Classes" (confirmed from HAR)
     params = {
         "district":       school_info["district_id"],
@@ -301,16 +316,20 @@ def worker_fetch_school_data(school_info):
     }
 
     # 1. Totals from pie chart (now retried instead of single-shot try/except)
-    d1 = fetch_json_with_retry(f"{BASE}/dashboard_revamp/get_gender_summary_pie", params)
-    if isinstance(d1, dict):
+    d1 = fetch_json_with_retry(f"{BASE}/dashboard_revamp/get_gender_summary_pie", params,
+                                retries=retries, backoff=backoff, timeout=timeout)
+    pie_ok = isinstance(d1, dict)
+    if pie_ok:
         school_info["total_school_students"] = to_int(d1.get("total"))
         school_info["total_school_boys"]     = to_int(d1.get("male_count"))
         school_info["total_school_girls"]    = to_int(d1.get("female_count"))
 
     # 2. Grade breakdown from get_gender_bar_AREA (has category labels!)
+    raw = fetch_json_with_retry(f"{BASE}/dashboard_revamp/get_gender_bar_area", params,
+                                 retries=retries, backoff=backoff, timeout=timeout)
+    bar_ok = isinstance(raw, dict)
     grades = []
-    raw = fetch_json_with_retry(f"{BASE}/dashboard_revamp/get_gender_bar_area", params)
-    if isinstance(raw, dict):
+    if bar_ok:
         categories  = raw.get("categories", [])
         male_vals   = raw.get("male",   [])
         female_vals = raw.get("female", [])
@@ -327,10 +346,24 @@ def worker_fetch_school_data(school_info):
                 "female_students": f,
             })
 
-    if not grades:
+    # IMPORTANT: only accept "No Data" as a genuine result if BOTH endpoints
+    # actually responded (bar_ok) and simply came back with no rows. If the
+    # endpoint call itself failed (bar_ok is False), we must NOT write "No
+    # Data" / leave 0s in place, because that's indistinguishable later from
+    # a real zero-enrolment school. Instead we leave grades unset and flag
+    # the school as failed so the retry pass below picks it up.
+    if bar_ok and not grades:
         grades = [{"grade_name": "No Data", "male_students": 0, "female_students": 0}]
 
-    school_info["grades"] = grades
+    fetch_ok = pie_ok and bar_ok
+    if fetch_ok:
+        school_info["grades"] = grades
+    elif "grades" not in school_info:
+        # first attempt failed and we have nothing yet - placeholder only,
+        # will be overwritten by a successful retry round if one succeeds
+        school_info["grades"] = grades or [{"grade_name": "No Data", "male_students": 0, "female_students": 0}]
+
+    school_info["_fetch_ok"] = fetch_ok
     return school_info
 
 
@@ -364,15 +397,52 @@ def scrape():
     # losing 10-20% of schools to silent failures under concurrent load.
     print(f"\nPhase 1b: Fetching school lists across {len(markaz_list)} Markazs...", flush=True)
     inventory, done = [], 0
+    empty_markazs = []   # markazs that came back with 0 schools - could be
+                          # genuinely empty, or a dropped request under load
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = {executor.submit(worker_fetch_schools_in_markaz, m, csrf, ts): m for m in markaz_list}
         for future in concurrent.futures.as_completed(futures):
             done += 1
-            inventory.extend(future.result())
+            m = futures[future]
+            result = future.result()
+            if result:
+                inventory.extend(result)
+            else:
+                empty_markazs.append(m)
             if done % 200 == 0:
                 print(f"  -> Processed {done} / {len(markaz_list)} Markazs...", flush=True)
 
+    print(f"[Info] {len(empty_markazs)} Markazs came back with 0 schools on the first pass.", flush=True)
+
+    # Phase 1c: sequentially re-check every Markaz that came back empty, with
+    # more retries and no concurrent-load contention, before trusting that
+    # it's genuinely a 0-school Markaz rather than a dropped request. This is
+    # what was silently losing whole Markazs' worth of schools before.
+    still_empty_markazs = []
+    if empty_markazs:
+        print(f"\nPhase 1c: Re-checking {len(empty_markazs)} empty Markazs "
+              f"sequentially (retries={MARKAZ_RECHECK_RETRIES})...", flush=True)
+        for i, m in enumerate(empty_markazs, 1):
+            result = worker_fetch_schools_in_markaz(m, csrf, ts, retries=MARKAZ_RECHECK_RETRIES)
+            if result:
+                inventory.extend(result)
+                print(f"  -> Recovered {len(result)} schools for {m[5]} ({m[1]}) "
+                      f"that were missed on the first pass.", flush=True)
+            else:
+                still_empty_markazs.append(m)
+            if i % 50 == 0:
+                print(f"  -> Rechecked {i} / {len(empty_markazs)} Markazs...", flush=True)
+
+        if still_empty_markazs:
+            print(f"[Info] {len(still_empty_markazs)} Markazs are still empty after "
+                  f"recheck - treating these as genuinely 0-school Markazs.", flush=True)
+
     print(f"\nPhase 1 Complete! Discovered {len(inventory)} schools.", flush=True)
+    if len(inventory) < EXPECTED_TOTAL_SCHOOLS:
+        print(f"[Info] {len(inventory)} is below the known-good reference total "
+              f"of {EXPECTED_TOTAL_SCHOOLS:,} - this is expected to fluctuate slightly "
+              f"(new/closed schools), but a large gap may indicate remaining issues.",
+              flush=True)
 
     # Phase 2: fetch enrollment data (now with retries inside worker_fetch_school_data)
     print(f"\nPhase 2: Fetching enrollment data for ALL {len(inventory)} schools (50 threads)...", flush=True)
@@ -386,7 +456,86 @@ def scrape():
             if done_schools % 500 == 0:
                 print(f"  -> Fetched {done_schools} / {len(inventory)} schools...", flush=True)
 
+    # Phase 2b: dedicated retry rounds for schools whose enrolment fetch
+    # failed outright (not "genuinely 0 enrolment" - the API call itself
+    # never came back cleanly). This is what was previously producing rows
+    # that silently show 0/0 despite the school actually having enrolment -
+    # a failed fetch and a real zero looked identical before. We now retry
+    # ONLY the failed subset, with lower concurrency and a wait between
+    # rounds, since these failures are usually transient server load.
+    failed_schools = [s for s in final_schools if not s.get("_fetch_ok", True)]
+    round_num = 0
+    while failed_schools and round_num < ENROLMENT_RETRY_MAX_ROUNDS:
+        round_num += 1
+        print(f"\n[Retry] Phase 2b round {round_num}/{ENROLMENT_RETRY_MAX_ROUNDS}: "
+              f"re-fetching enrolment for {len(failed_schools)} schools that failed "
+              f"the first pass...", flush=True)
+        time.sleep(ENROLMENT_RETRY_WAIT_SECONDS)
+
+        still_failed = []
+        # Lower concurrency + more per-call retries than the main pass, since
+        # these are the stubborn ones that already failed once.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            futures = {
+                executor.submit(worker_fetch_school_data, s, retries=5, backoff=2.0, timeout=20): s
+                for s in failed_schools
+            }
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                if not result.get("_fetch_ok", True):
+                    still_failed.append(result)
+
+        recovered = len(failed_schools) - len(still_failed)
+        print(f"  -> Recovered {recovered} / {len(failed_schools)} schools this round.", flush=True)
+        failed_schools = still_failed
+
+    if failed_schools:
+        print(f"\n[Warning] {len(failed_schools)} schools STILL failed enrolment fetch "
+              f"after {ENROLMENT_RETRY_MAX_ROUNDS} retry rounds. These are listed in "
+              f"data/scrape_issues.json for follow-up - their enrolment numbers in "
+              f"this run may be incomplete/placeholder, not confirmed zeros.", flush=True)
+        _write_scrape_issues(failed_schools, still_empty_markazs)
+    elif still_empty_markazs:
+        _write_scrape_issues([], still_empty_markazs)
+
     return final_schools, ts
+
+
+def _write_scrape_issues(failed_schools, still_empty_markazs):
+    """Write out exactly which schools/markazs the scrape could not confirm,
+    even after all retry passes, so they're visible for manual follow-up
+    instead of silently blending into the data as fake zeros."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "note": "Entries here failed enrolment/school-list fetch even after all "
+                "automated retry passes. Their numbers in the main data files "
+                "may be incomplete placeholders, not confirmed real values.",
+        "failed_enrolment_fetch": [
+            {
+                "school_id":   s.get("school_id"),
+                "emis_code":   s.get("emis_code"),
+                "school_name": s.get("school_name"),
+                "district":    s.get("district"),
+                "tehsil":      s.get("tehsil"),
+                "markaz":      s.get("markaz"),
+            }
+            for s in failed_schools
+        ],
+        "still_empty_markazs": [
+            {
+                "district_id": m[0], "district": m[1],
+                "tehsil_id":   m[2], "tehsil":   m[3],
+                "markaz_id":   m[4], "markaz":   m[5],
+            }
+            for m in still_empty_markazs
+        ],
+    }
+    with open(os.path.join(DATA_DIR, "scrape_issues.json"), "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    print(f"[Info] Wrote data/scrape_issues.json "
+          f"({len(failed_schools)} failed schools, {len(still_empty_markazs)} still-empty markazs).",
+          flush=True)
 
 
 def scrape_with_retry():
@@ -424,6 +573,7 @@ def build_payloads(schools, ts):
 
     groups = {}  # key -> {"name": str, "schools": [...]}
     for s in schools:
+        s.pop("_fetch_ok", None)  # internal bookkeeping only - not part of output schema
         d_id   = s.get("district_id") or slugify(s.get("district", ""))
         d_name = s.get("district") or "Unknown"
         if d_id not in groups:
