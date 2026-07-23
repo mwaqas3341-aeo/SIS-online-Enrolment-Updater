@@ -275,10 +275,8 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
       <p class="sub">Source: <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank" style="color:var(--g)">sis.pesrp.edu.pk</a> · Now supporting automated Excel exports for District, Tehsil, and Markaz hierarchies.</p>
     </div>
     
-    <!-- COMPACT CONTACT ROW (Directly under Scraped timestamp) -->
     <div class="hdr-r">
       <span id="ts">Loading…</span>
-      
       <div class="contact-mini">
         <div>
             <span class="mini-name">Muhammad Waqas</span> 
@@ -291,12 +289,10 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
         </div>
       </div>
     </div>
-    
   </div>
 </header>
 
 <main>
-
   <div class="cards">
     <div class="card">   <div class="cl">Total Schools</div><div class="cv" id="c0">—</div><div class="cs" id="cs0">Across Punjab</div></div>
     <div class="card b"> <div class="cl">Total Male</div>   <div class="cv" id="c1">—</div><div class="cs">Male students</div></div>
@@ -314,9 +310,7 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
       <select id="st" onchange="onTehsilChange()" disabled><option value="">All Tehsils</option></select>
     </div>
     
-    <!-- ═══════════════════════════════════════════════════════════════
-         ADDED: GENDER FILTER (Between Tehsil and Markaz)
-         ═══════════════════════════════════════════════════════════════ -->
+    <!-- GENDER FILTER -->
     <div class="cg">
       <div class="cl2">👤 Gender</div>
       <select id="sg" onchange="onGenderChange()">
@@ -325,7 +319,6 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
         <option value="female">Female Only</option>
       </select>
     </div>
-    <!-- ═══════════════════════════════════════════════════════════════ -->
 
     <div class="cg">
       <div class="cl2">🏘 Markaz</div>
@@ -348,7 +341,6 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
     </div>
     <div id="body"><div class="center"><div class="spin"></div>Loading district list…</div></div>
   </div>
-
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -541,12 +533,8 @@ function onTehsilChange() {
   recompute(); 
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ADDED: GENDER CHANGE HANDLER
-   ═══════════════════════════════════════════════════════════════════ */
 function onGenderChange() {
   appliedGender = document.getElementById('sg').value;
-  // Reset Markaz when gender changes so dropdown options reflect the filtered list
   appliedMarkaz = ''; 
   populateMarkaz(appliedTehsil);
   recompute();
@@ -563,20 +551,23 @@ function onViewModeChange() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   UPDATED: POPULATE MARKAZ (Respects Gender Filter)
+   UPDATED: POPULATE MARKAZ (Filters purely by text in the name)
    ═══════════════════════════════════════════════════════════════════ */
 function populateMarkaz(tehsil) {
+  // 1. Get the base pool of schools based on the selected Tehsil
   let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
   
-  // Filter pool by selected Gender for the dropdown options
+  // 2. Extract unique Markaz names from the pool
+  let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
+  
+  // 3. Filter the Markaz options solely by the words "male" or "female" in their name
   if (appliedGender === 'male') {
-    pool = pool.filter(r => (r.boys || 0) > 0);
+    items = items.filter(name => name.toLowerCase().includes('male'));
   } else if (appliedGender === 'female') {
-    pool = pool.filter(r => (r.girls || 0) > 0);
+    items = items.filter(name => name.toLowerCase().includes('female'));
   }
 
-  const items  = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
-  const mSel   = document.getElementById('sm');
+  const mSel = document.getElementById('sm');
   const currentVal = mSel.value;
   
   mSel.innerHTML = '<option value="">All Markaz</option>';
@@ -662,15 +653,12 @@ function getAggregatedData(level) {
   return result;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   UPDATED: RECOMPUTE (Applies Gender Filter to Rows)
-   ═══════════════════════════════════════════════════════════════════ */
 function recompute() {
   FLT = ALL.filter(r => {
     if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
     if (appliedMarkaz && r.markaz !== appliedMarkaz) return false;
     
-    // Gender filter applied to table data
+    // Gender filter applied to actual table data (student counts)
     if (appliedGender === 'male' && (r.boys || 0) <= 0) return false;
     if (appliedGender === 'female' && (r.girls || 0) <= 0) return false;
 
@@ -853,7 +841,7 @@ function drawDetailed() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   EXCEL EXPORT (Always exports the current active detailed view)
+   EXCEL EXPORT
    ═══════════════════════════════════════════════════════════════════ */
 function exportExcel() {
   if (!FLT.length || !window._detailExport) {
