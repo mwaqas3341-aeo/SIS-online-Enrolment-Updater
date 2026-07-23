@@ -1,1001 +1,1363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIS PESRP — School Enrollment</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-:root{
-  --g:#1A7A4A;--gl:#E6F4ED;--b:#1565C0;--bl:#E3F0FF;
-  --r:#C0392B;--rl:#FDECEA;--au:#B8860B;--aul:#FDF6E3;
-  --bg:#F4F6FB;--s:#fff;--bd:#E0E4EC;--tx:#1A2035;--mt:#6B7280;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS PESRP — School Enrollment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --g: #1A7A4A;
+            --gl: #E6F4ED;
+            --b: #1565C0;
+            --bl: #E3F0FF;
+            --r: #C0392B;
+            --rl: #FDECEA;
+            --au: #B8860B;
+            --aul: #FDF6E3;
+            --bg: #F4F6FB;
+            --s: #fff;
+            --bd: #E0E4EC;
+            --tx: #1A2035;
+            --mt: #6B7280;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--tx);
+            font-size: 14px;
+            line-height: 1.5;
+        }
 
-/* topbar */
-.top{background:var(--g);color:#fff;height:46px;display:flex;align-items:center;
-  justify-content:space-between;padding:0 20px}
-.top-l{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
-.gov{font-size:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
-  border-radius:3px;padding:2px 7px;letter-spacing:.04em}
-.top-r{font-size:11px;font-family:'JetBrains Mono',monospace;opacity:.75}
+        /* topbar */
+        .top {
+            background: var(--g);
+            color: #fff;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        .top-l {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .gov {
+            font-size: 10px;
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .3);
+            border-radius: 3px;
+            padding: 2px 7px;
+            letter-spacing: .04em;
+        }
+        .top-r {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            opacity: .75;
+        }
 
-/* header */
-header{background:var(--s);border-bottom:1px solid var(--bd);padding:16px 20px}
-.hdr{max-width:100%;margin:0 auto;display:flex;justify-content:space-between;
-  align-items:center;flex-wrap:wrap;gap:12px}
-h1{font-size:18px;font-weight:700;color:var(--g)}
-.sub{font-size:12px;color:var(--mt);margin-top:2px}
-.hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-#ts{font-size:11px;color:var(--mt);font-family:'JetBrains Mono',monospace}
+        /* header */
+        header {
+            background: var(--s);
+            border-bottom: 1px solid var(--bd);
+            padding: 16px 20px;
+        }
+        .hdr {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--g);
+        }
+        .sub {
+            font-size: 12px;
+            color: var(--mt);
+            margin-top: 2px;
+        }
+        .hdr-r {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        #ts {
+            font-size: 11px;
+            color: var(--mt);
+            font-family: 'JetBrains Mono', monospace;
+        }
 
-/* COMPACT CONTACT ROW */
-.contact-mini {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    font-size: 11px;
-    line-height: 1.4;
-    width: 100%;
-}
-.mini-name {
-    font-weight: 700;
-    color: var(--g);
-    font-size: 11px;
-}
-.mini-desig {
-    font-weight: 400;
-    color: var(--mt);
-    font-size: 10px;
-}
-.mini-icons {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-top: 2px;
-}
-.mini-icons a {
-    text-decoration: none;
-    color: var(--g);
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-weight: 600;
-    font-size: 10px;
-    background: var(--gl);
-    padding: 2px 8px;
-    border-radius: 12px;
-    transition: 0.15s;
-}
-.mini-icons a i {
-    color: #2ecc71;
-}
-.mini-icons a:hover {
-    background: var(--g);
-    color: #fff;
-}
-.mini-icons a:hover i {
-    color: #fff;
-}
+        /* COMPACT CONTACT ROW */
+        .contact-mini {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 11px;
+            line-height: 1.4;
+            width: 100%;
+        }
+        .mini-name {
+            font-weight: 700;
+            color: var(--g);
+            font-size: 11px;
+        }
+        .mini-desig {
+            font-weight: 400;
+            color: var(--mt);
+            font-size: 10px;
+        }
+        .mini-icons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 2px;
+        }
+        .mini-icons a {
+            text-decoration: none;
+            color: var(--g);
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-weight: 600;
+            font-size: 10px;
+            background: var(--gl);
+            padding: 2px 8px;
+            border-radius: 12px;
+            transition: 0.15s;
+        }
+        .mini-icons a i {
+            color: #2ecc71;
+        }
+        .mini-icons a:hover {
+            background: var(--g);
+            color: #fff;
+        }
+        .mini-icons a:hover i {
+            color: #fff;
+        }
 
-/* main */
-main{max-width:100%;margin:18px auto;padding:0 20px 60px}
+        /* main */
+        main {
+            max-width: 100%;
+            margin: 18px auto;
+            padding: 0 20px 60px;
+        }
 
-/* summary cards */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:18px}
-.card{background:var(--s);border:1px solid var(--bd);border-radius:8px;
-  padding:13px 15px;border-top:3px solid var(--g);transition:.15s}
-.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.card.b{border-top-color:var(--b)}.card.r{border-top-color:var(--r)}.card.a{border-top-color:var(--au)}
-.cl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mt);font-weight:600;margin-bottom:3px}
-.cv{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em}
-.cs{font-size:11px;color:var(--mt);margin-top:2px}
+        /* summary cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .card {
+            background: var(--s);
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            padding: 13px 15px;
+            border-top: 3px solid var(--g);
+            transition: .15s;
+        }
+        .card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .07);
+        }
+        .card.b {
+            border-top-color: var(--b);
+        }
+        .card.r {
+            border-top-color: var(--r);
+        }
+        .card.a {
+            border-top-color: var(--au);
+        }
+        .cl {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--mt);
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        .cv {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -.02em;
+        }
+        .cs {
+            font-size: 11px;
+            color: var(--mt);
+            margin-top: 2px;
+        }
 
-/* controls */
-.ctrl{background:var(--s);border:1px solid var(--bd);border-radius:8px;
-  padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.cg{display:flex;flex-direction:column;gap:3px;flex:1;min-width:140px}
-.cl2{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mt)}
-input,select{padding:7px 10px;border:1px solid var(--bd);border-radius:5px;
-  font-size:13px;color:var(--tx);background:var(--bg);width:100%;font-family:inherit;transition:.15s}
-input:focus,select:focus{outline:none;border-color:var(--g);background:#fff;box-shadow:0 0 0 3px var(--gl)}
-input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
+        /* controls */
+        .ctrl {
+            background: var(--s);
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .cg {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 140px;
+        }
+        .cl2 {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--mt);
+        }
+        input,
+        select {
+            padding: 7px 10px;
+            border: 1px solid var(--bd);
+            border-radius: 5px;
+            font-size: 13px;
+            color: var(--tx);
+            background: var(--bg);
+            width: 100%;
+            font-family: inherit;
+            transition: .15s;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--g);
+            background: #fff;
+            box-shadow: 0 0 0 3px var(--gl);
+        }
+        input:disabled,
+        select:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SHINY EXPORT BUTTON
-   ═══════════════════════════════════════════════════════════════════ */
-.btn{padding:7px 14px;border-radius:5px;font-size:12px;font-weight:600;
-  cursor:pointer;border:1px solid;white-space:nowrap;transition:.15s;font-family:inherit}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn-b{background:var(--bl);color:var(--b);border-color:var(--b)}
-.btn-b:hover:not(:disabled){background:var(--b);color:#fff}
+        /* SHINY EXPORT BUTTON */
+        .btn {
+            padding: 7px 14px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid;
+            white-space: nowrap;
+            transition: .15s;
+            font-family: inherit;
+        }
+        .btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .btn-b {
+            background: var(--bl);
+            color: var(--b);
+            border-color: var(--b);
+        }
+        .btn-b:hover:not(:disabled) {
+            background: var(--b);
+            color: #fff;
+        }
 
-#btnExport {
-    background: linear-gradient(90deg, #1A7A4A, #2ecc71, #1565C0, #1A7A4A);
-    background-size: 300% 100%;
-    color: #ffffff;
-    border: none;
-    box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3);
-    animation: shimmer 4s infinite linear;
-    position: relative;
-}
-#btnExport:hover:not(:disabled) {
-    transform: scale(1.06);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    color: #fff;
-}
-#btnExport:disabled {
-    background: #ccc !important;
-    animation: none !important;
-    transform: none !important;
-}
-@keyframes shimmer {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 300% 50%; }
-}
-/* ═══════════════════════════════════════════════════════════════════ */
+        #btnExport {
+            background: linear-gradient(90deg, #1A7A4A, #2ecc71, #1565C0, #1A7A4A);
+            background-size: 300% 100%;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3);
+            animation: shimmer 4s infinite linear;
+            position: relative;
+        }
+        #btnExport:hover:not(:disabled) {
+            transform: scale(1.06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            color: #fff;
+        }
+        #btnExport:disabled {
+            background: #ccc !important;
+            animation: none !important;
+            transform: none !important;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 300% 50%;
+            }
+        }
 
-/* table wrap */
-.tw{background:var(--s);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
-.th2{padding:11px 16px;border-bottom:1px solid var(--bd);
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.tt{font-size:14px;font-weight:600}
-.tc{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--mt)}
+        /* table wrap */
+        .tw {
+            background: var(--s);
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .th2 {
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tt {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .tc {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--mt);
+        }
 
-/* states */
-.center{text-align:center;padding:48px;color:var(--mt)}
-.spin{width:26px;height:26px;border:3px solid var(--bd);border-top-color:var(--g);
-  border-radius:50%;margin:0 auto 10px;animation:sp .8s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-.warn{background:var(--aul);border:1px solid var(--au);border-radius:7px;
-  padding:12px 16px;color:#5a4000;font-size:13px;margin:16px;line-height:1.7}
-.warn code{background:rgba(0,0,0,.07);border-radius:3px;padding:1px 5px;
-  font-family:'JetBrains Mono',monospace;font-size:12px}
-.err{background:var(--rl);border:1px solid var(--r);border-radius:7px;
-  padding:12px 16px;color:var(--r);font-size:13px;margin:16px}
+        /* states */
+        .center {
+            text-align: center;
+            padding: 48px;
+            color: var(--mt);
+        }
+        .spin {
+            width: 26px;
+            height: 26px;
+            border: 3px solid var(--bd);
+            border-top-color: var(--g);
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            animation: sp .8s linear infinite;
+        }
+        @keyframes sp {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+        .warn {
+            background: var(--aul);
+            border: 1px solid var(--au);
+            border-radius: 7px;
+            padding: 12px 16px;
+            color: #5a4000;
+            font-size: 13px;
+            margin: 16px;
+            line-height: 1.7;
+        }
+        .warn code {
+            background: rgba(0, 0, 0, .07);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+        .err {
+            background: var(--rl);
+            border: 1px solid var(--r);
+            border-radius: 7px;
+            padding: 12px 16px;
+            color: var(--r);
+            font-size: 13px;
+            margin: 16px;
+        }
 
-/* ════════════════════════════════════════════════════════════════════
-   DETAILED LANDSCAPE TABLE
-   ════════════════════════════════════════════════════════════════════ */
-.dt-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.dt-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:10px;
-  font-family:'JetBrains Mono',monospace;
-  table-layout:fixed;
-}
+        /* DETAILED LANDSCAPE TABLE */
+        .dt-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .dt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            table-layout: fixed;
+        }
 
-/* ── header cells ─────────────────────────────────────────────────── */
-.dt-table thead th{
-  padding:4px 3px;
-  text-align:center;
-  border:1px solid #0b4a28;
-  font-weight:700;
-  word-break:break-word;
-  white-space:normal;
-  line-height:1.3;
-  vertical-align:middle;
-}
-.dt-h-sec{background:#063e1e;color:#fff;font-size:10px;letter-spacing:.06em}
-.dt-h-grade{background:#135d34;color:#fff;font-size:9.5px}
-.dt-h-bg{background:#1a7a4a;color:#d0f0e0;font-size:9px;letter-spacing:.04em}
-.dt-h-sub{background:#2d5a1b;color:#cff0b0;font-size:9px}
-.dt-h-fix{background:#03291a;color:#fff;font-size:10px}
-.dt-h-totb{background:#0d3d7a;color:#cce0ff;font-size:10px}
-.dt-h-totg{background:#7a0d0d;color:#ffe0e0;font-size:10px}
-.dt-h-gtot{background:#3d0d7a;color:#e8d0ff;font-size:10px}
+        /* header cells */
+        .dt-table thead th {
+            padding: 4px 3px;
+            text-align: center;
+            border: 1px solid #0b4a28;
+            font-weight: 700;
+            word-break: break-word;
+            white-space: normal;
+            line-height: 1.3;
+            vertical-align: middle;
+        }
+        .dt-h-sec {
+            background: #063e1e;
+            color: #fff;
+            font-size: 10px;
+            letter-spacing: .06em;
+        }
+        .dt-h-grade {
+            background: #135d34;
+            color: #fff;
+            font-size: 9.5px;
+        }
+        .dt-h-bg {
+            background: #1a7a4a;
+            color: #d0f0e0;
+            font-size: 9px;
+            letter-spacing: .04em;
+        }
+        .dt-h-sub {
+            background: #2d5a1b;
+            color: #cff0b0;
+            font-size: 9px;
+        }
+        .dt-h-fix {
+            background: #03291a;
+            color: #fff;
+            font-size: 10px;
+        }
+        .dt-h-totb {
+            background: #0d3d7a;
+            color: #cce0ff;
+            font-size: 10px;
+        }
+        .dt-h-totg {
+            background: #7a0d0d;
+            color: #ffe0e0;
+            font-size: 10px;
+        }
+        .dt-h-gtot {
+            background: #3d0d7a;
+            color: #e8d0ff;
+            font-size: 10px;
+        }
 
-/* ── body cells ───────────────────────────────────────────────────── */
-.dt-table tbody td{
-  padding:4px 4px;
-  border:1px solid #d8dfe8;
-  text-align:center;
-  font-size:10.5px;
-  overflow:hidden;
-  white-space:nowrap;
-}
-.dt-table tbody tr:nth-child(even) td{background:#f5fbf8}
-.dt-table tbody tr:nth-child(odd) td{background:#fff}
-.dt-table tbody tr:hover td{background:#e8f5ee!important}
+        /* body cells */
+        .dt-table tbody td {
+            padding: 4px 4px;
+            border: 1px solid #d8dfe8;
+            text-align: center;
+            font-size: 10.5px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .dt-table tbody tr:nth-child(even) td {
+            background: #f5fbf8;
+        }
+        .dt-table tbody tr:nth-child(odd) td {
+            background: #fff;
+        }
+        .dt-table tbody tr:hover td {
+            background: #e8f5ee !important;
+        }
 
-.dt-emis{
-  text-align:center;
-  color:#444;
-  font-size:10px;
-}
-.dt-name{
-  text-align:left!important;
-  font-family:'Inter',sans-serif;
-  font-size:11px;
-  color:#1A2035;
-  font-weight:600;
-  white-space:normal!important;
-  word-break:break-word;
-  line-height:1.3;
-}
-.dt-b{color:#1254a0!important;font-weight:600}
-.dt-g{color:#a01515!important;font-weight:600}
-.dt-ct{color:#0b4a28!important;font-weight:600}
-.dt-sub{
-  background:#dff0e8!important;
-  color:#063e1e!important;
-  font-weight:700;
-  border-left:2px solid #8cc!important;
-  border-right:2px solid #8cc!important;
-}
-.dt-totb{background:#deeeff!important;color:#0d3d7a!important;font-weight:700}
-.dt-totg{background:#fce8e6!important;color:#7a0d0d!important;font-weight:700}
-.dt-gtot{background:#ede7f6!important;color:#3d0d7a!important;font-weight:700}
+        .dt-emis {
+            text-align: center;
+            color: #444;
+            font-size: 10px;
+        }
+        .dt-name {
+            text-align: left !important;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            color: #1A2035;
+            font-weight: 600;
+            white-space: normal !important;
+            word-break: break-word;
+            line-height: 1.3;
+        }
+        .dt-b {
+            color: #1254a0 !important;
+            font-weight: 600;
+        }
+        .dt-g {
+            color: #a01515 !important;
+            font-weight: 600;
+        }
+        .dt-ct {
+            color: #0b4a28 !important;
+            font-weight: 600;
+        }
+        .dt-sub {
+            background: #dff0e8 !important;
+            color: #063e1e !important;
+            font-weight: 700;
+            border-left: 2px solid #8cc !important;
+            border-right: 2px solid #8cc !important;
+        }
+        .dt-totb {
+            background: #deeeff !important;
+            color: #0d3d7a !important;
+            font-weight: 700;
+        }
+        .dt-totg {
+            background: #fce8e6 !important;
+            color: #7a0d0d !important;
+            font-weight: 700;
+        }
+        .dt-gtot {
+            background: #ede7f6 !important;
+            color: #3d0d7a !important;
+            font-weight: 700;
+        }
 
-/* ── footer row ───────────────────────────────────────────────────── */
-.dt-table tfoot tr td{
-  padding:5px 4px;
-  border:1px solid #0b4a28;
-  text-align:center;
-  font-size:10.5px;
-  font-weight:700;
-  white-space:nowrap;
-}
-.dt-f-label{background:#063e1e;color:#fff;font-size:11px;}
-.dt-f-b{background:#1254a0;color:#fff}
-.dt-f-g{background:#a01515;color:#fff}
-.dt-f-sub{background:#2d5a1b;color:#d0f5b0}
-.dt-f-totb{background:#0d3d7a;color:#cce0ff}
-.dt-f-totg{background:#7a0d0d;color:#ffe0e0}
-.dt-f-gtot{background:#3d0d7a;color:#e8d0ff}
+        /* footer row */
+        .dt-table tfoot tr td {
+            padding: 5px 4px;
+            border: 1px solid #0b4a28;
+            text-align: center;
+            font-size: 10.5px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .dt-f-label {
+            background: #063e1e;
+            color: #fff;
+            font-size: 11px;
+        }
+        .dt-f-b {
+            background: #1254a0;
+            color: #fff;
+        }
+        .dt-f-g {
+            background: #a01515;
+            color: #fff;
+        }
+        .dt-f-sub {
+            background: #2d5a1b;
+            color: #d0f5b0;
+        }
+        .dt-f-totb {
+            background: #0d3d7a;
+            color: #cce0ff;
+        }
+        .dt-f-totg {
+            background: #7a0d0d;
+            color: #ffe0e0;
+        }
+        .dt-f-gtot {
+            background: #3d0d7a;
+            color: #e8d0ff;
+        }
 
-/* legend strip */
-.dt-legend{
-  display:flex;gap:12px;align-items:center;padding:8px 16px;
-  border-top:1px solid var(--bd);font-size:11px;flex-wrap:wrap;color:var(--mt)
-}
-.dt-leg-dot{
-  width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle
-}
-</style>
+        /* legend strip */
+        .dt-legend {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 8px 16px;
+            border-top: 1px solid var(--bd);
+            font-size: 11px;
+            flex-wrap: wrap;
+            color: var(--mt);
+        }
+        .dt-leg-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
 
-<div class="top">
-  <div class="top-l">🏫 SIS PESRP · Punjab School Information System
-    <span class="gov">Govt of Punjab</span>
-  </div>
-  <div class="top-r" id="clock"></div>
-</div>
-
-<header>
-  <div class="hdr">
-    <div>
-      <h1>School-wise Enrollment Dashboard</h1>
-      <p class="sub">Source: <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank" style="color:var(--g)">sis.pesrp.edu.pk</a> · Now supporting automated Excel exports for District, Tehsil, and Markaz hierarchies.</p>
-    </div>
-    
-    <div class="hdr-r">
-      <span id="ts">Loading…</span>
-      <div class="contact-mini">
-        <div>
-            <span class="mini-name">Muhammad Waqas</span> 
-            <span class="mini-desig">(Assistant Education Officer)</span>
+    <div class="top">
+        <div class="top-l">🏫 SIS PESRP · Punjab School Information System
+            <span class="gov">Govt of Punjab</span>
         </div>
-        <div class="mini-icons">
-            <a href="https://wa.me/923047392281" target="_blank"><i class="fa-brands fa-whatsapp"></i> 0304-7392281</a>
-            <a href="https://wa.me/923466507640" target="_blank"><i class="fa-brands fa-whatsapp"></i> 0346-6507640</a>
-            <a href="https://whatsapp.com/channel/0029VbCvSD6EwEjsKWnrzm1B" target="_blank" title="Join WhatsApp Channel"><i class="fa-brands fa-whatsapp"></i> 📢</a>
+        <div class="top-r" id="clock"></div>
+    </div>
+
+    <header>
+        <div class="hdr">
+            <div>
+                <h1>School-wise Enrollment Dashboard</h1>
+                <p class="sub">Source: <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank" style="color:var(--g)">sis.pesrp.edu.pk</a> · Now supporting automated Excel exports for District, Tehsil, and Markaz hierarchies.</p>
+            </div>
+
+            <div class="hdr-r">
+                <span id="ts">Loading…</span>
+                <div class="contact-mini">
+                    <div>
+                        <span class="mini-name">Muhammad Waqas</span>
+                        <span class="mini-desig">(Assistant Education Officer)</span>
+                    </div>
+                    <div class="mini-icons">
+                        <a href="https://wa.me/923047392281" target="_blank"><i class="fa-brands fa-whatsapp"></i> 0304-7392281</a>
+                        <a href="https://wa.me/923466507640" target="_blank"><i class="fa-brands fa-whatsapp"></i> 0346-6507640</a>
+                        <a href="https://whatsapp.com/channel/0029VbCvSD6EwEjsKWnrzm1B" target="_blank" title="Join WhatsApp Channel"><i class="fa-brands fa-whatsapp"></i> 📢</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</header>
+    </header>
 
-<main>
-  <div class="cards">
-    <div class="card">   <div class="cl">Total Schools</div><div class="cv" id="c0">—</div><div class="cs" id="cs0">Across Punjab</div></div>
-    <div class="card b"> <div class="cl">Total Male</div>   <div class="cv" id="c1">—</div><div class="cs">Male students</div></div>
-    <div class="card a"> <div class="cl">Total Female</div> <div class="cv" id="c2">—</div><div class="cs">Female students</div></div>
-    <div class="card r"> <div class="cl">Total Students</div><div class="cv" id="c3">—</div><div class="cs">Male + Female</div></div>
-  </div>
+    <main>
+        <div class="cards">
+            <div class="card">   <div class="cl">Total Schools</div><div class="cv" id="c0">—</div><div class="cs" id="cs0">Across Punjab</div></div>
+            <div class="card b"> <div class="cl">Total Male</div>   <div class="cv" id="c1">—</div><div class="cs">Male students</div></div>
+            <div class="card a"> <div class="cl">Total Female</div> <div class="cv" id="c2">—</div><div class="cs">Female students</div></div>
+            <div class="card r"> <div class="cl">Total Students</div><div class="cv" id="c3">—</div><div class="cs">Male + Female</div></div>
+        </div>
 
-  <div class="ctrl">
-    <div class="cg">
-      <div class="cl2">🗺 District</div>
-      <select id="sd" onchange="onDistrictChange()"><option value="">Select a district…</option></select>
-    </div>
-    <div class="cg">
-      <div class="cl2">📍 Tehsil</div>
-      <select id="st" onchange="onTehsilChange()" disabled><option value="">All Tehsils</option></select>
-    </div>
-    
-    <!-- WING FILTER -->
-    <div class="cg">
-      <div class="cl2">🏫 Wing</div>
-      <select id="sg" onchange="onGenderChange()">
-        <option value="">All Wings</option>
-        <option value="M-EE">M-EE</option>
-        <option value="W-EE">W-EE</option>
-        <option value="SE">SE</option>
-      </select>
-    </div>
+        <div class="ctrl">
+            <div class="cg">
+                <div class="cl2">🗺 District</div>
+                <select id="sd" onchange="onDistrictChange()"><option value="">Select a district…</option></select>
+            </div>
+            <div class="cg">
+                <div class="cl2">📍 Tehsil</div>
+                <select id="st" onchange="onTehsilChange()" disabled><option value="">All Tehsils</option></select>
+            </div>
 
-    <div class="cg">
-      <div class="cl2">🏘 Markaz</div>
-      <select id="sm" onchange="onMarkazChange()" disabled><option value="">All Markaz</option></select>
-    </div>
-    <div class="cg">
-      <div class="cl2">📊 Class Columns</div>
-      <select id="vm" onchange="onViewModeChange()" disabled>
-        <option value="bg">Boys / Girls per Class</option>
-        <option value="total">Class Total Only</option>
-      </select>
-    </div>
-    <button class="btn" id="btnExport" onclick="exportExcel()" disabled>⬇ Export Excel</button>
-  </div>
+            <!-- WING FILTER -->
+            <div class="cg">
+                <div class="cl2">🏫 Wing</div>
+                <select id="sg" onchange="onGenderChange()">
+                    <option value="">All Wings</option>
+                    <option value="M-EE">M-EE</option>
+                    <option value="W-EE">W-EE</option>
+                    <option value="SE">SE</option>
+                </select>
+            </div>
 
-  <div class="tw">
-    <div class="th2">
-      <div class="tt" id="tt">📋 Enrollment Records</div>
-      <div class="tc" id="rc">Loading districts…</div>
-    </div>
-    <div id="body"><div class="center"><div class="spin"></div>Loading district list…</div></div>
-  </div>
-</main>
+            <div class="cg">
+                <div class="cl2">🏘 Markaz</div>
+                <select id="sm" onchange="onMarkazChange()" disabled><option value="">All Markaz</option></select>
+            </div>
+            <div class="cg">
+                <div class="cl2">📊 Class Columns</div>
+                <select id="vm" onchange="onViewModeChange()" disabled>
+                    <option value="bg">Boys / Girls per Class</option>
+                    <option value="total">Class Total Only</option>
+                </select>
+            </div>
+            <button class="btn" id="btnExport" onclick="exportExcel()" disabled>⬇ Export Excel</button>
+        </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-/* ═══════════════════════════════════════════════════════════════════
-   STATE
-   ═══════════════════════════════════════════════════════════════════ */
-let INDEX = null, ALL = [], FLT = [];
-let appliedTehsil = '', appliedMarkaz = '', appliedGender = '';
-let VIEW_MODE = 'bg';
+        <div class="tw">
+            <div class="th2">
+                <div class="tt" id="tt">📋 Enrollment Records</div>
+                <div class="tc" id="rc">Loading districts…</div>
+            </div>
+            <div id="body"><div class="center"><div class="spin"></div>Loading district list…</div></div>
+        </div>
+    </main>
 
-/* ═══════════════════════════════════════════════════════════════════
-   UTILITIES
-   ═══════════════════════════════════════════════════════════════════ */
-setInterval(() => {
-  document.getElementById('clock').textContent = new Date().toUTCString().replace('GMT', 'UTC');
-}, 1000);
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        /* ═══════════════════════════════════════════════════════════════════
+           STATE
+           ═══════════════════════════════════════════════════════════════════ */
+        let INDEX = null,
+            ALL = [],
+            FLT = [];
+        let appliedTehsil = '',
+            appliedMarkaz = '',
+            appliedGender = '';
+        let VIEW_MODE = 'bg';
 
-const fmt = n => Number(n || 0).toLocaleString();
-const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const fdt = iso => {
-  try {
-    return new Date(iso).toLocaleString('en-PK', {
-      timeZone: 'Asia/Karachi', day: '2-digit', month: 'short',
-      year: 'numeric', hour: '2-digit', minute: '2-digit'
-    }) + ' PKT';
-  } catch { return iso; }
-};
+        /* ═══════════════════════════════════════════════════════════════════
+           UTILITIES
+           ═══════════════════════════════════════════════════════════════════ */
+        setInterval(() => {
+            document.getElementById('clock').textContent = new Date().toUTCString().replace('GMT', 'UTC');
+        }, 1000);
 
-function setCards(schools, male, female) {
-  document.getElementById('c0').textContent = fmt(schools);
-  document.getElementById('c1').textContent = fmt(male);
-  document.getElementById('c2').textContent = fmt(female);
-  document.getElementById('c3').textContent = fmt((male || 0) + (female || 0));
-}
+        const fmt = n => Number(n || 0).toLocaleString();
+        const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const fdt = iso => {
+            try {
+                return new Date(iso).toLocaleString('en-PK', {
+                    timeZone: 'Asia/Karachi',
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) + ' PKT';
+            } catch { return iso; }
+        };
 
-/* ═══════════════════════════════════════════════════════════════════
-   GRADE ORDERING & SECTION MAPPING
-   ═══════════════════════════════════════════════════════════════════ */
-function gradeIdx(name) {
-  const n = (name || '').toLowerCase().trim();
-  if (/ecce|ece/.test(n))                                       return 0;
-  if (/nursery|kachi|katchi|prep\b|pre.?primary|pre.?school/.test(n)) return 1;
-  if (/\bone\b|grade\s*1\b|class\s*1\b|^1$/.test(n))            return 2;
-  if (/\btwo\b|grade\s*2\b|class\s*2\b|^2$/.test(n))            return 3;
-  if (/\bthree\b|grade\s*3\b|class\s*3\b|^3$/.test(n))          return 4;
-  if (/\bfour\b|grade\s*4\b|class\s*4\b|^4$/.test(n))           return 5;
-  if (/\bfive\b|grade\s*5\b|class\s*5\b|^5$/.test(n))           return 6;
-  if (/\bsix\b|grade\s*6\b|class\s*6\b|^6$/.test(n))            return 7;
-  if (/\bseven\b|grade\s*7\b|class\s*7\b|^7$/.test(n))          return 8;
-  if (/\beight\b|grade\s*8\b|class\s*8\b|^8$/.test(n))          return 9;
-  if (/\bnine\b|grade\s*9\b|class\s*9\b|^9$/.test(n))           return 10;
-  if (/\bten\b|grade\s*10\b|class\s*10\b|^10$/.test(n))         return 11;
-  if (/\beleven\b|grade\s*11\b|class\s*11\b|^11$/.test(n))      return 12;
-  if (/\btwelve\b|grade\s*12\b|class\s*12\b|^12$/.test(n))      return 13;
-  return 999;
-}
-
-function gradeSectionIdx(gradeName) {
-  const i = gradeIdx(gradeName);
-  if (i <= 6)  return 0; // PRIMARY  (ECE – 5)
-  if (i <= 9)  return 1; // MIDDLE   (6 – 8)
-  if (i <= 11) return 2; // HIGH     (9 – 10)
-  if (i <= 13) return 3; // HIGHER SECONDARY (11 – 12)
-  return 4;
-}
-
-const SEC_LABELS     = ['PRIMARY PORTION', 'MIDDLE SECTION', 'HIGH SECTION', 'HIGHER SECONDARY', 'OTHER'];
-const SEC_SUB_LABELS = ['TOTAL (P)', 'TOTAL (M)', 'TOTAL (H)', 'TOTAL (HS)', 'TOTAL (O)'];
-
-function gradeVal(school, gradeName, field) {
-  const g = (school.grades || []).find(g => g.grade_name === gradeName);
-  if (!g) return 0;
-  if (field === 'b')
-    return +(g.boys || g.total_boys || g.male || g.male_count || g.male_students || 0);
-  return +(g.girls || g.total_girls || g.female || g.female_count || g.female_students || 0);
-}
-
-function buildSections(grades) {
-  const buckets = SEC_LABELS.map(() => []);
-  grades.forEach(g => buckets[gradeSectionIdx(g)].push(g));
-  return buckets
-    .map((gs, i) => ({ label: SEC_LABELS[i], subLabel: SEC_SUB_LABELS[i], grades: gs }))
-    .filter(s => s.grades.length > 0);
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   STEP 1 — load index.json
-   ═══════════════════════════════════════════════════════════════════ */
-fetch(`data/index.json?t=${Date.now()}`)
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(d => initIndex(d))
-  .catch(err => {
-    document.getElementById('body').innerHTML = `
-      <div class="err">⚠ <strong>Cannot load data/index.json</strong></div>`;
-    document.getElementById('rc').textContent = '0 rows';
-  });
-
-function initIndex(d) {
-  INDEX = d;
-  document.getElementById('ts').textContent = 'Scraped: ' + fdt(d.scraped_at);
-  const s = d.summary || {};
-  setCards(s.total_schools, s.total_boys, s.total_girls);
-  document.getElementById('cs0').textContent = `Across ${fmt(s.total_districts)} districts`;
-
-  const districts = d.districts || [];
-  const sel = document.getElementById('sd');
-  sel.innerHTML = '<option value="">Select a district…</option>';
-
-  if (!districts.length) {
-    document.getElementById('body').innerHTML = `<div class="warn"><strong>No district data yet.</strong></div>`;
-    return;
-  }
-
-  districts.forEach(e => {
-    const o = document.createElement('option');
-    o.value = e.slug;
-    o.textContent = `${e.district} (${fmt(e.total_schools)} schools)`;
-    o.dataset.file = e.file;
-    sel.appendChild(o);
-  });
-
-  document.getElementById('body').innerHTML = `<div class="center">👆 Select a district above to view data.</div>`;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   STEP 2 — Handlers
-   ═══════════════════════════════════════════════════════════════════ */
-function onDistrictChange() {
-  const sel  = document.getElementById('sd');
-  const opt  = sel.options[sel.selectedIndex];
-  const slug = sel.value;
-
-  if (!slug) {
-    ALL = []; FLT = [];
-    setControlsEnabled(false);
-    const s = INDEX?.summary || {};
-    setCards(s.total_schools, s.total_boys, s.total_girls);
-    document.getElementById('cs0').textContent = `Across ${fmt(s.total_districts)} districts`;
-    document.getElementById('tt').textContent = '📋 Enrollment Records';
-    document.getElementById('body').innerHTML = `<div class="center">👆 Select a district above to view data.</div>`;
-    return;
-  }
-
-  const file = opt.dataset.file || `data/${slug}.json`;
-  document.getElementById('body').innerHTML = `<div class="center"><div class="spin"></div>Loading ${esc(opt.textContent)}…</div>`;
-  setControlsEnabled(false);
-
-  fetch(`${file}?t=${Date.now()}`)
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(d => initDistrict(d))
-    .catch(err => {
-      document.getElementById('body').innerHTML = `<div class="err">⚠ <strong>Cannot load ${esc(file)}</strong></div>`;
-    });
-}
-
-function initDistrict(d) {
-  document.getElementById('ts').textContent = `${d.district} updated: ${fdt(d.scraped_at)}`;
-  document.getElementById('tt').textContent = `📋 ${d.district} — Enrollment Records`;
-
-  ALL = (d.schools || []).map(r => ({
-    ...r,
-    total_students: r.total_school_students || 0,
-    boys:           r.total_school_boys || 0,
-    girls:          r.total_school_girls || 0,
-  }));
-
-  appliedTehsil = ''; appliedMarkaz = ''; appliedGender = '';
-  document.getElementById('st').value = '';
-  document.getElementById('sm').value = '';
-  document.getElementById('sg').value = '';
-
-  const tehs = [...new Set(ALL.map(r => r.tehsil || ''))].filter(Boolean).sort();
-  const tSel = document.getElementById('st');
-  tSel.innerHTML = '<option value="">All Tehsils</option>';
-  tehs.forEach(v => {
-    const o = document.createElement('option');
-    o.value = v; o.textContent = v; tSel.appendChild(o);
-  });
-
-  populateMarkaz('');
-  setControlsEnabled(true);
-  recompute();
-}
-
-function onTehsilChange() { 
-  appliedTehsil = document.getElementById('st').value;
-  appliedMarkaz = ''; // reset markaz automatically
-  populateMarkaz(appliedTehsil);
-  recompute(); 
-}
-
-function onGenderChange() {
-  appliedGender = document.getElementById('sg').value;
-  appliedMarkaz = ''; 
-  populateMarkaz(appliedTehsil);
-  recompute();
-}
-
-function onMarkazChange() {
-  appliedMarkaz = document.getElementById('sm').value;
-  recompute();
-}
-
-function onViewModeChange() {
-  VIEW_MODE = document.getElementById('vm').value;
-  recompute();
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   PRECISE WING CLASSIFICATION ENGINE
-   ═══════════════════════════════════════════════════════════════════ */
-function getSchoolWing(r) {
-  const name = String(r.school_name || '').toUpperCase();
-  const markaz = String(r.markaz || '').toUpperCase();
-
-  // 1. Check if Secondary (SE)
-  const isSecByName = /\b(GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(name);
-  const hasHighClasses = (r.grades || []).some(g => {
-    const i = gradeIdx(g.grade_name);
-    return i >= 10 && i <= 13;
-  });
-  if (isSecByName || hasHighClasses) return 'SE';
-
-  // 2. Check explicitly by naming cues or markaz for M-EE / W-EE
-  const isMaleName = /\b(GPS|GES|GGIC|GGES)?\b/.test(name) && !/\b(GGES|GGHS|GHS (W)|G Girls)\b/.test(name);
-  const isFemaleName = /\b(GGES|GGHS|G Girls|FEMALE)\b/.test(name);
-
-  if (/\bmale\b/.test(markaz)) return 'M-EE';
-  if (/\bfemale\b/.test(markaz)) return 'W-EE';
-
-  // Fallback heuristics on names/metrics
-  if (isFemaleName) return 'W-EE';
-  if ((r.girls || 0) > (r.boys || 0) && (r.boys || 0) === 0) return 'W-EE';
-  
-  return 'M-EE'; // Default elemental fallback
-}
-
-function populateMarkaz(tehsil) {
-  const mSel = document.getElementById('sm');
-  
-  if (appliedGender === 'SE') {
-    mSel.innerHTML = '<option value="">SECONDARY WING</option>';
-    appliedMarkaz = '';
-    mSel.disabled = true;
-    return;
-  }
-
-  let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
-  
-  if (appliedGender) {
-    pool = pool.filter(r => getSchoolWing(r) === appliedGender);
-  }
-
-  let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
-
-  const currentVal = mSel.value;
-  mSel.innerHTML = '<option value="">All Markaz</option>';
-  items.forEach(v => {
-    const o = document.createElement('option');
-    o.value = v; o.textContent = v; mSel.appendChild(o);
-  });
-
-  if (currentVal && !items.includes(currentVal)) {
-      appliedMarkaz = '';
-  } else if (currentVal) {
-      appliedMarkaz = currentVal;
-      mSel.value = currentVal;
-  }
-  
-  mSel.disabled = !tehsil;
-}
-
-function setControlsEnabled(on) {
-  ['st', 'sg', 'vm', 'btnExport'].forEach(id => {
-    document.getElementById(id).disabled = !on;
-  });
-  if (!on) document.getElementById('sm').disabled = true;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   RECOMPUTE & AGGREGATE
-   ═══════════════════════════════════════════════════════════════════ */
-function emisCompare(a, b) {
-  const ae = a.emis_code, be = b.emis_code;
-  const an = parseInt(String(ae ?? '').replace(/\D/g, ''), 10);
-  const bn = parseInt(String(be ?? '').replace(/\D/g, ''), 10);
-  const aHas = !isNaN(an) && String(ae ?? '').trim() !== '';
-  const bHas = !isNaN(bn) && String(be ?? '').trim() !== '';
-  if (aHas && bHas) return an - bn;
-  if (aHas) return -1;
-  if (bHas) return 1;
-  return String(ae ?? '').localeCompare(String(be ?? ''));
-}
-
-function getAggregatedData(level) {
-  const map = new Map();
-  
-  FLT.forEach(r => {
-    const key = level === 'tehsil' ? (r.tehsil || 'Unknown Tehsil') : (r.markaz || 'Unknown Markaz');
-    
-    if (!map.has(key)) {
-      map.set(key, {
-        is_aggregate: true,
-        emis_code: '-',
-        school_name: key,
-        boys: 0,
-        girls: 0,
-        total_students: 0,
-        gradesMap: {} 
-      });
-    }
-    
-    const agg = map.get(key);
-    agg.boys += (r.boys || 0);
-    agg.girls += (r.girls || 0);
-    agg.total_students += (r.total_students || 0);
-    
-    (r.grades || []).forEach(g => {
-      if (g.grade_name && g.grade_name !== 'No Data') {
-        if (!agg.gradesMap[g.grade_name]) {
-          agg.gradesMap[g.grade_name] = { grade_name: g.grade_name, boys: 0, girls: 0 };
+        function setCards(schools, male, female) {
+            document.getElementById('c0').textContent = fmt(schools);
+            document.getElementById('c1').textContent = fmt(male);
+            document.getElementById('c2').textContent = fmt(female);
+            document.getElementById('c3').textContent = fmt((male || 0) + (female || 0));
         }
-        const b = gradeVal(r, g.grade_name, 'b'); 
-        const gv = gradeVal(r, g.grade_name, 'g');
-        
-        agg.gradesMap[g.grade_name].boys += b;
-        agg.gradesMap[g.grade_name].girls += gv;
-      }
-    });
-  });
 
-  const result = Array.from(map.values()).map(agg => {
-    agg.grades = Object.values(agg.gradesMap);
-    delete agg.gradesMap;
-    return agg;
-  });
-
-  result.sort((a, b) => a.school_name.localeCompare(b.school_name));
-  return result;
-}
-
-function recompute() {
-  FLT = ALL.filter(r => {
-    if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
-    if (appliedMarkaz && r.markaz !== appliedMarkaz && appliedGender !== 'SE') return false;
-    
-    if (appliedGender && getSchoolWing(r) !== appliedGender) return false;
-
-    return true;
-  });
-
-  drawDetailed();
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   DETAILED TABLE RENDERER
-   ═══════════════════════════════════════════════════════════════════ */
-function drawDetailed() {
-  if (!FLT.length) {
-    document.getElementById('body').innerHTML = '<div class="center">No schools match your filters.</div>';
-    return;
-  }
-
-  let displayData;
-  let rowType;
-
-  if (!appliedTehsil) {
-    displayData = getAggregatedData('tehsil');
-    rowType = 'Tehsil';
-  } else if (!appliedMarkaz && appliedGender !== 'SE') {
-    displayData = getAggregatedData('markaz');
-    rowType = 'Markaz';
-  } else {
-    displayData = [...FLT].sort(emisCompare);
-    rowType = 'School';
-  }
-
-  const gradeSet = new Set();
-  FLT.forEach(r => (r.grades || []).forEach(g => {
-    if (g.grade_name && g.grade_name !== 'No Data') gradeSet.add(g.grade_name);
-  }));
-
-  if (!gradeSet.size) {
-    document.getElementById('body').innerHTML = '<div class="center">⚠ No grade data found in the filtered schools.</div>';
-    return;
-  }
-
-  const allGrades    = [...gradeSet].sort((a, b) => gradeIdx(a) - gradeIdx(b));
-  const sections     = buildSections(allGrades);
-  const isTotal      = VIEW_MODE === 'total';   
-  const perGradeCols = isTotal ? 1 : 2;         
-  const headerRowSpan = isTotal ? 2 : 3;        
-
-  let colgroup = '<colgroup>';
-  colgroup += `<col style="width:65px">`;
-  colgroup += `<col style="width:170px">`;
-  sections.forEach(sec => {
-    sec.grades.forEach(() => {
-      if (isTotal) colgroup += `<col style="width:40px">`;
-      else         colgroup += `<col style="width:30px"><col style="width:30px">`;
-    });
-    colgroup += `<col style="width:38px">`;
-  });
-  colgroup += `<col style="width:42px"><col style="width:42px"><col style="width:48px">`;
-  colgroup += '</colgroup>';
-
-  let h1 = `
-    <th rowspan="${headerRowSpan}" class="dt-h-fix">EMIS CODE ▲</th>
-    <th rowspan="${headerRowSpan}" class="dt-h-fix" style="text-align:left;padding-left:6px">NAME OF ${rowType.toUpperCase()}</th>`;
-  sections.forEach(sec => {
-    const span = sec.grades.length * perGradeCols + 1;
-    h1 += `<th colspan="${span}" class="dt-h-sec">${esc(sec.label)}</th>`;
-  });
-  h1 += `
-    <th rowspan="${headerRowSpan}" class="dt-h-totb">TOTAL<br>BOYS</th>
-    <th rowspan="${headerRowSpan}" class="dt-h-totg">TOTAL<br>GIRLS</th>
-    <th rowspan="${headerRowSpan}" class="dt-h-gtot">GRAND<br>TOTAL</th>`;
-
-  let h2 = '';
-  sections.forEach(sec => {
-    sec.grades.forEach(g => {
-      h2 += isTotal
-        ? `<th class="dt-h-grade">${esc(g)}</th>`
-        : `<th colspan="2" class="dt-h-grade">${esc(g)}</th>`;
-    });
-    h2 += `<th rowspan="${isTotal ? 1 : 2}" class="dt-h-sub">${esc(sec.subLabel)}</th>`;
-  });
-
-  let h3 = '';
-  if (!isTotal) {
-    sections.forEach(sec => {
-      sec.grades.forEach(() => {
-        h3 += `<th class="dt-h-bg">B</th><th class="dt-h-bg">G</th>`;
-      });
-    });
-  }
-
-  const gradeTot = {};
-  allGrades.forEach(g => { gradeTot[g] = { b: 0, g: 0 }; });
-  const secTot = sections.map(() => 0);
-  let grandB = 0, grandG = 0;
-
-  const rows = displayData.map(r => {
-    let cells = `<td class="dt-emis">${esc(r.emis_code || '')}</td>
-                 <td class="dt-name" title="${esc(r.school_name || '')}">${esc(r.school_name || '')}</td>`;
-
-    sections.forEach((sec, si) => {
-      let secSum = 0;
-      sec.grades.forEach(g => {
-        const b  = gradeVal(r, g, 'b');
-        const gv = gradeVal(r, g, 'g');
-        if (isTotal) {
-          const t = b + gv;
-          cells += `<td class="dt-ct">${t || ''}</td>`;
-        } else {
-          cells += `<td class="dt-b">${b  || ''}</td>`;
-          cells += `<td class="dt-g">${gv || ''}</td>`;
+        /* ═══════════════════════════════════════════════════════════════════
+           GRADE ORDERING & SECTION MAPPING
+           ═══════════════════════════════════════════════════════════════════ */
+        function gradeIdx(name) {
+            const n = (name || '').toLowerCase().trim();
+            if (/ecce|ece/.test(n)) return 0;
+            if (/nursery|kachi|katchi|prep\b|pre.?primary|pre.?school/.test(n)) return 1;
+            if (/\bone\b|grade\s*1\b|class\s*1\b|^1$/.test(n)) return 2;
+            if (/\btwo\b|grade\s*2\b|class\s*2\b|^2$/.test(n)) return 3;
+            if (/\bthree\b|grade\s*3\b|class\s*3\b|^3$/.test(n)) return 4;
+            if (/\bfour\b|grade\s*4\b|class\s*4\b|^4$/.test(n)) return 5;
+            if (/\bfive\b|grade\s*5\b|class\s*5\b|^5$/.test(n)) return 6;
+            if (/\bsix\b|grade\s*6\b|class\s*6\b|^6$/.test(n)) return 7;
+            if (/\bseven\b|grade\s*7\b|class\s*7\b|^7$/.test(n)) return 8;
+            if (/\beight\b|grade\s*8\b|class\s*8\b|^8$/.test(n)) return 9;
+            if (/\bnine\b|grade\s*9\b|class\s*9\b|^9$/.test(n)) return 10;
+            if (/\bten\b|grade\s*10\b|class\s*10\b|^10$/.test(n)) return 11;
+            if (/\beleven\b|grade\s*11\b|class\s*11\b|^11$/.test(n)) return 12;
+            if (/\btwelve\b|grade\s*12\b|class\s*12\b|^12$/.test(n)) return 13;
+            return 999;
         }
-        secSum += b + gv;
-        gradeTot[g].b += b;
-        gradeTot[g].g += gv;
-      });
-      secTot[si] += secSum;
-      cells += `<td class="dt-sub">${secSum || ''}</td>`;
-    });
 
-    const rowB = r.boys || 0;
-    const rowG = r.girls || 0;
-    grandB += rowB;
-    grandG += rowG;
-    cells += `<td class="dt-totb">${fmt(rowB)}</td>`;
-    cells += `<td class="dt-totg">${fmt(rowG)}</td>`;
-    cells += `<td class="dt-gtot">${fmt(rowB + rowG)}</td>`;
-    return `<tr>${cells}</tr>`;
-  }).join('');
+        function gradeSectionIdx(gradeName) {
+            const i = gradeIdx(gradeName);
+            if (i <= 6) return 0; // PRIMARY  (ECE – 5)
+            if (i <= 9) return 1; // MIDDLE   (6 – 8)
+            if (i <= 11) return 2; // HIGH     (9 – 10)
+            if (i <= 13) return 3; // HIGHER SECONDARY (11 – 12)
+            return 4;
+        }
 
-  let foot = `<td colspan="2" class="dt-f-label">GRAND TOTAL</td>`;
-  sections.forEach((sec, si) => {
-    sec.grades.forEach(g => {
-      if (isTotal) {
-        foot += `<td class="dt-f-b">${fmt(gradeTot[g].b + gradeTot[g].g)}</td>`;
-      } else {
-        foot += `<td class="dt-f-b">${fmt(gradeTot[g].b)}</td>`;
-        foot += `<td class="dt-f-g">${fmt(gradeTot[g].g)}</td>`;
-      }
-    });
-    foot += `<td class="dt-f-sub">${fmt(secTot[si])}</td>`;
-  });
-  foot += `<td class="dt-f-totb">${fmt(grandB)}</td>`;
-  foot += `<td class="dt-f-totg">${fmt(grandG)}</td>`;
-  foot += `<td class="dt-f-gtot">${fmt(grandB + grandG)}</td>`;
+        const SEC_LABELS = ['PRIMARY PORTION', 'MIDDLE SECTION', 'HIGH SECTION', 'HIGHER SECONDARY', 'OTHER'];
+        const SEC_SUB_LABELS = ['TOTAL (P)', 'TOTAL (M)', 'TOTAL (H)', 'TOTAL (HS)', 'TOTAL (O)'];
 
-  const legend = `
-    <div class="dt-legend">
-      ${isTotal ? '' : `<span><span class="dt-leg-dot" style="background:#1254a0"></span>Boys (B)</span>
-      <span><span class="dt-leg-dot" style="background:#a01515"></span>Girls (G)</span>`}
-      ${isTotal ? `<span><span class="dt-leg-dot" style="background:#0b4a28"></span>Class Total</span>` : ''}
-      <span><span class="dt-leg-dot" style="background:#2d5a1b"></span>Section Total</span>
-      <span><span class="dt-leg-dot" style="background:#0d3d7a"></span>Total Boys</span>
-      <span><span class="dt-leg-dot" style="background:#7a0d0d"></span>Total Girls</span>
-      <span><span class="dt-leg-dot" style="background:#3d0d7a"></span>Grand Total</span>
-    </div>`;
+        function gradeVal(school, gradeName, field) {
+            const g = (school.grades || []).find(g => g.grade_name === gradeName);
+            if (!g) return 0;
+            if (field === 'b')
+                return +(g.boys || g.total_boys || g.male || g.male_count || g.male_students || 0);
+            return +(g.girls || g.total_girls || g.female || g.female_count || g.female_students || 0);
+        }
 
-  document.getElementById('body').innerHTML = `
-    <div class="dt-wrap">
-      <table class="dt-table">
-        ${colgroup}
-        <thead>
-          <tr>${h1}</tr>
-          <tr>${h2}</tr>
-          ${isTotal ? '' : `<tr>${h3}</tr>`}
-        </thead>
-        <tbody>${rows}</tbody>
-        <tfoot><tr>${foot}</tr></tfoot>
-      </table>
-    </div>
-    ${legend}`;
+        function buildSections(grades) {
+            const buckets = SEC_LABELS.map(() => []);
+            grades.forEach(g => buckets[gradeSectionIdx(g)].push(g));
+            return buckets
+                .map((gs, i) => ({ label: SEC_LABELS[i], subLabel: SEC_SUB_LABELS[i], grades: gs }))
+                .filter(s => s.grades.length > 0);
+        }
 
-  document.getElementById('rc').textContent =
-    `${fmt(displayData.length)} ${rowType.toLowerCase()}${displayData.length !== 1 ? 's' : ''} shown · ${allGrades.length} grades mapped`;
+        /* ═══════════════════════════════════════════════════════════════════
+           STEP 1 — load index.json
+           ═══════════════════════════════════════════════════════════════════ */
+        fetch(`data/index.json?t=${Date.now()}`)
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(d => initIndex(d))
+            .catch(err => {
+                document.getElementById('body').innerHTML = `
+                      <div class="err">⚠ <strong>Cannot load data/index.json</strong></div>`;
+                document.getElementById('rc').textContent = '0 rows';
+            });
 
-  setCards(FLT.length, grandB, grandG);
+        function initIndex(d) {
+            INDEX = d;
+            document.getElementById('ts').textContent = 'Scraped: ' + fdt(d.scraped_at);
+            const s = d.summary || {};
+            setCards(s.total_schools, s.total_boys, s.total_girls);
+            document.getElementById('cs0').textContent = `Across ${fmt(s.total_districts)} districts`;
 
-  window._detailExport = { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal };
-}
+            const districts = d.districts || [];
+            const sel = document.getElementById('sd');
+            sel.innerHTML = '<option value="">Select a district…</option>';
 
-/* ═══════════════════════════════════════════════════════════════════
-   EXCEL EXPORT
-   ═══════════════════════════════════════════════════════════════════ */
-function exportExcel() {
-  if (!FLT.length || !window._detailExport) {
-    alert('No rows to export — load a district first.');
-    return;
-  }
+            if (!districts.length) {
+                document.getElementById('body').innerHTML = `<div class="warn"><strong>No district data yet.</strong></div>`;
+                return;
+            }
 
-  const sel  = document.getElementById('sd');
-  const dist = sel.options[sel.selectedIndex]?.textContent || 'district';
-  const { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal } = window._detailExport;
-  const perGradeCols = isTotal ? 1 : 2;
+            districts.forEach(e => {
+                const o = document.createElement('option');
+                o.value = e.slug;
+                o.textContent = `${e.district} (${fmt(e.total_schools)} schools)`;
+                o.dataset.file = e.file;
+                sel.appendChild(o);
+            });
 
-  const totalCols      = 2 + sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0) + 3;
-  const emptyRow       = () => new Array(totalCols).fill('');
-  const lastHeaderRow  = isTotal ? 1 : 2; 
+            document.getElementById('body').innerHTML = `<div class="center">👆 Select a district above to view data.</div>`;
+        }
 
-  const aoa    = [];
-  const merges = [];
+        /* ═══════════════════════════════════════════════════════════════════
+           STEP 2 — Handlers
+           ═══════════════════════════════════════════════════════════════════ */
+        function onDistrictChange() {
+            const sel = document.getElementById('sd');
+            const opt = sel.options[sel.selectedIndex];
+            const slug = sel.value;
 
-  const r0 = emptyRow();
-  r0[0] = 'EMIS CODE';                        merges.push({ s:{r:0,c:0}, e:{r:lastHeaderRow,c:0} });
-  r0[1] = `NAME OF ${rowType.toUpperCase()}`; merges.push({ s:{r:0,c:1}, e:{r:lastHeaderRow,c:1} });
+            if (!slug) {
+                ALL = [];
+                FLT = [];
+                setControlsEnabled(false);
+                const s = INDEX?.summary || {};
+                setCards(s.total_schools, s.total_boys, s.total_girls);
+                document.getElementById('cs0').textContent = `Across ${fmt(s.total_districts)} districts`;
+                document.getElementById('tt').textContent = '📋 Enrollment Records';
+                document.getElementById('body').innerHTML = `<div class="center">👆 Select a district above to view data.</div>`;
+                return;
+            }
 
-  let c = 2;
-  sections.forEach(sec => {
-    const secStart = c;
-    sec.grades.forEach(() => { c += perGradeCols; });
-    c++; 
-    merges.push({ s:{r:0,c:secStart}, e:{r:0,c:c-1} }); 
-  });
-  
-  const totBCol = c, totGCol = c + 1, gTotCol = c + 2;
-  r0[totBCol] = 'TOTAL BOYS';   merges.push({ s:{r:0,c:totBCol}, e:{r:lastHeaderRow,c:totBCol} });
-  r0[totGCol] = 'TOTAL GIRLS';  merges.push({ s:{r:0,c:totGCol}, e:{r:lastHeaderRow,c:totGCol} });
-  r0[gTotCol] = 'GRAND TOTAL';  merges.push({ s:{r:0,c:gTotCol}, e:{r:lastHeaderRow,c:gTotCol} });
+            const file = opt.dataset.file || `data/${slug}.json`;
+            document.getElementById('body').innerHTML = `<div class="center"><div class="spin"></div>Loading ${esc(opt.textContent)}…</div>`;
+            setControlsEnabled(false);
 
-  const r1 = emptyRow();
-  c = 2;
-  sections.forEach(sec => {
-    sec.grades.forEach(g => {
-      r1[c] = g;
-      if (!isTotal) merges.push({ s:{r:1,c:c}, e:{r:1,c:c+1} }); 
-      c += perGradeCols;
-    });
-    r1[c] = sec.subLabel;
-    if (!isTotal) merges.push({ s:{r:1,c:c}, e:{r:2,c:c} }); 
-    c++;
-  });
+            fetch(`${file}?t=${Date.now()}`)
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(d => initDistrict(d))
+                .catch(err => {
+                    document.getElementById('body').innerHTML = `<div class="err">⚠ <strong>Cannot load ${esc(file)}</strong></div>`;
+                });
+        }
 
-  aoa.push(r0, r1);
+        function initDistrict(d) {
+            document.getElementById('ts').textContent = `${d.district} updated: ${fdt(d.scraped_at)}`;
+            document.getElementById('tt').textContent = `📋 ${d.district} — Enrollment Records`;
 
-  if (!isTotal) {
-    const r2 = emptyRow();
-    c = 2;
-    sections.forEach(sec => {
-      sec.grades.forEach(() => {
-        r2[c] = 'Boys'; r2[c + 1] = 'Girls';
-        c += 2;
-      });
-      c++; 
-    });
-    aoa.push(r2);
-  }
+            ALL = (d.schools || []).map(r => ({
+                ...r,
+                total_students: r.total_school_students || 0,
+                boys: r.total_school_boys || 0,
+                girls: r.total_school_girls || 0,
+            }));
 
-  displayData.forEach(r => {
-    const row = [r.emis_code || '', r.school_name || ''];
-    sections.forEach(sec => {
-      let secSum = 0;
-      sec.grades.forEach(g => {
-        const b  = gradeVal(r, g, 'b');
-        const gv = gradeVal(r, g, 'g');
-        if (isTotal) row.push((b + gv) || 0);
-        else         row.push(b || 0, gv || 0);
-        secSum += b + gv;
-      });
-      row.push(secSum || 0);
-    });
-    const rowB = r.boys || 0, rowG = r.girls || 0;
-    row.push(rowB, rowG, rowB + rowG);
-    aoa.push(row);
-  });
+            appliedTehsil = '';
+            appliedMarkaz = '';
+            appliedGender = '';
+            document.getElementById('st').value = '';
+            document.getElementById('sm').value = '';
+            document.getElementById('sg').value = '';
 
-  const footRow = ['GRAND TOTAL', ''];
-  sections.forEach((sec, si) => {
-    sec.grades.forEach(g => {
-      if (isTotal) footRow.push((gradeTot[g].b + gradeTot[g].g) || 0);
-      else         footRow.push(gradeTot[g].b || 0, gradeTot[g].g || 0);
-    });
-    footRow.push(secTot[si] || 0);
-  });
-  footRow.push(grandB, grandG, grandB + grandG);
-  aoa.push(footRow);
+            const tehs = [...new Set(ALL.map(r => r.tehsil || ''))].filter(Boolean).sort();
+            const tSel = document.getElementById('st');
+            tSel.innerHTML = '<option value="">All Tehsils</option>';
+            tehs.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v;
+                o.textContent = v;
+                tSel.appendChild(o);
+            });
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!merges'] = merges;
+            populateMarkaz('');
+            setControlsEnabled(true);
+            recompute();
+        }
 
-  const colWidths = [{ wch: 12 }, { wch: 35 }];
-  sections.forEach(sec => {
-    sec.grades.forEach(() => {
-      if (isTotal) colWidths.push({ wch: 10 });
-      else         colWidths.push({ wch: 8 }, { wch: 8 });
-    });
-    colWidths.push({ wch: 13 });
-  });
-  colWidths.push({ wch: 13 }, { wch: 13 }, { wch: 13 });
-  ws['!cols'] = colWidths;
+        function onTehsilChange() {
+            appliedTehsil = document.getElementById('st').value;
+            appliedMarkaz = ''; // reset markaz automatically
+            populateMarkaz(appliedTehsil);
+            recompute();
+        }
 
-  ws['!pageSetup'] = {
-    orientation: 'landscape',
-    fitToPage: true,
-    fitToWidth: 1,
-    fitToHeight: 0,
-    paperSize: 9  
-  };
+        function onGenderChange() {
+            appliedGender = document.getElementById('sg').value;
+            appliedMarkaz = '';
+            populateMarkaz(appliedTehsil);
+            recompute();
+        }
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, `${rowType} Enrollment`);
-  
-  const prefix = isTotal ? 'classtotal_' : '';
-  const scope = appliedMarkaz ? 'markaz' : (appliedTehsil ? 'tehsil' : 'district');
-  XLSX.writeFile(wb, `sis_pesrp_${prefix}${scope}_${_slug(dist)}_${_today()}.xlsx`);
-}
+        function onMarkazChange() {
+            appliedMarkaz = document.getElementById('sm').value;
+            recompute();
+        }
 
-const _slug  = s => s.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
-const _today = () => new Date().toISOString().slice(0, 10);
-</script>
+        function onViewModeChange() {
+            VIEW_MODE = document.getElementById('vm').value;
+            recompute();
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           PRECISE WING CLASSIFICATION ENGINE (fixed pattern)
+           ═══════════════════════════════════════════════════════════════════ */
+        function getSchoolWing(r) {
+            const raw = (r.school_name || '').toUpperCase();
+            // Normalize: remove all non-alphanumeric characters (keep letters and digits)
+            const name = raw.replace(/[^A-Z0-9]/g, '');
+
+            // 1. Female primary / elementary / middle
+            if (name.startsWith('GGPS') || name.startsWith('GGES') || name.startsWith('GGMS')) {
+                return 'W-EE';
+            }
+            // 2. Secondary (High / Higher Secondary) – both boys and girls high schools
+            if (name.startsWith('GHS') || name.startsWith('GGHS')) {
+                return 'SE';
+            }
+            // 3. Male primary / elementary
+            if (name.startsWith('GPS') || name.startsWith('GES')) {
+                return 'M-EE';
+            }
+
+            // Fallback: use the previous heuristics for schools that don't match the pattern
+            const markaz = String(r.markaz || '').toUpperCase();
+            if (/\bmale\b/.test(markaz)) return 'M-EE';
+            if (/\bfemale\b/.test(markaz)) return 'W-EE';
+
+            // Check name for gender clues
+            const nameUpper = raw; // keep original with spaces etc.
+            if (/\b(GGES|GGHS|G Girls|FEMALE)\b/.test(nameUpper)) return 'W-EE';
+            if (/\b(GPS|GES|GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(nameUpper)) {
+                // If it contains "GHS" or "GHSS" or "HIGH" it's secondary, but we already caught GHS
+                // However we might have missed due to normalization? We'll check again.
+                if (/\b(GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(nameUpper)) return 'SE';
+                return 'M-EE';
+            }
+
+            // If still undecided, use gender counts
+            if ((r.girls || 0) > (r.boys || 0) && (r.boys || 0) === 0) return 'W-EE';
+            return 'M-EE'; // default
+        }
+
+        function populateMarkaz(tehsil) {
+            const mSel = document.getElementById('sm');
+
+            if (appliedGender === 'SE') {
+                mSel.innerHTML = '<option value="">SECONDARY WING</option>';
+                appliedMarkaz = '';
+                mSel.disabled = true;
+                return;
+            }
+
+            let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
+
+            if (appliedGender) {
+                pool = pool.filter(r => getSchoolWing(r) === appliedGender);
+            }
+
+            let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
+
+            const currentVal = mSel.value;
+            mSel.innerHTML = '<option value="">All Markaz</option>';
+            items.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v;
+                o.textContent = v;
+                mSel.appendChild(o);
+            });
+
+            if (currentVal && !items.includes(currentVal)) {
+                appliedMarkaz = '';
+            } else if (currentVal) {
+                appliedMarkaz = currentVal;
+                mSel.value = currentVal;
+            }
+
+            mSel.disabled = !tehsil;
+        }
+
+        function setControlsEnabled(on) {
+            ['st', 'sg', 'vm', 'btnExport'].forEach(id => {
+                document.getElementById(id).disabled = !on;
+            });
+            if (!on) document.getElementById('sm').disabled = true;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           RECOMPUTE & AGGREGATE
+           ═══════════════════════════════════════════════════════════════════ */
+        function emisCompare(a, b) {
+            const ae = a.emis_code,
+                be = b.emis_code;
+            const an = parseInt(String(ae ?? '').replace(/\D/g, ''), 10);
+            const bn = parseInt(String(be ?? '').replace(/\D/g, ''), 10);
+            const aHas = !isNaN(an) && String(ae ?? '').trim() !== '';
+            const bHas = !isNaN(bn) && String(be ?? '').trim() !== '';
+            if (aHas && bHas) return an - bn;
+            if (aHas) return -1;
+            if (bHas) return 1;
+            return String(ae ?? '').localeCompare(String(be ?? ''));
+        }
+
+        function getAggregatedData(level) {
+            const map = new Map();
+
+            FLT.forEach(r => {
+                const key = level === 'tehsil' ? (r.tehsil || 'Unknown Tehsil') : (r.markaz || 'Unknown Markaz');
+
+                if (!map.has(key)) {
+                    map.set(key, {
+                        is_aggregate: true,
+                        emis_code: '-',
+                        school_name: key,
+                        boys: 0,
+                        girls: 0,
+                        total_students: 0,
+                        gradesMap: {}
+                    });
+                }
+
+                const agg = map.get(key);
+                agg.boys += (r.boys || 0);
+                agg.girls += (r.girls || 0);
+                agg.total_students += (r.total_students || 0);
+
+                (r.grades || []).forEach(g => {
+                    if (g.grade_name && g.grade_name !== 'No Data') {
+                        if (!agg.gradesMap[g.grade_name]) {
+                            agg.gradesMap[g.grade_name] = { grade_name: g.grade_name, boys: 0, girls: 0 };
+                        }
+                        const b = gradeVal(r, g.grade_name, 'b');
+                        const gv = gradeVal(r, g.grade_name, 'g');
+
+                        agg.gradesMap[g.grade_name].boys += b;
+                        agg.gradesMap[g.grade_name].girls += gv;
+                    }
+                });
+            });
+
+            const result = Array.from(map.values()).map(agg => {
+                agg.grades = Object.values(agg.gradesMap);
+                delete agg.gradesMap;
+                return agg;
+            });
+
+            result.sort((a, b) => a.school_name.localeCompare(b.school_name));
+            return result;
+        }
+
+        function recompute() {
+            FLT = ALL.filter(r => {
+                if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
+                if (appliedMarkaz && r.markaz !== appliedMarkaz && appliedGender !== 'SE') return false;
+
+                if (appliedGender && getSchoolWing(r) !== appliedGender) return false;
+
+                return true;
+            });
+
+            drawDetailed();
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           DETAILED TABLE RENDERER
+           ═══════════════════════════════════════════════════════════════════ */
+        function drawDetailed() {
+            if (!FLT.length) {
+                document.getElementById('body').innerHTML = '<div class="center">No schools match your filters.</div>';
+                return;
+            }
+
+            let displayData;
+            let rowType;
+
+            if (!appliedTehsil) {
+                displayData = getAggregatedData('tehsil');
+                rowType = 'Tehsil';
+            } else if (!appliedMarkaz && appliedGender !== 'SE') {
+                displayData = getAggregatedData('markaz');
+                rowType = 'Markaz';
+            } else {
+                displayData = [...FLT].sort(emisCompare);
+                rowType = 'School';
+            }
+
+            const gradeSet = new Set();
+            FLT.forEach(r => (r.grades || []).forEach(g => {
+                if (g.grade_name && g.grade_name !== 'No Data') gradeSet.add(g.grade_name);
+            }));
+
+            if (!gradeSet.size) {
+                document.getElementById('body').innerHTML = '<div class="center">⚠ No grade data found in the filtered schools.</div>';
+                return;
+            }
+
+            const allGrades = [...gradeSet].sort((a, b) => gradeIdx(a) - gradeIdx(b));
+            const sections = buildSections(allGrades);
+            const isTotal = VIEW_MODE === 'total';
+            const perGradeCols = isTotal ? 1 : 2;
+            const headerRowSpan = isTotal ? 2 : 3;
+
+            let colgroup = '<colgroup>';
+            colgroup += `<col style="width:65px">`;
+            colgroup += `<col style="width:170px">`;
+            sections.forEach(sec => {
+                sec.grades.forEach(() => {
+                    if (isTotal) colgroup += `<col style="width:40px">`;
+                    else colgroup += `<col style="width:30px"><col style="width:30px">`;
+                });
+                colgroup += `<col style="width:38px">`;
+            });
+            colgroup += `<col style="width:42px"><col style="width:42px"><col style="width:48px">`;
+            colgroup += '</colgroup>';
+
+            let h1 = `
+                <th rowspan="${headerRowSpan}" class="dt-h-fix">EMIS CODE ▲</th>
+                <th rowspan="${headerRowSpan}" class="dt-h-fix" style="text-align:left;padding-left:6px">NAME OF ${rowType.toUpperCase()}</th>`;
+            sections.forEach(sec => {
+                const span = sec.grades.length * perGradeCols + 1;
+                h1 += `<th colspan="${span}" class="dt-h-sec">${esc(sec.label)}</th>`;
+            });
+            h1 += `
+                <th rowspan="${headerRowSpan}" class="dt-h-totb">TOTAL<br>BOYS</th>
+                <th rowspan="${headerRowSpan}" class="dt-h-totg">TOTAL<br>GIRLS</th>
+                <th rowspan="${headerRowSpan}" class="dt-h-gtot">GRAND<br>TOTAL</th>`;
+
+            let h2 = '';
+            sections.forEach(sec => {
+                sec.grades.forEach(g => {
+                    h2 += isTotal ?
+                        `<th class="dt-h-grade">${esc(g)}</th>` :
+                        `<th colspan="2" class="dt-h-grade">${esc(g)}</th>`;
+                });
+                h2 += `<th rowspan="${isTotal ? 1 : 2}" class="dt-h-sub">${esc(sec.subLabel)}</th>`;
+            });
+
+            let h3 = '';
+            if (!isTotal) {
+                sections.forEach(sec => {
+                    sec.grades.forEach(() => {
+                        h3 += `<th class="dt-h-bg">B</th><th class="dt-h-bg">G</th>`;
+                    });
+                });
+            }
+
+            const gradeTot = {};
+            allGrades.forEach(g => { gradeTot[g] = { b: 0, g: 0 }; });
+            const secTot = sections.map(() => 0);
+            let grandB = 0,
+                grandG = 0;
+
+            const rows = displayData.map(r => {
+                let cells = `<td class="dt-emis">${esc(r.emis_code || '')}</td>
+                             <td class="dt-name" title="${esc(r.school_name || '')}">${esc(r.school_name || '')}</td>`;
+
+                sections.forEach((sec, si) => {
+                    let secSum = 0;
+                    sec.grades.forEach(g => {
+                        const b = gradeVal(r, g, 'b');
+                        const gv = gradeVal(r, g, 'g');
+                        if (isTotal) {
+                            const t = b + gv;
+                            cells += `<td class="dt-ct">${t || ''}</td>`;
+                        } else {
+                            cells += `<td class="dt-b">${b  || ''}</td>`;
+                            cells += `<td class="dt-g">${gv || ''}</td>`;
+                        }
+                        secSum += b + gv;
+                        gradeTot[g].b += b;
+                        gradeTot[g].g += gv;
+                    });
+                    secTot[si] += secSum;
+                    cells += `<td class="dt-sub">${secSum || ''}</td>`;
+                });
+
+                const rowB = r.boys || 0;
+                const rowG = r.girls || 0;
+                grandB += rowB;
+                grandG += rowG;
+                cells += `<td class="dt-totb">${fmt(rowB)}</td>`;
+                cells += `<td class="dt-totg">${fmt(rowG)}</td>`;
+                cells += `<td class="dt-gtot">${fmt(rowB + rowG)}</td>`;
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            let foot = `<td colspan="2" class="dt-f-label">GRAND TOTAL</td>`;
+            sections.forEach((sec, si) => {
+                sec.grades.forEach(g => {
+                    if (isTotal) {
+                        foot += `<td class="dt-f-b">${fmt(gradeTot[g].b + gradeTot[g].g)}</td>`;
+                    } else {
+                        foot += `<td class="dt-f-b">${fmt(gradeTot[g].b)}</td>`;
+                        foot += `<td class="dt-f-g">${fmt(gradeTot[g].g)}</td>`;
+                    }
+                });
+                foot += `<td class="dt-f-sub">${fmt(secTot[si])}</td>`;
+            });
+            foot += `<td class="dt-f-totb">${fmt(grandB)}</td>`;
+            foot += `<td class="dt-f-totg">${fmt(grandG)}</td>`;
+            foot += `<td class="dt-f-gtot">${fmt(grandB + grandG)}</td>`;
+
+            const legend = `
+                <div class="dt-legend">
+                  ${isTotal ? '' : `<span><span class="dt-leg-dot" style="background:#1254a0"></span>Boys (B)</span>
+                  <span><span class="dt-leg-dot" style="background:#a01515"></span>Girls (G)</span>`}
+                  ${isTotal ? `<span><span class="dt-leg-dot" style="background:#0b4a28"></span>Class Total</span>` : ''}
+                  <span><span class="dt-leg-dot" style="background:#2d5a1b"></span>Section Total</span>
+                  <span><span class="dt-leg-dot" style="background:#0d3d7a"></span>Total Boys</span>
+                  <span><span class="dt-leg-dot" style="background:#7a0d0d"></span>Total Girls</span>
+                  <span><span class="dt-leg-dot" style="background:#3d0d7a"></span>Grand Total</span>
+                </div>`;
+
+            document.getElementById('body').innerHTML = `
+                <div class="dt-wrap">
+                  <table class="dt-table">
+                    ${colgroup}
+                    <thead>
+                      <tr>${h1}</tr>
+                      <tr>${h2}</tr>
+                      ${isTotal ? '' : `<tr>${h3}</tr>`}
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot><tr>${foot}</tr></tfoot>
+                  </table>
+                </div>
+                ${legend}`;
+
+            document.getElementById('rc').textContent =
+                `${fmt(displayData.length)} ${rowType.toLowerCase()}${displayData.length !== 1 ? 's' : ''} shown · ${allGrades.length} grades mapped`;
+
+            setCards(FLT.length, grandB, grandG);
+
+            window._detailExport = { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal };
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           EXCEL EXPORT
+           ═══════════════════════════════════════════════════════════════════ */
+        function exportExcel() {
+            if (!FLT.length || !window._detailExport) {
+                alert('No rows to export — load a district first.');
+                return;
+            }
+
+            const sel = document.getElementById('sd');
+            const dist = sel.options[sel.selectedIndex]?.textContent || 'district';
+            const { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal } = window
+            ._detailExport;
+            const perGradeCols = isTotal ? 1 : 2;
+
+            const totalCols = 2 + sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0) + 3;
+            const emptyRow = () => new Array(totalCols).fill('');
+            const lastHeaderRow = isTotal ? 1 : 2;
+
+            const aoa = [];
+            const merges = [];
+
+            const r0 = emptyRow();
+            r0[0] = 'EMIS CODE';
+            merges.push({ s: { r: 0, c: 0 }, e: { r: lastHeaderRow, c: 0 } });
+            r0[1] = `NAME OF ${rowType.toUpperCase()}`;
+            merges.push({ s: { r: 0, c: 1 }, e: { r: lastHeaderRow, c: 1 } });
+
+            let c = 2;
+            sections.forEach(sec => {
+                const secStart = c;
+                sec.grades.forEach(() => { c += perGradeCols; });
+                c++;
+                merges.push({ s: { r: 0, c: secStart }, e: { r: 0, c: c - 1 } });
+            });
+
+            const totBCol = c,
+                totGCol = c + 1,
+                gTotCol = c + 2;
+            r0[totBCol] = 'TOTAL BOYS';
+            merges.push({ s: { r: 0, c: totBCol }, e: { r: lastHeaderRow, c: totBCol } });
+            r0[totGCol] = 'TOTAL GIRLS';
+            merges.push({ s: { r: 0, c: totGCol }, e: { r: lastHeaderRow, c: totGCol } });
+            r0[gTotCol] = 'GRAND TOTAL';
+            merges.push({ s: { r: 0, c: gTotCol }, e: { r: lastHeaderRow, c: gTotCol } });
+
+            const r1 = emptyRow();
+            c = 2;
+            sections.forEach(sec => {
+                sec.grades.forEach(g => {
+                    r1[c] = g;
+                    if (!isTotal) merges.push({ s: { r: 1, c: c }, e: { r: 1, c: c + 1 } });
+                    c += perGradeCols;
+                });
+                r1[c] = sec.subLabel;
+                if (!isTotal) merges.push({ s: { r: 1, c: c }, e: { r: 2, c: c } });
+                c++;
+            });
+
+            aoa.push(r0, r1);
+
+            if (!isTotal) {
+                const r2 = emptyRow();
+                c = 2;
+                sections.forEach(sec => {
+                    sec.grades.forEach(() => {
+                        r2[c] = 'Boys';
+                        r2[c + 1] = 'Girls';
+                        c += 2;
+                    });
+                    c++;
+                });
+                aoa.push(r2);
+            }
+
+            displayData.forEach(r => {
+                const row = [r.emis_code || '', r.school_name || ''];
+                sections.forEach(sec => {
+                    let secSum = 0;
+                    sec.grades.forEach(g => {
+                        const b = gradeVal(r, g, 'b');
+                        const gv = gradeVal(r, g, 'g');
+                        if (isTotal) row.push((b + gv) || 0);
+                        else row.push(b || 0, gv || 0);
+                        secSum += b + gv;
+                    });
+                    row.push(secSum || 0);
+                });
+                const rowB = r.boys || 0,
+                    rowG = r.girls || 0;
+                row.push(rowB, rowG, rowB + rowG);
+                aoa.push(row);
+            });
+
+            const footRow = ['GRAND TOTAL', ''];
+            sections.forEach((sec, si) => {
+                sec.grades.forEach(g => {
+                    if (isTotal) footRow.push((gradeTot[g].b + gradeTot[g].g) || 0);
+                    else footRow.push(gradeTot[g].b || 0, gradeTot[g].g || 0);
+                });
+                footRow.push(secTot[si] || 0);
+            });
+            footRow.push(grandB, grandG, grandB + grandG);
+            aoa.push(footRow);
+
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!merges'] = merges;
+
+            const colWidths = [{ wch: 12 }, { wch: 35 }];
+            sections.forEach(sec => {
+                sec.grades.forEach(() => {
+                    if (isTotal) colWidths.push({ wch: 10 });
+                    else colWidths.push({ wch: 8 }, { wch: 8 });
+                });
+                colWidths.push({ wch: 13 });
+            });
+            colWidths.push({ wch: 13 }, { wch: 13 }, { wch: 13 });
+            ws['!cols'] = colWidths;
+
+            ws['!pageSetup'] = {
+                orientation: 'landscape',
+                fitToPage: true,
+                fitToWidth: 1,
+                fitToHeight: 0,
+                paperSize: 9
+            };
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `${rowType} Enrollment`);
+
+            const prefix = isTotal ? 'classtotal_' : '';
+            const scope = appliedMarkaz ? 'markaz' : (appliedTehsil ? 'tehsil' : 'district');
+            XLSX.writeFile(wb, `sis_pesrp_${prefix}${scope}_${_slug(dist)}_${_today()}.xlsx`);
+        }
+
+        const _slug = s => s.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+        const _today = () => new Date().toISOString().slice(0, 10);
+    </script>
 </body>
 </html>
