@@ -73,6 +73,9 @@ EXPECTED_TOTAL_SCHOOLS = 38150   # known-good total (as of last full count). Use
 # schools, before trusting that it's genuinely empty rather than a dropped
 # request under concurrent load.
 MARKAZ_RECHECK_RETRIES = 6
+MARKAZ_RECHECK_MAX_ROUNDS = 5     # keep looping Phase 1c while total schools
+                                   # found is still below EXPECTED_TOTAL_SCHOOLS
+MARKAZ_RECHECK_WAIT_SECONDS = 20  # pause between rounds so transient load clears
 
 # Phase 2b: dedicated retry rounds for schools whose enrolment fetch failed
 # (not "zero enrolment" - actually failed/None after fetch_json_with_retry's
@@ -418,31 +421,63 @@ def scrape():
     # more retries and no concurrent-load contention, before trusting that
     # it's genuinely a 0-school Markaz rather than a dropped request. This is
     # what was silently losing whole Markazs' worth of schools before.
-    still_empty_markazs = []
-    if empty_markazs:
-        print(f"\nPhase 1c: Re-checking {len(empty_markazs)} empty Markazs "
-              f"sequentially (retries={MARKAZ_RECHECK_RETRIES})...", flush=True)
-        for i, m in enumerate(empty_markazs, 1):
+    #
+    # This now LOOPS: as long as the running total is still below the known
+    # target (EXPECTED_TOTAL_SCHOOLS), keep re-fetching whatever Markazs are
+    # still empty, rather than trusting a single recheck pass. It stops when
+    # any of these happen: (a) the total reaches the target, (b) a round
+    # recovers nothing new (converged - remaining Markazs are genuinely
+    # empty), or (c) MARKAZ_RECHECK_MAX_ROUNDS is hit.
+    still_empty_markazs = empty_markazs
+    round_num = 0
+    while (still_empty_markazs
+           and len(inventory) < EXPECTED_TOTAL_SCHOOLS
+           and round_num < MARKAZ_RECHECK_MAX_ROUNDS):
+        round_num += 1
+        print(f"\nPhase 1c round {round_num}/{MARKAZ_RECHECK_MAX_ROUNDS}: "
+              f"total is {len(inventory)}/{EXPECTED_TOTAL_SCHOOLS} - re-checking "
+              f"{len(still_empty_markazs)} empty Markazs sequentially "
+              f"(retries={MARKAZ_RECHECK_RETRIES})...", flush=True)
+        if round_num > 1:
+            time.sleep(MARKAZ_RECHECK_WAIT_SECONDS)
+
+        next_still_empty = []
+        recovered_this_round = 0
+        for i, m in enumerate(still_empty_markazs, 1):
             result = worker_fetch_schools_in_markaz(m, csrf, ts, retries=MARKAZ_RECHECK_RETRIES)
             if result:
                 inventory.extend(result)
+                recovered_this_round += len(result)
                 print(f"  -> Recovered {len(result)} schools for {m[5]} ({m[1]}) "
-                      f"that were missed on the first pass.", flush=True)
+                      f"that were missed on the previous pass.", flush=True)
             else:
-                still_empty_markazs.append(m)
+                next_still_empty.append(m)
             if i % 50 == 0:
-                print(f"  -> Rechecked {i} / {len(empty_markazs)} Markazs...", flush=True)
+                print(f"  -> Rechecked {i} / {len(still_empty_markazs)} Markazs...", flush=True)
 
-        if still_empty_markazs:
-            print(f"[Info] {len(still_empty_markazs)} Markazs are still empty after "
-                  f"recheck - treating these as genuinely 0-school Markazs.", flush=True)
+        print(f"  -> Round {round_num} recovered {recovered_this_round} schools. "
+              f"Running total: {len(inventory)}/{EXPECTED_TOTAL_SCHOOLS}. "
+              f"{len(next_still_empty)} Markazs still empty.", flush=True)
+
+        still_empty_markazs = next_still_empty
+        # Deliberately no early-exit on a zero-recovery round: a round-wide
+        # site hiccup can affect every Markaz in the batch at once, and the
+        # wait before the next round is exactly what gives it time to clear.
+        # We only stop via the while-condition: target reached, no Markazs
+        # left, or the round cap.
+
+    if still_empty_markazs and len(inventory) < EXPECTED_TOTAL_SCHOOLS:
+        print(f"[Warning] Still {len(still_empty_markazs)} empty Markazs and total "
+              f"({len(inventory)}) remains below target ({EXPECTED_TOTAL_SCHOOLS:,}) "
+              f"after {round_num} recheck round(s). These will be listed in "
+              f"data/scrape_issues.json.", flush=True)
 
     print(f"\nPhase 1 Complete! Discovered {len(inventory)} schools.", flush=True)
     if len(inventory) < EXPECTED_TOTAL_SCHOOLS:
-        print(f"[Info] {len(inventory)} is below the known-good reference total "
-              f"of {EXPECTED_TOTAL_SCHOOLS:,} - this is expected to fluctuate slightly "
-              f"(new/closed schools), but a large gap may indicate remaining issues.",
-              flush=True)
+        print(f"[Info] {len(inventory)} is still below the known-good reference "
+              f"total of {EXPECTED_TOTAL_SCHOOLS:,} even after retry rounds - this "
+              f"is expected to fluctuate slightly (new/closed schools), but a large "
+              f"gap may indicate a genuine site-side issue.", flush=True)
 
     # Phase 2: fetch enrollment data (now with retries inside worker_fetch_school_data)
     print(f"\nPhase 2: Fetching enrollment data for ALL {len(inventory)} schools (50 threads)...", flush=True)
