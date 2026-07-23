@@ -310,13 +310,14 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
       <select id="st" onchange="onTehsilChange()" disabled><option value="">All Tehsils</option></select>
     </div>
     
-    <!-- GENDER FILTER -->
+    <!-- WING FILTER -->
     <div class="cg">
-      <div class="cl2">👤 Gender</div>
+      <div class="cl2">🏫 Wing</div>
       <select id="sg" onchange="onGenderChange()">
-        <option value="">All</option>
-        <option value="male">Male Only</option>
-        <option value="female">Female Only</option>
+        <option value="">All Wings</option>
+        <option value="M-EE">M-EE</option>
+        <option value="W-EE">W-EE</option>
+        <option value="SE">SE</option>
       </select>
     </div>
 
@@ -551,22 +552,32 @@ function onViewModeChange() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   UPDATED: POPULATE MARKAZ (Fixed "male" inside "female" bug)
+   UPDATED: POPULATE MARKAZ & WING FILTER LOGIC
    ═══════════════════════════════════════════════════════════════════ */
+function isSecondary(r) {
+  const n = String(r.school_name || '').toUpperCase();
+  // Safe string matching fallback
+  if (/\b(GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(n)) return true;
+  // Deep check by offered classes (Grades 9 to 12)
+  return (r.grades || []).some(g => {
+    const i = gradeIdx(g.grade_name);
+    return i >= 10 && i <= 13; 
+  });
+}
+
 function populateMarkaz(tehsil) {
-  // 1. Get the base pool of schools based on the selected Tehsil
   let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
   
-  // 2. Extract unique Markaz names from the pool
-  let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
-  
-  // 3. Filter the Markaz options using word boundaries (\b) 
-  //    This prevents the substring "male" inside "female" from triggering a match.
-  if (appliedGender === 'male') {
-    items = items.filter(name => /\bmale\b/i.test(name));
-  } else if (appliedGender === 'female') {
-    items = items.filter(name => /\bfemale\b/i.test(name));
+  // Filter the pool based on the selected Wing before extracting Markaz names
+  if (appliedGender === 'SE') {
+    pool = pool.filter(r => isSecondary(r));
+  } else if (appliedGender === 'M-EE') {
+    pool = pool.filter(r => !isSecondary(r) && /\bmale\b/i.test(r.markaz || ''));
+  } else if (appliedGender === 'W-EE') {
+    pool = pool.filter(r => !isSecondary(r) && /\bfemale\b/i.test(r.markaz || ''));
   }
+
+  let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
 
   const mSel = document.getElementById('sm');
   const currentVal = mSel.value;
@@ -659,9 +670,20 @@ function recompute() {
     if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
     if (appliedMarkaz && r.markaz !== appliedMarkaz) return false;
     
-    // Gender filter applied to actual table data (student counts)
-    if (appliedGender === 'male' && (r.boys || 0) <= 0) return false;
-    if (appliedGender === 'female' && (r.girls || 0) <= 0) return false;
+    const isSec = isSecondary(r);
+
+    // Wing filter applied to actual table data
+    if (appliedGender === 'SE' && !isSec) return false;
+    
+    if (appliedGender === 'M-EE') {
+       if (isSec) return false; // Exclude High Schools
+       if (!/\bmale\b/i.test(r.markaz || '')) return false;
+    }
+    
+    if (appliedGender === 'W-EE') {
+       if (isSec) return false; // Exclude High Schools
+       if (!/\bfemale\b/i.test(r.markaz || '')) return false;
+    }
 
     return true;
   });
