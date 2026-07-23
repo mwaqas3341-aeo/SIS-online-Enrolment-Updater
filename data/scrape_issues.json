@@ -1,54 +1,14 @@
 {
-  "generated_at": "2026-07-23T06:12:35.685981+00:00",
+  "generated_at": "2026-07-23T08:20:50.402605+00:00",
   "note": "Entries here failed enrolment/school-list fetch even after all automated retry passes. Their numbers in the main data files may be incomplete placeholders, not confirmed real values.",
   "failed_enrolment_fetch": [
     {
-      "school_id": "55379",
-      "emis_code": "32111448",
-      "school_name": "GPS Nikka Khan Jarrani",
-      "district": "D.G. KHAN",
-      "tehsil": "KOH-E-SULEMAN",
-      "markaz": "BAWATA-MALE"
-    },
-    {
-      "school_id": "55343",
-      "emis_code": "31210734",
-      "school_name": "GPS CHAK DANWANJ",
-      "district": "BAHAWALPUR",
-      "tehsil": "AHMADPUR EAST",
-      "markaz": "DHOOR KOT - MALE"
-    },
-    {
-      "school_id": "55399",
-      "emis_code": "38120532",
-      "school_name": "GPS RAHDARIAN WALA",
-      "district": "BHAKKAR",
-      "tehsil": "KALLUR KOT",
-      "markaz": "RODI - MALE"
-    },
-    {
-      "school_id": "55400",
-      "emis_code": "38130324",
-      "school_name": "GGPS KORU",
-      "district": "BHAKKAR",
-      "tehsil": "MANKERA",
-      "markaz": "MAHNI - FEMALE"
-    },
-    {
-      "school_id": "55398",
-      "emis_code": "38140931",
-      "school_name": "GPS BASTI KOHAWAR SHUMALI",
-      "district": "BHAKKAR",
-      "tehsil": "DARYA KHAN",
-      "markaz": "JHOKE QALANDER BAKHSH-MALE"
-    },
-    {
-      "school_id": "55345",
-      "emis_code": "31210732",
-      "school_name": "GGPS AHMAD KHAN SHIKRANI",
-      "district": "BAHAWALPUR",
-      "tehsil": "AHMADPUR EAST",
-      "markaz": "BUKHTIARI - FEMALE"
+      "school_id": "55021",
+      "emis_code": "31199991",
+      "school_name": "QAED, College, Chistian",
+      "district": "BAHAWALNAGAR",
+      "tehsil": "CHISHTIAN",
+      "markaz": "SECONDARY-WING"
     },
     {
       "school_id": "192",
@@ -59,12 +19,12 @@
       "markaz": "BWN-I-MALE"
     },
     {
-      "school_id": "55021",
-      "emis_code": "31199991",
-      "school_name": "QAED, College, Chistian",
-      "district": "BAHAWALNAGAR",
-      "tehsil": "CHISHTIAN",
-      "markaz": "SECONDARY-WING"
+      "school_id": "55343",
+      "emis_code": "31210734",
+      "school_name": "GPS CHAK DANWANJ",
+      "district": "BAHAWALPUR",
+      "tehsil": "AHMADPUR EAST",
+      "markaz": "DHOOR KOT - MALE"
     },
     {
       "school_id": "55353",
@@ -75,11 +35,11 @@
       "markaz": "AEO (M) LALIAN NO.24"
     },
     {
-      "school_id": "55018",
-      "emis_code": "31299992",
-      "school_name": "QAED,  (M) /Bahawalpur",
-      "district": "BAHAWALPUR",
-      "tehsil": "BAHAWALPUR CITY",
+      "school_id": "55000",
+      "emis_code": "32199991",
+      "school_name": "QAED(F) D.G.KHAN",
+      "district": "D.G. KHAN",
+      "tehsil": "D.G.KHAN",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -89,6 +49,94 @@
       "district": "D.G. KHAN",
       "tehsil": "D.G.KHAN",
       "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55022",
+      "emis_code": "33499991",
+      "school_name": "QAED Chiniot",
+      "district": "CHINIOT",
+      "tehsil": "CHINIOT",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55344",
+      "emis_code": "31210733",
+      "school_name": "GPS BEAT SHIKRANI",
+      "district": "BAHAWALPUR",
+      "tehsil": "AHMADPUR EAST",
+      "markaz": "BUKHTIARI - MALE"
+    },
+    {
+      "school_id": "55398",
+      "emis_code": "38140931",
+      "school_name": "GPS BASTI KOHAWAR SHUMALI",
+      "district": "BHAKKAR",
+      "tehsil": "DARYA KHAN",
+      "markaz": "JHOKE QALANDER BAKHSH-MALE"
+    },
+    {
+      "school_id": "55378",
+      "emis_code": "32111447",
+      "school_name": "GPS Basti Kalu Khan Bishmani",
+      "district": "D.G. KHAN",
+      "tehsil": "KOH-E-SULEMAN",
+      "markaz": "BAWATA-MALE"
+    },
+    {
+      "school_id": "55399",
+      "emis_code": "38120532",
+      "school_name": "GPS RAHDARIAN WALA",
+      "district": "BHAKKAR",
+      "tehsil": "KALLUR KOT",
+      "markaz": "RODI - MALE"
+    },
+    {
+      "school_id": "55018",
+      "emis_code": "31299992",
+      "school_name": "QAED,  (M) /Bahawalpur",
+      "district": "BAHAWALPUR",
+      "tehsil": "BAHAWALPUR CITY",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55017",
+      "emis_code": "31299991",
+      "school_name": "QAED, (W)Bahawalpur",
+      "district": "BAHAWALPUR",
+      "tehsil": "BAHAWALPUR CITY",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55345",
+      "emis_code": "31210732",
+      "school_name": "GGPS AHMAD KHAN SHIKRANI",
+      "district": "BAHAWALPUR",
+      "tehsil": "AHMADPUR EAST",
+      "markaz": "BUKHTIARI - FEMALE"
+    },
+    {
+      "school_id": "55400",
+      "emis_code": "38130324",
+      "school_name": "GGPS KORU",
+      "district": "BHAKKAR",
+      "tehsil": "MANKERA",
+      "markaz": "MAHNI - FEMALE"
+    },
+    {
+      "school_id": "55381",
+      "emis_code": "32111449",
+      "school_name": "GPS Haji Khair Din Bishmani",
+      "district": "D.G. KHAN",
+      "tehsil": "KOH-E-SULEMAN",
+      "markaz": "BAWATA-MALE"
+    },
+    {
+      "school_id": "55379",
+      "emis_code": "32111448",
+      "school_name": "GPS Nikka Khan Jarrani",
+      "district": "D.G. KHAN",
+      "tehsil": "KOH-E-SULEMAN",
+      "markaz": "BAWATA-MALE"
     },
     {
       "school_id": "55377",
@@ -107,14 +155,6 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55362",
-      "emis_code": "33120773",
-      "school_name": "GGPS 568 GB",
-      "district": "FAISALABAD",
-      "tehsil": "JARANWALA",
-      "markaz": "LUNDIANWALA - FEMALE"
-    },
-    {
       "school_id": "55020",
       "emis_code": "34299992",
       "school_name": "QAED, Gujrat",
@@ -123,11 +163,19 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55395",
-      "emis_code": "34110645",
-      "school_name": "GGHS KOT SHERA",
-      "district": "GUJRANWALA",
-      "tehsil": "GUJRANWALA SADAR",
+      "school_id": "55401",
+      "emis_code": "34211073",
+      "school_name": "GGHSS AMMAN RASHEEDA BEGUM, MAJRA SHUMALI",
+      "district": "GUJRAT",
+      "tehsil": "GUJRAT",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55019",
+      "emis_code": "34299991",
+      "school_name": "QAED, female merged in (M) Lalamusa",
+      "district": "GUJRAT",
+      "tehsil": "KHARIAN",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -139,43 +187,19 @@
       "markaz": "MANJHVAIL MALE"
     },
     {
-      "school_id": "55401",
-      "emis_code": "34211073",
-      "school_name": "GGHSS AMMAN RASHEEDA BEGUM, MAJRA SHUMALI",
-      "district": "GUJRAT",
-      "tehsil": "GUJRAT",
-      "markaz": "SECONDARY-WING"
+      "school_id": "55362",
+      "emis_code": "33120773",
+      "school_name": "GGPS 568 GB",
+      "district": "FAISALABAD",
+      "tehsil": "JARANWALA",
+      "markaz": "LUNDIANWALA - FEMALE"
     },
     {
-      "school_id": "55371",
-      "emis_code": "37230459",
-      "school_name": "GPS ARNYAL PHOOLAN",
-      "district": "JHELUM",
-      "tehsil": "SOHAWA",
-      "markaz": "SOHAWA - MALE"
-    },
-    {
-      "school_id": "55019",
-      "emis_code": "34299991",
-      "school_name": "QAED, female merged in (M) Lalamusa",
-      "district": "GUJRAT",
-      "tehsil": "KHARIAN",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55010",
-      "emis_code": "37299991",
-      "school_name": "QAED, Jhelum",
-      "district": "JHELUM",
-      "tehsil": "JHELUM",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "54999",
-      "emis_code": "35199991",
-      "school_name": "QAED",
-      "district": "KASUR",
-      "tehsil": "KASUR",
+      "school_id": "55395",
+      "emis_code": "34110645",
+      "school_name": "GGHS KOT SHERA",
+      "district": "GUJRANWALA",
+      "tehsil": "GUJRANWALA SADAR",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -187,12 +211,44 @@
       "markaz": "TALOKER (FEMALE)"
     },
     {
+      "school_id": "54999",
+      "emis_code": "35199991",
+      "school_name": "QAED",
+      "district": "KASUR",
+      "tehsil": "KASUR",
+      "markaz": "SECONDARY-WING"
+    },
+    {
       "school_id": "55374",
       "emis_code": "38230956",
       "school_name": "GGPS BANDIAL SHUMALI",
       "district": "KHUSHAB",
       "tehsil": "QUAIDABAD",
       "markaz": "QUAIDABAD NORTH (FEMALE)"
+    },
+    {
+      "school_id": "55371",
+      "emis_code": "37230459",
+      "school_name": "GPS ARNYAL PHOOLAN",
+      "district": "JHELUM",
+      "tehsil": "SOHAWA",
+      "markaz": "SOHAWA - MALE"
+    },
+    {
+      "school_id": "55010",
+      "emis_code": "37299991",
+      "school_name": "QAED, Jhelum",
+      "district": "JHELUM",
+      "tehsil": "JHELUM",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55385",
+      "emis_code": "35211012",
+      "school_name": "GGPS KOT CHANAN DIN",
+      "district": "LAHORE",
+      "tehsil": "MODEL TOWN",
+      "markaz": "KAHANA - FEMALE"
     },
     {
       "school_id": "55387",
@@ -203,12 +259,12 @@
       "markaz": "KAHANA - FEMALE"
     },
     {
-      "school_id": "55385",
-      "emis_code": "35211012",
-      "school_name": "GGPS KOT CHANAN DIN",
+      "school_id": "55024",
+      "emis_code": "35299991",
+      "school_name": "QAED, Kot Lakhpat Lahore",
       "district": "LAHORE",
       "tehsil": "MODEL TOWN",
-      "markaz": "KAHANA - FEMALE"
+      "markaz": "SECONDARY-WING"
     },
     {
       "school_id": "55386",
@@ -227,35 +283,11 @@
       "markaz": "NISHTER-FEMALE"
     },
     {
-      "school_id": "55389",
-      "emis_code": "35211016",
-      "school_name": "GGPS Satellite Kahna nau",
-      "district": "LAHORE",
-      "tehsil": "MODEL TOWN",
-      "markaz": "NISHTER-FEMALE"
-    },
-    {
-      "school_id": "55024",
-      "emis_code": "35299991",
-      "school_name": "QAED, Kot Lakhpat Lahore",
-      "district": "LAHORE",
-      "tehsil": "MODEL TOWN",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55025",
-      "emis_code": "35299992",
-      "school_name": "Provincial QAED, Wahdat Road Lahore",
-      "district": "LAHORE",
-      "tehsil": "MODEL TOWN",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55047",
-      "emis_code": "38399999",
-      "school_name": "Cadet College, Esa Khel Mianwali",
-      "district": "MIANWALI",
-      "tehsil": "ISA KHEL",
+      "school_id": "54996",
+      "emis_code": "36199991",
+      "school_name": "QAED (F) NAWAN SHAHER MULTAN",
+      "district": "MULTAN",
+      "tehsil": "MULTAN CITY",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -267,11 +299,35 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "54996",
-      "emis_code": "36199991",
-      "school_name": "QAED (F) NAWAN SHAHER MULTAN",
+      "school_id": "54997",
+      "emis_code": "36199992",
+      "school_name": "QAED BOSAN ROAD MULTAN",
       "district": "MULTAN",
       "tehsil": "MULTAN CITY",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55389",
+      "emis_code": "35211016",
+      "school_name": "GGPS Satellite Kahna nau",
+      "district": "LAHORE",
+      "tehsil": "MODEL TOWN",
+      "markaz": "NISHTER-FEMALE"
+    },
+    {
+      "school_id": "55047",
+      "emis_code": "38399999",
+      "school_name": "Cadet College, Esa Khel Mianwali",
+      "district": "MIANWALI",
+      "tehsil": "ISA KHEL",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55025",
+      "emis_code": "35299992",
+      "school_name": "Provincial QAED, Wahdat Road Lahore",
+      "district": "LAHORE",
+      "tehsil": "MODEL TOWN",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -283,11 +339,11 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "54997",
-      "emis_code": "36199992",
-      "school_name": "QAED BOSAN ROAD MULTAN",
-      "district": "MULTAN",
-      "tehsil": "MULTAN CITY",
+      "school_id": "55007",
+      "emis_code": "34499991",
+      "school_name": "QAED, Narowal",
+      "district": "NAROWAL",
+      "tehsil": "NAROWAL",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -296,14 +352,6 @@
       "school_name": "QAED MUZAFFARGARH",
       "district": "MUZAFFARGARH",
       "tehsil": "MUZAFFARGARH",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55007",
-      "emis_code": "34499991",
-      "school_name": "QAED, Narowal",
-      "district": "NAROWAL",
-      "tehsil": "NAROWAL",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -347,43 +395,11 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55008",
-      "emis_code": "39199991",
-      "school_name": "QAED SAHIWAL",
-      "district": "SAHIWAL",
-      "tehsil": "SAHIWAL",
-      "markaz": "SECONDARY-WING"
-    },
-    {
       "school_id": "55006",
       "emis_code": "38499992",
       "school_name": "QAED SHAHPUR SADAR",
       "district": "SARGODHA",
       "tehsil": "SHAHPUR",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55014",
-      "emis_code": "35499991",
-      "school_name": "QAED Sharaqpur",
-      "district": "SHEIKHUPURA",
-      "tehsil": "SHARAQPUR",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55004",
-      "emis_code": "34399991",
-      "school_name": "QAED, Pasrur",
-      "district": "SIALKOT",
-      "tehsil": "PASRUR",
-      "markaz": "SECONDARY-WING"
-    },
-    {
-      "school_id": "55015",
-      "emis_code": "33399991",
-      "school_name": "QAED Kamalia Railway Road, TT Singh",
-      "district": "T.T.SINGH",
-      "tehsil": "KAMALIA",
       "markaz": "SECONDARY-WING"
     },
     {
@@ -395,12 +411,20 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55383",
-      "emis_code": "37420518",
-      "school_name": "GGPS DHOK BAZGUL",
-      "district": "TALAGANG",
-      "tehsil": "TALAGANG",
-      "markaz": "SAGHAR-FEMALE"
+      "school_id": "55015",
+      "emis_code": "33399991",
+      "school_name": "QAED Kamalia Railway Road, TT Singh",
+      "district": "T.T.SINGH",
+      "tehsil": "KAMALIA",
+      "markaz": "SECONDARY-WING"
+    },
+    {
+      "school_id": "55014",
+      "emis_code": "35499991",
+      "school_name": "QAED Sharaqpur",
+      "district": "SHEIKHUPURA",
+      "tehsil": "SHARAQPUR",
+      "markaz": "SECONDARY-WING"
     },
     {
       "school_id": "55013",
@@ -411,52 +435,28 @@
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55000",
-      "emis_code": "32199991",
-      "school_name": "QAED(F) D.G.KHAN",
-      "district": "D.G. KHAN",
-      "tehsil": "D.G.KHAN",
+      "school_id": "55008",
+      "emis_code": "39199991",
+      "school_name": "QAED SAHIWAL",
+      "district": "SAHIWAL",
+      "tehsil": "SAHIWAL",
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55344",
-      "emis_code": "31210733",
-      "school_name": "GPS BEAT SHIKRANI",
-      "district": "BAHAWALPUR",
-      "tehsil": "AHMADPUR EAST",
-      "markaz": "BUKHTIARI - MALE"
-    },
-    {
-      "school_id": "55378",
-      "emis_code": "32111447",
-      "school_name": "GPS Basti Kalu Khan Bishmani",
-      "district": "D.G. KHAN",
-      "tehsil": "KOH-E-SULEMAN",
-      "markaz": "BAWATA-MALE"
-    },
-    {
-      "school_id": "55381",
-      "emis_code": "32111449",
-      "school_name": "GPS Haji Khair Din Bishmani",
-      "district": "D.G. KHAN",
-      "tehsil": "KOH-E-SULEMAN",
-      "markaz": "BAWATA-MALE"
-    },
-    {
-      "school_id": "55017",
-      "emis_code": "31299991",
-      "school_name": "QAED, (W)Bahawalpur",
-      "district": "BAHAWALPUR",
-      "tehsil": "BAHAWALPUR CITY",
+      "school_id": "55004",
+      "emis_code": "34399991",
+      "school_name": "QAED, Pasrur",
+      "district": "SIALKOT",
+      "tehsil": "PASRUR",
       "markaz": "SECONDARY-WING"
     },
     {
-      "school_id": "55022",
-      "emis_code": "33499991",
-      "school_name": "QAED Chiniot",
-      "district": "CHINIOT",
-      "tehsil": "CHINIOT",
-      "markaz": "SECONDARY-WING"
+      "school_id": "55383",
+      "emis_code": "37420518",
+      "school_name": "GGPS DHOK BAZGUL",
+      "district": "TALAGANG",
+      "tehsil": "TALAGANG",
+      "markaz": "SAGHAR-FEMALE"
     }
   ],
   "still_empty_markazs": [
@@ -673,16 +673,16 @@
       "district": "RAJANPUR",
       "tehsil_id": "43",
       "tehsil": "JAMPUR",
-      "markaz_id": "6533",
-      "markaz": "HAMEED WALA - MALE"
+      "markaz_id": "4017",
+      "markaz": "HARRAND - FEMALE"
     },
     {
       "district_id": "29",
       "district": "RAJANPUR",
       "tehsil_id": "43",
       "tehsil": "JAMPUR",
-      "markaz_id": "4017",
-      "markaz": "HARRAND - FEMALE"
+      "markaz_id": "6533",
+      "markaz": "HAMEED WALA - MALE"
     },
     {
       "district_id": "29",
@@ -737,16 +737,16 @@
       "district": "T.T.SINGH",
       "tehsil_id": "31",
       "tehsil": "GOJRA",
-      "markaz_id": "3328",
-      "markaz": "QADIR ABAD FEMALE"
+      "markaz_id": "3789",
+      "markaz": "SARO KI-FEMALE"
     },
     {
       "district_id": "35",
       "district": "T.T.SINGH",
       "tehsil_id": "31",
       "tehsil": "GOJRA",
-      "markaz_id": "3789",
-      "markaz": "SARO KI-FEMALE"
+      "markaz_id": "3328",
+      "markaz": "QADIR ABAD FEMALE"
     },
     {
       "district_id": "35",
@@ -921,16 +921,16 @@
       "district": "WAZIRABAD",
       "tehsil_id": "128",
       "tehsil": "WAZIRABAD",
-      "markaz_id": "4872",
-      "markaz": "WAZIRABAD CITY 5 - FEMALE"
+      "markaz_id": "4871",
+      "markaz": "WAZIRABAD CITY 4 - FEMALE"
     },
     {
       "district_id": "40",
       "district": "WAZIRABAD",
       "tehsil_id": "128",
       "tehsil": "WAZIRABAD",
-      "markaz_id": "4871",
-      "markaz": "WAZIRABAD CITY 4 - FEMALE"
+      "markaz_id": "4872",
+      "markaz": "WAZIRABAD CITY 5 - FEMALE"
     }
   ]
 }
