@@ -552,36 +552,48 @@ function onViewModeChange() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   POPULATE MARKAZ & WING FILTER LOGIC
+   PRECISE WING CLASSIFICATION ENGINE
    ═══════════════════════════════════════════════════════════════════ */
-function isSecondary(r) {
-  const n = String(r.school_name || '').toUpperCase();
-  // Safe string matching fallback
-  if (/\b(GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(n)) return true;
-  // Deep check by offered classes (Grades 9 to 12)
-  return (r.grades || []).some(g => {
+function getSchoolWing(r) {
+  const name = String(r.school_name || '').toUpperCase();
+  const markaz = String(r.markaz || '').toUpperCase();
+
+  // 1. Check if Secondary (SE)
+  const isSecByName = /\b(GHS|GHSS|HIGH|HIGHER SECONDARY)\b/.test(name);
+  const hasHighClasses = (r.grades || []).some(g => {
     const i = gradeIdx(g.grade_name);
-    return i >= 10 && i <= 13; 
+    return i >= 10 && i <= 13;
   });
+  if (isSecByName || hasHighClasses) return 'SE';
+
+  // 2. Check explicitly by naming cues or markaz for M-EE / W-EE
+  const isMaleName = /\b(GPS|GES|GGIC|GGES)?\b/.test(name) && !/\b(GGES|GGHS|GHS (W)|G Girls)\b/.test(name);
+  const isFemaleName = /\b(GGES|GGHS|G Girls|FEMALE)\b/.test(name);
+
+  if (/\bmale\b/.test(markaz)) return 'M-EE';
+  if (/\bfemale\b/.test(markaz)) return 'W-EE';
+
+  // Fallback heuristics on names/metrics
+  if (isFemaleName) return 'W-EE';
+  if ((r.girls || 0) > (r.boys || 0) && (r.boys || 0) === 0) return 'W-EE';
+  
+  return 'M-EE'; // Default elemental fallback
 }
 
 function populateMarkaz(tehsil) {
   const mSel = document.getElementById('sm');
   
-  // IF SE IS SELECTED: Bypass the Markaz list entirely
   if (appliedGender === 'SE') {
     mSel.innerHTML = '<option value="">SECONDARY WING</option>';
     appliedMarkaz = '';
-    mSel.disabled = true; // Lock dropdown
+    mSel.disabled = true;
     return;
   }
 
   let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
   
-  if (appliedGender === 'M-EE') {
-    pool = pool.filter(r => !isSecondary(r) && /\bmale\b/i.test(r.markaz || ''));
-  } else if (appliedGender === 'W-EE') {
-    pool = pool.filter(r => !isSecondary(r) && /\bfemale\b/i.test(r.markaz || ''));
+  if (appliedGender) {
+    pool = pool.filter(r => getSchoolWing(r) === appliedGender);
   }
 
   let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
@@ -593,7 +605,6 @@ function populateMarkaz(tehsil) {
     o.value = v; o.textContent = v; mSel.appendChild(o);
   });
 
-  // Reset selection if the previously selected markaz is no longer in the filtered list
   if (currentVal && !items.includes(currentVal)) {
       appliedMarkaz = '';
   } else if (currentVal) {
@@ -601,11 +612,10 @@ function populateMarkaz(tehsil) {
       mSel.value = currentVal;
   }
   
-  mSel.disabled = !tehsil; // enable standard interaction
+  mSel.disabled = !tehsil;
 }
 
 function setControlsEnabled(on) {
-  // Purposely omitting 'sm' here so populateMarkaz manages its disabled state
   ['st', 'sg', 'vm', 'btnExport'].forEach(id => {
     document.getElementById(id).disabled = !on;
   });
@@ -677,24 +687,9 @@ function getAggregatedData(level) {
 function recompute() {
   FLT = ALL.filter(r => {
     if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
-    
-    // Ignore Markaz filter entirely if SE is selected
     if (appliedMarkaz && r.markaz !== appliedMarkaz && appliedGender !== 'SE') return false;
     
-    const isSec = isSecondary(r);
-
-    // Wing filter applied to actual table data
-    if (appliedGender === 'SE' && !isSec) return false;
-    
-    if (appliedGender === 'M-EE') {
-       if (isSec) return false; // Exclude High Schools
-       if (!/\bmale\b/i.test(r.markaz || '')) return false;
-    }
-    
-    if (appliedGender === 'W-EE') {
-       if (isSec) return false; // Exclude High Schools
-       if (!/\bfemale\b/i.test(r.markaz || '')) return false;
-    }
+    if (appliedGender && getSchoolWing(r) !== appliedGender) return false;
 
     return true;
   });
@@ -714,7 +709,6 @@ function drawDetailed() {
   let displayData;
   let rowType;
 
-  // KEY FIX: Treat Wing="SE" exactly like picking a specific Markaz, bypassing aggregation
   if (!appliedTehsil) {
     displayData = getAggregatedData('tehsil');
     rowType = 'Tehsil';
