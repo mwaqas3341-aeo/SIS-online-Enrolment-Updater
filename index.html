@@ -551,7 +551,7 @@ function onViewModeChange() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   UPDATED: POPULATE MARKAZ (Filters purely by text in the name)
+   UPDATED: POPULATE MARKAZ (Fixed "male" inside "female" bug)
    ═══════════════════════════════════════════════════════════════════ */
 function populateMarkaz(tehsil) {
   // 1. Get the base pool of schools based on the selected Tehsil
@@ -560,11 +560,12 @@ function populateMarkaz(tehsil) {
   // 2. Extract unique Markaz names from the pool
   let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
   
-  // 3. Filter the Markaz options solely by the words "male" or "female" in their name
+  // 3. Filter the Markaz options using word boundaries (\b) 
+  //    This prevents the substring "male" inside "female" from triggering a match.
   if (appliedGender === 'male') {
-    items = items.filter(name => name.toLowerCase().includes('male'));
+    items = items.filter(name => /\bmale\b/i.test(name));
   } else if (appliedGender === 'female') {
-    items = items.filter(name => name.toLowerCase().includes('female'));
+    items = items.filter(name => /\bfemale\b/i.test(name));
   }
 
   const mSel = document.getElementById('sm');
