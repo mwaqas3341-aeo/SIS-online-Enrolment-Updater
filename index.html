@@ -552,7 +552,7 @@ function onViewModeChange() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   UPDATED: POPULATE MARKAZ & WING FILTER LOGIC
+   POPULATE MARKAZ & WING FILTER LOGIC
    ═══════════════════════════════════════════════════════════════════ */
 function isSecondary(r) {
   const n = String(r.school_name || '').toUpperCase();
@@ -566,12 +566,19 @@ function isSecondary(r) {
 }
 
 function populateMarkaz(tehsil) {
+  const mSel = document.getElementById('sm');
+  
+  // IF SE IS SELECTED: Bypass the Markaz list entirely
+  if (appliedGender === 'SE') {
+    mSel.innerHTML = '<option value="">SECONDARY WING</option>';
+    appliedMarkaz = '';
+    mSel.disabled = true; // Lock dropdown
+    return;
+  }
+
   let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
   
-  // Filter the pool based on the selected Wing before extracting Markaz names
-  if (appliedGender === 'SE') {
-    pool = pool.filter(r => isSecondary(r));
-  } else if (appliedGender === 'M-EE') {
+  if (appliedGender === 'M-EE') {
     pool = pool.filter(r => !isSecondary(r) && /\bmale\b/i.test(r.markaz || ''));
   } else if (appliedGender === 'W-EE') {
     pool = pool.filter(r => !isSecondary(r) && /\bfemale\b/i.test(r.markaz || ''));
@@ -579,9 +586,7 @@ function populateMarkaz(tehsil) {
 
   let items = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
 
-  const mSel = document.getElementById('sm');
   const currentVal = mSel.value;
-  
   mSel.innerHTML = '<option value="">All Markaz</option>';
   items.forEach(v => {
     const o = document.createElement('option');
@@ -595,12 +600,16 @@ function populateMarkaz(tehsil) {
       appliedMarkaz = currentVal;
       mSel.value = currentVal;
   }
+  
+  mSel.disabled = !tehsil; // enable standard interaction
 }
 
 function setControlsEnabled(on) {
-  ['st', 'sg', 'sm', 'vm', 'btnExport'].forEach(id => {
+  // Purposely omitting 'sm' here so populateMarkaz manages its disabled state
+  ['st', 'sg', 'vm', 'btnExport'].forEach(id => {
     document.getElementById(id).disabled = !on;
   });
+  if (!on) document.getElementById('sm').disabled = true;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -668,7 +677,9 @@ function getAggregatedData(level) {
 function recompute() {
   FLT = ALL.filter(r => {
     if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
-    if (appliedMarkaz && r.markaz !== appliedMarkaz) return false;
+    
+    // Ignore Markaz filter entirely if SE is selected
+    if (appliedMarkaz && r.markaz !== appliedMarkaz && appliedGender !== 'SE') return false;
     
     const isSec = isSecondary(r);
 
@@ -703,10 +714,11 @@ function drawDetailed() {
   let displayData;
   let rowType;
 
-  if (!appliedTehsil && !appliedMarkaz) {
+  // KEY FIX: Treat Wing="SE" exactly like picking a specific Markaz, bypassing aggregation
+  if (!appliedTehsil) {
     displayData = getAggregatedData('tehsil');
     rowType = 'Tehsil';
-  } else if (appliedTehsil && !appliedMarkaz) {
+  } else if (!appliedMarkaz && appliedGender !== 'SE') {
     displayData = getAggregatedData('markaz');
     rowType = 'Markaz';
   } else {
