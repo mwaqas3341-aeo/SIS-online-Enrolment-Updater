@@ -32,9 +32,7 @@ h1{font-size:18px;font-weight:700;color:var(--g)}
 .hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 #ts{font-size:11px;color:var(--mt);font-family:'JetBrains Mono',monospace}
 
-/* ═══════════════════════════════════════════════════════════════════
-   ADDED: COMPACT CONTACT ROW (Smaller, under scraped timestamp)
-   ═══════════════════════════════════════════════════════════════════ */
+/* COMPACT CONTACT ROW */
 .contact-mini {
     display: flex;
     flex-direction: column;
@@ -83,7 +81,6 @@ h1{font-size:18px;font-weight:700;color:var(--g)}
 .mini-icons a:hover i {
     color: #fff;
 }
-/* ═══════════════════════════════════════════════════════════════════ */
 
 /* main */
 main{max-width:100%;margin:18px auto;padding:0 20px 60px}
@@ -101,17 +98,46 @@ main{max-width:100%;margin:18px auto;padding:0 20px 60px}
 /* controls */
 .ctrl{background:var(--s);border:1px solid var(--bd);border-radius:8px;
   padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.cg{display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px}
+.cg{display:flex;flex-direction:column;gap:3px;flex:1;min-width:140px}
 .cl2{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mt)}
 input,select{padding:7px 10px;border:1px solid var(--bd);border-radius:5px;
   font-size:13px;color:var(--tx);background:var(--bg);width:100%;font-family:inherit;transition:.15s}
 input:focus,select:focus{outline:none;border-color:var(--g);background:#fff;box-shadow:0 0 0 3px var(--gl)}
 input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
-.btn{padding:7px 13px;border-radius:5px;font-size:12px;font-weight:600;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHINY EXPORT BUTTON
+   ═══════════════════════════════════════════════════════════════════ */
+.btn{padding:7px 14px;border-radius:5px;font-size:12px;font-weight:600;
   cursor:pointer;border:1px solid;white-space:nowrap;transition:.15s;font-family:inherit}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-b{background:var(--bl);color:var(--b);border-color:var(--b)}
 .btn-b:hover:not(:disabled){background:var(--b);color:#fff}
+
+#btnExport {
+    background: linear-gradient(90deg, #1A7A4A, #2ecc71, #1565C0, #1A7A4A);
+    background-size: 300% 100%;
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3);
+    animation: shimmer 4s infinite linear;
+    position: relative;
+}
+#btnExport:hover:not(:disabled) {
+    transform: scale(1.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: #fff;
+}
+#btnExport:disabled {
+    background: #ccc !important;
+    animation: none !important;
+    transform: none !important;
+}
+@keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+}
+/* ═══════════════════════════════════════════════════════════════════ */
 
 /* table wrap */
 .tw{background:var(--s);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
@@ -249,9 +275,7 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
       <p class="sub">Source: <a href="https://sis.pesrp.edu.pk/str/analysis" target="_blank" style="color:var(--g)">sis.pesrp.edu.pk</a> · Now supporting automated Excel exports for District, Tehsil, and Markaz hierarchies.</p>
     </div>
     
-    <!-- ═══════════════════════════════════════════════════════════════════
-         ADDED: COMPACT CONTACT ROW (Directly under Scraped timestamp)
-         ═══════════════════════════════════════════════════════════════════ -->
+    <!-- COMPACT CONTACT ROW (Directly under Scraped timestamp) -->
     <div class="hdr-r">
       <span id="ts">Loading…</span>
       
@@ -267,7 +291,6 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
         </div>
       </div>
     </div>
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
     
   </div>
 </header>
@@ -290,6 +313,20 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
       <div class="cl2">📍 Tehsil</div>
       <select id="st" onchange="onTehsilChange()" disabled><option value="">All Tehsils</option></select>
     </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         ADDED: GENDER FILTER (Between Tehsil and Markaz)
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="cg">
+      <div class="cl2">👤 Gender</div>
+      <select id="sg" onchange="onGenderChange()">
+        <option value="">All</option>
+        <option value="male">Male Only</option>
+        <option value="female">Female Only</option>
+      </select>
+    </div>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
     <div class="cg">
       <div class="cl2">🏘 Markaz</div>
       <select id="sm" onchange="onMarkazChange()" disabled><option value="">All Markaz</option></select>
@@ -301,7 +338,7 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
         <option value="total">Class Total Only</option>
       </select>
     </div>
-    <button class="btn btn-b" onclick="exportExcel()" id="btnExport" disabled>⬇ Export Excel</button>
+    <button class="btn" id="btnExport" onclick="exportExcel()" disabled>⬇ Export Excel</button>
   </div>
 
   <div class="tw">
@@ -320,7 +357,7 @@ input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
    STATE
    ═══════════════════════════════════════════════════════════════════ */
 let INDEX = null, ALL = [], FLT = [];
-let appliedTehsil = '', appliedMarkaz = '';
+let appliedTehsil = '', appliedMarkaz = '', appliedGender = '';
 let VIEW_MODE = 'bg';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -479,9 +516,10 @@ function initDistrict(d) {
     girls:          r.total_school_girls || 0,
   }));
 
-  appliedTehsil = ''; appliedMarkaz = '';
+  appliedTehsil = ''; appliedMarkaz = ''; appliedGender = '';
   document.getElementById('st').value = '';
   document.getElementById('sm').value = '';
+  document.getElementById('sg').value = '';
 
   const tehs = [...new Set(ALL.map(r => r.tehsil || ''))].filter(Boolean).sort();
   const tSel = document.getElementById('st');
@@ -503,6 +541,17 @@ function onTehsilChange() {
   recompute(); 
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   ADDED: GENDER CHANGE HANDLER
+   ═══════════════════════════════════════════════════════════════════ */
+function onGenderChange() {
+  appliedGender = document.getElementById('sg').value;
+  // Reset Markaz when gender changes so dropdown options reflect the filtered list
+  appliedMarkaz = ''; 
+  populateMarkaz(appliedTehsil);
+  recompute();
+}
+
 function onMarkazChange() {
   appliedMarkaz = document.getElementById('sm').value;
   recompute();
@@ -513,19 +562,40 @@ function onViewModeChange() {
   recompute();
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   UPDATED: POPULATE MARKAZ (Respects Gender Filter)
+   ═══════════════════════════════════════════════════════════════════ */
 function populateMarkaz(tehsil) {
-  const pool   = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
+  let pool = tehsil ? ALL.filter(r => r.tehsil === tehsil) : ALL;
+  
+  // Filter pool by selected Gender for the dropdown options
+  if (appliedGender === 'male') {
+    pool = pool.filter(r => (r.boys || 0) > 0);
+  } else if (appliedGender === 'female') {
+    pool = pool.filter(r => (r.girls || 0) > 0);
+  }
+
   const items  = [...new Set(pool.map(r => r.markaz || ''))].filter(Boolean).sort();
   const mSel   = document.getElementById('sm');
+  const currentVal = mSel.value;
+  
   mSel.innerHTML = '<option value="">All Markaz</option>';
   items.forEach(v => {
     const o = document.createElement('option');
     o.value = v; o.textContent = v; mSel.appendChild(o);
   });
+
+  // Reset selection if the previously selected markaz is no longer in the filtered list
+  if (currentVal && !items.includes(currentVal)) {
+      appliedMarkaz = '';
+  } else if (currentVal) {
+      appliedMarkaz = currentVal;
+      mSel.value = currentVal;
+  }
 }
 
 function setControlsEnabled(on) {
-  ['st', 'sm', 'vm', 'btnExport'].forEach(id => {
+  ['st', 'sg', 'sm', 'vm', 'btnExport'].forEach(id => {
     document.getElementById(id).disabled = !on;
   });
 }
@@ -573,7 +643,6 @@ function getAggregatedData(level) {
         if (!agg.gradesMap[g.grade_name]) {
           agg.gradesMap[g.grade_name] = { grade_name: g.grade_name, boys: 0, girls: 0 };
         }
-        /* FIXED: Using gradeVal guarantees we catch variations like male_students or male_count */
         const b = gradeVal(r, g.grade_name, 'b'); 
         const gv = gradeVal(r, g.grade_name, 'g');
         
@@ -593,10 +662,18 @@ function getAggregatedData(level) {
   return result;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   UPDATED: RECOMPUTE (Applies Gender Filter to Rows)
+   ═══════════════════════════════════════════════════════════════════ */
 function recompute() {
   FLT = ALL.filter(r => {
     if (appliedTehsil && r.tehsil !== appliedTehsil) return false;
     if (appliedMarkaz && r.markaz !== appliedMarkaz) return false;
+    
+    // Gender filter applied to table data
+    if (appliedGender === 'male' && (r.boys || 0) <= 0) return false;
+    if (appliedGender === 'female' && (r.girls || 0) <= 0) return false;
+
     return true;
   });
 
