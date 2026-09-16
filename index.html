@@ -1283,8 +1283,9 @@
             const dist = sel.options[sel.selectedIndex]?.textContent || 'district';
             const { sections, gradeTot, secTot, grandB, grandG, isTotal } = window._detailExport;
             const perGradeCols = isTotal ? 1 : 2;
+            const LEAD_COLS = 4; // TEHSIL, MARKAZ, EMIS CODE, NAME OF SCHOOL
 
-            const totalCols = 2 + sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0) + 3;
+            const totalCols = LEAD_COLS + sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0) + 3;
             const emptyRow = () => new Array(totalCols).fill('');
             const lastHeaderRow = isTotal ? 1 : 2;
 
@@ -1292,12 +1293,16 @@
             const merges = [];
 
             const r0 = emptyRow();
-            r0[0] = 'EMIS CODE';
+            r0[0] = 'TEHSIL';
             merges.push({ s: { r: 0, c: 0 }, e: { r: lastHeaderRow, c: 0 } });
-            r0[1] = 'NAME OF SCHOOL';
+            r0[1] = 'MARKAZ';
             merges.push({ s: { r: 0, c: 1 }, e: { r: lastHeaderRow, c: 1 } });
+            r0[2] = 'EMIS CODE';
+            merges.push({ s: { r: 0, c: 2 }, e: { r: lastHeaderRow, c: 2 } });
+            r0[3] = 'NAME OF SCHOOL';
+            merges.push({ s: { r: 0, c: 3 }, e: { r: lastHeaderRow, c: 3 } });
 
-            let c = 2;
+            let c = LEAD_COLS;
             sections.forEach(sec => {
                 const secStart = c;
                 sec.grades.forEach(() => { c += perGradeCols; });
@@ -1316,7 +1321,7 @@
             merges.push({ s: { r: 0, c: gTotCol }, e: { r: lastHeaderRow, c: gTotCol } });
 
             const r1 = emptyRow();
-            c = 2;
+            c = LEAD_COLS;
             sections.forEach(sec => {
                 sec.grades.forEach(g => {
                     r1[c] = g;
@@ -1331,7 +1336,7 @@
 
             if (!isTotal) {
                 const r2 = emptyRow();
-                c = 2;
+                c = LEAD_COLS;
                 sections.forEach(sec => {
                     sec.grades.forEach(() => {
                         r2[c] = 'Boys';
@@ -1343,15 +1348,8 @@
                 aoa.push(r2);
             }
 
-            const groupRow = (label) => {
-                const row = emptyRow();
-                row[0] = label;
-                aoa.push(row);
-                merges.push({ s: { r: aoa.length - 1, c: 0 }, e: { r: aoa.length - 1, c: totalCols - 1 } });
-            };
-
             const schoolRow = (r) => {
-                const row = [r.emis_code || '', r.school_name || ''];
+                const row = [r.tehsil || '', r.markaz || '', r.emis_code || '', r.school_name || ''];
                 sections.forEach(sec => {
                     let secSum = 0;
                     sec.grades.forEach(g => {
@@ -1369,28 +1367,18 @@
                 aoa.push(row);
             };
 
-            // Group FLT (already filtered to the selected District/Tehsil scope)
-            // by Tehsil then Markaz, so each eligible school appears exactly once.
-            const byTehsil = new Map();
-            FLT.forEach(r => {
-                const t = r.tehsil || 'Unknown Tehsil';
-                const m = r.markaz || 'Unknown Markaz';
-                if (!byTehsil.has(t)) byTehsil.set(t, new Map());
-                const mMap = byTehsil.get(t);
-                if (!mMap.has(m)) mMap.set(m, []);
-                mMap.get(m).push(r);
-            });
+            // Sort by Tehsil, then Markaz, then school — each eligible EMIS
+            // appears exactly once as a plain row, with Tehsil/Markaz as
+            // regular column values (not group-header rows).
+            [...FLT].sort((a, b) => {
+                const t = (a.tehsil || '').localeCompare(b.tehsil || '');
+                if (t) return t;
+                const m = (a.markaz || '').localeCompare(b.markaz || '');
+                if (m) return m;
+                return emisCompare(a, b);
+            }).forEach(schoolRow);
 
-            [...byTehsil.keys()].sort().forEach(t => {
-                if (!appliedTehsil) groupRow(`TEHSIL: ${t}`);
-                const mMap = byTehsil.get(t);
-                [...mMap.keys()].sort().forEach(m => {
-                    groupRow(`MARKAZ: ${m}`);
-                    [...mMap.get(m)].sort(emisCompare).forEach(schoolRow);
-                });
-            });
-
-            const footRow = ['GRAND TOTAL', ''];
+            const footRow = ['GRAND TOTAL', '', '', ''];
             sections.forEach((sec, si) => {
                 sec.grades.forEach(g => {
                     if (isTotal) footRow.push((gradeTot[g].b + gradeTot[g].g) || 0);
@@ -1404,7 +1392,7 @@
             const ws = XLSX.utils.aoa_to_sheet(aoa);
             ws['!merges'] = merges;
 
-            const colWidths = [{ wch: 12 }, { wch: 35 }];
+            const colWidths = [{ wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 35 }];
             sections.forEach(sec => {
                 sec.grades.forEach(() => {
                     if (isTotal) colWidths.push({ wch: 10 });
