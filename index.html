@@ -580,6 +580,79 @@
             margin-right: 4px;
             vertical-align: middle;
         }
+        /* EXPORT CHOICE MODAL */
+        .xm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 24, 38, .45);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .xm-overlay.open {
+            display: flex;
+        }
+        .xm-box {
+            background: var(--s);
+            border-radius: 10px;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
+        }
+        .xm-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--tx);
+            margin-bottom: 4px;
+        }
+        .xm-sub {
+            font-size: 12px;
+            color: var(--mt);
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        .xm-opt {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: var(--bg);
+            border: 1px solid var(--bd);
+            border-radius: 7px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: .15s;
+        }
+        .xm-opt:hover {
+            border-color: var(--g);
+            background: var(--gl);
+        }
+        .xm-opt-t {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tx);
+        }
+        .xm-opt-d {
+            font-size: 11px;
+            color: var(--mt);
+            margin-top: 2px;
+        }
+        .xm-cancel {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: none;
+            border: none;
+            color: var(--mt);
+            font-size: 12px;
+            padding: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
     </style>
 </head>
 <body>
@@ -646,7 +719,7 @@
                     <option value="total">Class Total Only</option>
                 </select>
             </div>
-            <button class="btn" id="btnExport" onclick="exportExcel()" disabled>⬇ Export Excel</button>
+            <button class="btn" id="btnExport" onclick="handleExportClick()" disabled>⬇ Export Excel</button>
         </div>
 
         <div class="tw">
@@ -657,6 +730,22 @@
             <div id="body"><div class="center"><div class="spin"></div>Loading district list…</div></div>
         </div>
     </main>
+
+    <div class="xm-overlay" id="xmOverlay">
+        <div class="xm-box">
+            <div class="xm-title">Choose export format</div>
+            <div class="xm-sub" id="xmSub">How should the <span id="xmScopeLabel">selection</span> be exported?</div>
+            <button class="xm-opt" id="xmSummaryOpt" onclick="chooseExportFormat('summary')">
+                <div class="xm-opt-t">📊 Summary (aggregated totals)</div>
+                <div class="xm-opt-d">One row per Tehsil/Markaz with summed numbers — today's default view.</div>
+            </button>
+            <button class="xm-opt" id="xmDetailedOpt" onclick="chooseExportFormat('detailed')">
+                <div class="xm-opt-t">📋 Detailed (every school listed)</div>
+                <div class="xm-opt-d">Full nested list — every school under its Tehsil/Markaz, same columns as the Markaz-level export.</div>
+            </button>
+            <button class="xm-cancel" onclick="closeExportChoiceModal()">Cancel</button>
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -1146,6 +1235,200 @@
             setCards(FLT.length, grandB, grandG);
 
             window._detailExport = { displayData, rowType, sections, allGrades, gradeTot, secTot, grandB, grandG, isTotal };
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           EXPORT DISPATCHER — asks Summary vs Detailed only when the download
+           spans more than one Markaz (District or Tehsil scope). Markaz-level
+           export is untouched: it already lists every school, so it exports
+           immediately exactly as before.
+           ═══════════════════════════════════════════════════════════════════ */
+        function handleExportClick() {
+            if (!FLT.length || !window._detailExport) {
+                alert('No rows to export — load a district first.');
+                return;
+            }
+            if (appliedMarkaz) {
+                exportExcel(); // unchanged Markaz-level behavior
+                return;
+            }
+            const scopeLabel = appliedTehsil ? 'Tehsil' : 'District';
+            document.getElementById('xmScopeLabel').textContent = scopeLabel + '-level download';
+            document.getElementById('xmOverlay').classList.add('open');
+        }
+
+        function closeExportChoiceModal() {
+            document.getElementById('xmOverlay').classList.remove('open');
+        }
+
+        function chooseExportFormat(kind) {
+            closeExportChoiceModal();
+            if (kind === 'detailed') exportDetailedList();
+            else exportExcel();
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           DETAILED (NESTED SCHOOL-LIST) EXPORT
+           Same columns/grade sections as exportExcel(), but instead of one
+           aggregated row per Tehsil/Markaz, lists every individual school
+           under group-header rows: District → Tehsil → Markaz → School.
+           ═══════════════════════════════════════════════════════════════════ */
+        function exportDetailedList() {
+            if (!FLT.length || !window._detailExport) {
+                alert('No rows to export — load a district first.');
+                return;
+            }
+
+            const sel = document.getElementById('sd');
+            const dist = sel.options[sel.selectedIndex]?.textContent || 'district';
+            const { sections, gradeTot, secTot, grandB, grandG, isTotal } = window._detailExport;
+            const perGradeCols = isTotal ? 1 : 2;
+
+            const totalCols = 2 + sections.reduce((s, sec) => s + sec.grades.length * perGradeCols + 1, 0) + 3;
+            const emptyRow = () => new Array(totalCols).fill('');
+            const lastHeaderRow = isTotal ? 1 : 2;
+
+            const aoa = [];
+            const merges = [];
+
+            const r0 = emptyRow();
+            r0[0] = 'EMIS CODE';
+            merges.push({ s: { r: 0, c: 0 }, e: { r: lastHeaderRow, c: 0 } });
+            r0[1] = 'NAME OF SCHOOL';
+            merges.push({ s: { r: 0, c: 1 }, e: { r: lastHeaderRow, c: 1 } });
+
+            let c = 2;
+            sections.forEach(sec => {
+                const secStart = c;
+                sec.grades.forEach(() => { c += perGradeCols; });
+                c++;
+                merges.push({ s: { r: 0, c: secStart }, e: { r: 0, c: c - 1 } });
+            });
+
+            const totBCol = c,
+                totGCol = c + 1,
+                gTotCol = c + 2;
+            r0[totBCol] = 'TOTAL BOYS';
+            merges.push({ s: { r: 0, c: totBCol }, e: { r: lastHeaderRow, c: totBCol } });
+            r0[totGCol] = 'TOTAL GIRLS';
+            merges.push({ s: { r: 0, c: totGCol }, e: { r: lastHeaderRow, c: totGCol } });
+            r0[gTotCol] = 'GRAND TOTAL';
+            merges.push({ s: { r: 0, c: gTotCol }, e: { r: lastHeaderRow, c: gTotCol } });
+
+            const r1 = emptyRow();
+            c = 2;
+            sections.forEach(sec => {
+                sec.grades.forEach(g => {
+                    r1[c] = g;
+                    if (!isTotal) merges.push({ s: { r: 1, c: c }, e: { r: 1, c: c + 1 } });
+                    c += perGradeCols;
+                });
+                r1[c] = sec.subLabel;
+                if (!isTotal) merges.push({ s: { r: 1, c: c }, e: { r: 2, c: c } });
+                c++;
+            });
+            aoa.push(r0, r1);
+
+            if (!isTotal) {
+                const r2 = emptyRow();
+                c = 2;
+                sections.forEach(sec => {
+                    sec.grades.forEach(() => {
+                        r2[c] = 'Boys';
+                        r2[c + 1] = 'Girls';
+                        c += 2;
+                    });
+                    c++;
+                });
+                aoa.push(r2);
+            }
+
+            const groupRow = (label) => {
+                const row = emptyRow();
+                row[0] = label;
+                aoa.push(row);
+                merges.push({ s: { r: aoa.length - 1, c: 0 }, e: { r: aoa.length - 1, c: totalCols - 1 } });
+            };
+
+            const schoolRow = (r) => {
+                const row = [r.emis_code || '', r.school_name || ''];
+                sections.forEach(sec => {
+                    let secSum = 0;
+                    sec.grades.forEach(g => {
+                        const b = gradeVal(r, g, 'b');
+                        const gv = gradeVal(r, g, 'g');
+                        if (isTotal) row.push((b + gv) || 0);
+                        else row.push(b || 0, gv || 0);
+                        secSum += b + gv;
+                    });
+                    row.push(secSum || 0);
+                });
+                const rowB = r.boys || 0,
+                    rowG = r.girls || 0;
+                row.push(rowB, rowG, rowB + rowG);
+                aoa.push(row);
+            };
+
+            // Group FLT (already filtered to the selected District/Tehsil scope)
+            // by Tehsil then Markaz, so each eligible school appears exactly once.
+            const byTehsil = new Map();
+            FLT.forEach(r => {
+                const t = r.tehsil || 'Unknown Tehsil';
+                const m = r.markaz || 'Unknown Markaz';
+                if (!byTehsil.has(t)) byTehsil.set(t, new Map());
+                const mMap = byTehsil.get(t);
+                if (!mMap.has(m)) mMap.set(m, []);
+                mMap.get(m).push(r);
+            });
+
+            [...byTehsil.keys()].sort().forEach(t => {
+                if (!appliedTehsil) groupRow(`TEHSIL: ${t}`);
+                const mMap = byTehsil.get(t);
+                [...mMap.keys()].sort().forEach(m => {
+                    groupRow(`MARKAZ: ${m}`);
+                    [...mMap.get(m)].sort(emisCompare).forEach(schoolRow);
+                });
+            });
+
+            const footRow = ['GRAND TOTAL', ''];
+            sections.forEach((sec, si) => {
+                sec.grades.forEach(g => {
+                    if (isTotal) footRow.push((gradeTot[g].b + gradeTot[g].g) || 0);
+                    else footRow.push(gradeTot[g].b || 0, gradeTot[g].g || 0);
+                });
+                footRow.push(secTot[si] || 0);
+            });
+            footRow.push(grandB, grandG, grandB + grandG);
+            aoa.push(footRow);
+
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!merges'] = merges;
+
+            const colWidths = [{ wch: 12 }, { wch: 35 }];
+            sections.forEach(sec => {
+                sec.grades.forEach(() => {
+                    if (isTotal) colWidths.push({ wch: 10 });
+                    else colWidths.push({ wch: 8 }, { wch: 8 });
+                });
+                colWidths.push({ wch: 13 });
+            });
+            colWidths.push({ wch: 13 }, { wch: 13 }, { wch: 13 });
+            ws['!cols'] = colWidths;
+
+            ws['!pageSetup'] = {
+                orientation: 'landscape',
+                fitToPage: true,
+                fitToWidth: 1,
+                fitToHeight: 0,
+                paperSize: 9
+            };
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Detailed Schools');
+
+            const prefix = isTotal ? 'classtotal_' : '';
+            const scope = appliedTehsil ? 'tehsil' : 'district';
+            XLSX.writeFile(wb, `sis_pesrp_detailed_${prefix}${scope}_${_slug(dist)}_${_today()}.xlsx`);
         }
 
         /* ═══════════════════════════════════════════════════════════════════
