@@ -2,22 +2,30 @@ name: Scrape SIS PESRP
 
 on:
   schedule:
-    # Runs at 00,03,06,09,12,15,18 UTC = 05,08,11,14,17,20,23 PKT (UTC+5).
-    # Deliberately skips 20:00-22:00 UTC (1-3 AM PKT) - the site's apparent
-    # nightly maintenance window that was causing intermittent failures.
-    - cron: '0 0,3,6,9,12,15,18 * * *'
+    # PKT = UTC+5, no DST.
+    # 23:00 UTC = 04:00 PKT  (primary run, right after the site's
+    #   apparent 1-3 AM PKT maintenance window closes)
+    # 01:00 UTC = 06:00 PKT  (safety-net run — only produces a new
+    #   commit if the 4 AM run was incomplete or failed; if data is
+    #   already complete this run finds no diff and commits nothing)
+    - cron: '0 23 * * *'
+    - cron: '0 1 * * *'
   workflow_dispatch:        # manual trigger
 
-# Prevent overlapping runs: if a run is ever still going when the next
-# trigger fires, cancel the stale one instead of letting them collide
-# on data/*.json writes.
+# Only cancel a run if the SAME run type is still going when its own
+# next trigger fires (extremely unlikely at 1-2 runs/day). Don't let
+# the 4 AM and 6 AM runs cancel each other.
 concurrency:
   group: scrape-sis-pesrp
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    # Generous ceiling: this now runs deliberately slower (low
+    # concurrency + retry rounds) to guarantee completeness, so give
+    # it room instead of racing the old 12-minute budget.
+    timeout-minutes: 240
     permissions:
       contents: write
 
@@ -48,10 +56,10 @@ jobs:
           git diff --cached --quiet || git commit -m \
             "scrape: $(date -u +'%Y-%m-%d %H:%M UTC')"
 
-          # The scrape takes 20-30 minutes, so main may have moved on (a manual
-          # commit, a deleted file, etc.) since this job's checkout. Rebase our
-          # data/ commit onto the latest remote history before pushing, and
-          # retry a few times in case of another late push.
+          # The scrape can take a while, so main may have moved on since
+          # this job's checkout. Rebase our data/ commit onto the latest
+          # remote history before pushing, and retry a few times in case
+          # of another late push.
           for i in 1 2 3 4 5; do
             git rebase --abort 2>/dev/null || true
             git fetch origin main
