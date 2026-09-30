@@ -1,12 +1,12 @@
 {
-  "scraped_at": "2026-09-29T06:18:21.467223+00:00",
+  "scraped_at": "2026-09-30T01:41:48.876608+00:00",
   "source": "https://sis.pesrp.edu.pk",
   "summary": {
     "total_districts": 40,
     "total_schools": 38148,
-    "total_students": 10508696,
-    "total_boys": 5028884,
-    "total_girls": 5478907
+    "total_students": 10509323,
+    "total_boys": 5028957,
+    "total_girls": 5479460
   },
   "districts": [
     {
@@ -15,10 +15,10 @@
       "slug": "attock",
       "file": "data/attock.json",
       "total_schools": 850,
-      "total_students": 221542,
-      "total_boys": 100777,
-      "total_girls": 120754,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 221528,
+      "total_boys": 100764,
+      "total_girls": 120753,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "2",
@@ -26,10 +26,10 @@
       "slug": "bahawalnagar",
       "file": "data/bahawalnagar.json",
       "total_schools": 1590,
-      "total_students": 352880,
-      "total_boys": 173907,
-      "total_girls": 178948,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 352928,
+      "total_boys": 173972,
+      "total_girls": 178931,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "3",
@@ -37,10 +37,10 @@
       "slug": "bahawalpur",
       "file": "data/bahawalpur.json",
       "total_schools": 1304,
-      "total_students": 303947,
-      "total_boys": 148898,
-      "total_girls": 155033,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 303890,
+      "total_boys": 148821,
+      "total_girls": 155053,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "4",
@@ -48,10 +48,10 @@
       "slug": "bhakkar",
       "file": "data/bhakkar.json",
       "total_schools": 967,
-      "total_students": 220416,
-      "total_boys": 118787,
-      "total_girls": 101607,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 220412,
+      "total_boys": 118756,
+      "total_girls": 101634,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "5",
@@ -59,10 +59,10 @@
       "slug": "chakwal",
       "file": "data/chakwal.json",
       "total_schools": 533,
-      "total_students": 98068,
-      "total_boys": 45093,
-      "total_girls": 52968,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 97993,
+      "total_boys": 45009,
+      "total_girls": 52977,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "6",
@@ -70,10 +70,10 @@
       "slug": "chiniot",
       "file": "data/chiniot.json",
       "total_schools": 551,
-      "total_students": 164897,
-      "total_boys": 84745,
-      "total_girls": 80146,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 164952,
+      "total_boys": 84774,
+      "total_girls": 80172,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "7",
@@ -81,10 +81,10 @@
       "slug": "d_g_khan",
       "file": "data/d_g_khan.json",
       "total_schools": 1215,
-      "total_students": 280242,
-      "total_boys": 144661,
-      "total_girls": 135555,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 280398,
+      "total_boys": 144753,
+      "total_girls": 135619,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "8",
@@ -92,10 +92,10 @@
       "slug": "faisalabad",
       "file": "data/faisalabad.json",
       "total_schools": 1933,
-      "total_students": 727521,
-      "total_boys": 329481,
-      "total_girls": 397959,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 727512,
+      "total_boys": 329405,
+      "total_girls": 398026,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "9",
@@ -103,10 +103,10 @@
       "slug": "gujranwala",
       "file": "data/gujranwala.json",
       "total_schools": 884,
-      "total_students": 296093,
-      "total_boys": 130741,
-      "total_girls": 165323,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 296043,
+      "total_boys": 130717,
+      "total_girls": 165297,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "10",
@@ -114,10 +114,10 @@
       "slug": "gujrat",
       "file": "data/gujrat.json",
       "total_schools": 1067,
-      "total_students": 293987,
-      "total_boys": 130295,
-      "total_girls": 163666,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 294073,
+      "total_boys": 130309,
+      "total_girls": 163738,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "11",
@@ -125,10 +125,10 @@
       "slug": "hafizabad",
       "file": "data/hafizabad.json",
       "total_schools": 533,
-      "total_students": 128723,
-      "total_boys": 61669,
-      "total_girls": 67045,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 128668,
+      "total_boys": 61657,
+      "total_girls": 67002,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "12",
@@ -136,10 +136,10 @@
       "slug": "jhang",
       "file": "data/jhang.json",
       "total_schools": 1256,
-      "total_students": 321450,
-      "total_boys": 166100,
-      "total_girls": 155335,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 321369,
+      "total_boys": 166005,
+      "total_girls": 155349,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "13",
@@ -147,10 +147,10 @@
       "slug": "jhelum",
       "file": "data/jhelum.json",
       "total_schools": 556,
-      "total_students": 134190,
-      "total_boys": 60610,
-      "total_girls": 73570,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 134177,
+      "total_boys": 60603,
+      "total_girls": 73564,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "14",
@@ -158,10 +158,10 @@
       "slug": "kasur",
       "file": "data/kasur.json",
       "total_schools": 1111,
-      "total_students": 331743,
-      "total_boys": 154064,
-      "total_girls": 177656,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 331749,
+      "total_boys": 154047,
+      "total_girls": 177679,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "15",
@@ -169,10 +169,10 @@
       "slug": "khanewal",
       "file": "data/khanewal.json",
       "total_schools": 1033,
-      "total_students": 361864,
-      "total_boys": 178228,
-      "total_girls": 183604,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 362007,
+      "total_boys": 178294,
+      "total_girls": 183681,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "16",
@@ -180,10 +180,10 @@
       "slug": "khushab",
       "file": "data/khushab.json",
       "total_schools": 664,
-      "total_students": 141902,
-      "total_boys": 74315,
-      "total_girls": 67580,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 141826,
+      "total_boys": 74254,
+      "total_girls": 67565,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "37",
@@ -191,10 +191,10 @@
       "slug": "kot_adu",
       "file": "data/kot_adu.json",
       "total_schools": 585,
-      "total_students": 121953,
-      "total_boys": 63664,
-      "total_girls": 58282,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 122007,
+      "total_boys": 63689,
+      "total_girls": 58311,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "17",
@@ -202,10 +202,10 @@
       "slug": "lahore",
       "file": "data/lahore.json",
       "total_schools": 1028,
-      "total_students": 597888,
-      "total_boys": 254666,
-      "total_girls": 343127,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 598604,
+      "total_boys": 254936,
+      "total_girls": 343573,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "18",
@@ -213,10 +213,10 @@
       "slug": "layyah",
       "file": "data/layyah.json",
       "total_schools": 1223,
-      "total_students": 265890,
-      "total_boys": 133208,
-      "total_girls": 132660,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 265928,
+      "total_boys": 133245,
+      "total_girls": 132661,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "19",
@@ -224,10 +224,10 @@
       "slug": "lodhran",
       "file": "data/lodhran.json",
       "total_schools": 632,
-      "total_students": 149815,
-      "total_boys": 77055,
-      "total_girls": 72751,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 149616,
+      "total_boys": 77070,
+      "total_girls": 72537,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "20",
@@ -235,10 +235,10 @@
       "slug": "mandi_baha_ud_din",
       "file": "data/mandi_baha_ud_din.json",
       "total_schools": 661,
-      "total_students": 182096,
-      "total_boys": 82835,
-      "total_girls": 99238,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 182113,
+      "total_boys": 82847,
+      "total_girls": 99243,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "21",
@@ -246,10 +246,10 @@
       "slug": "mianwali",
       "file": "data/mianwali.json",
       "total_schools": 990,
-      "total_students": 219458,
-      "total_boys": 118394,
-      "total_girls": 101051,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 219410,
+      "total_boys": 118374,
+      "total_girls": 101023,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "22",
@@ -257,10 +257,10 @@
       "slug": "multan",
       "file": "data/multan.json",
       "total_schools": 1098,
-      "total_students": 335384,
-      "total_boys": 162392,
-      "total_girls": 172964,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 335164,
+      "total_boys": 162354,
+      "total_girls": 172782,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "38",
@@ -268,10 +268,10 @@
       "slug": "murree",
       "file": "data/murree.json",
       "total_schools": 268,
-      "total_students": 38950,
-      "total_boys": 18575,
-      "total_girls": 20373,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 38960,
+      "total_boys": 18577,
+      "total_girls": 20381,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "23",
@@ -279,10 +279,10 @@
       "slug": "muzaffargarh",
       "file": "data/muzaffargarh.json",
       "total_schools": 871,
-      "total_students": 215113,
-      "total_boys": 114573,
-      "total_girls": 100530,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 215084,
+      "total_boys": 114532,
+      "total_girls": 100542,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "24",
@@ -290,10 +290,10 @@
       "slug": "nankana_sahib",
       "file": "data/nankana_sahib.json",
       "total_schools": 621,
-      "total_students": 163242,
-      "total_boys": 80031,
-      "total_girls": 83199,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 163278,
+      "total_boys": 80043,
+      "total_girls": 83223,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "25",
@@ -301,10 +301,10 @@
       "slug": "narowal",
       "file": "data/narowal.json",
       "total_schools": 956,
-      "total_students": 189031,
-      "total_boys": 87154,
-      "total_girls": 101858,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 189002,
+      "total_boys": 87108,
+      "total_girls": 101875,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "26",
@@ -312,10 +312,10 @@
       "slug": "okara",
       "file": "data/okara.json",
       "total_schools": 1112,
-      "total_students": 317848,
-      "total_boys": 154366,
-      "total_girls": 163438,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 318215,
+      "total_boys": 154494,
+      "total_girls": 163677,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "27",
@@ -323,10 +323,10 @@
       "slug": "pakpattan",
       "file": "data/pakpattan.json",
       "total_schools": 692,
-      "total_students": 197827,
-      "total_boys": 100759,
-      "total_girls": 97051,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 197817,
+      "total_boys": 100727,
+      "total_girls": 97073,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "28",
@@ -334,10 +334,10 @@
       "slug": "rahimyar_khan",
       "file": "data/rahimyar_khan.json",
       "total_schools": 2092,
-      "total_students": 528939,
-      "total_boys": 271523,
-      "total_girls": 257372,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 528730,
+      "total_boys": 271491,
+      "total_girls": 257195,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "29",
@@ -345,10 +345,10 @@
       "slug": "rajanpur",
       "file": "data/rajanpur.json",
       "total_schools": 775,
-      "total_students": 182353,
-      "total_boys": 102818,
-      "total_girls": 79523,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 182434,
+      "total_boys": 102864,
+      "total_girls": 79558,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "30",
@@ -356,10 +356,10 @@
       "slug": "rawalpindi",
       "file": "data/rawalpindi.json",
       "total_schools": 1178,
-      "total_students": 325451,
-      "total_boys": 137185,
-      "total_girls": 188238,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 325365,
+      "total_boys": 137114,
+      "total_girls": 188223,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "31",
@@ -367,10 +367,10 @@
       "slug": "sahiwal",
       "file": "data/sahiwal.json",
       "total_schools": 944,
-      "total_students": 322852,
-      "total_boys": 153150,
-      "total_girls": 169680,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 322915,
+      "total_boys": 153175,
+      "total_girls": 169718,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "32",
@@ -378,10 +378,10 @@
       "slug": "sargodha",
       "file": "data/sargodha.json",
       "total_schools": 1455,
-      "total_students": 399202,
-      "total_boys": 181650,
-      "total_girls": 217519,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 399209,
+      "total_boys": 181669,
+      "total_girls": 217507,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "33",
@@ -389,10 +389,10 @@
       "slug": "sheikhupura",
       "file": "data/sheikhupura.json",
       "total_schools": 910,
-      "total_students": 291863,
-      "total_boys": 132760,
-      "total_girls": 159068,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 291855,
+      "total_boys": 132700,
+      "total_girls": 159120,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "34",
@@ -400,10 +400,10 @@
       "slug": "sialkot",
       "file": "data/sialkot.json",
       "total_schools": 1278,
-      "total_students": 349108,
-      "total_boys": 152567,
-      "total_girls": 196506,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 349179,
+      "total_boys": 152611,
+      "total_girls": 196533,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "35",
@@ -411,10 +411,10 @@
       "slug": "t_t_singh",
       "file": "data/t_t_singh.json",
       "total_schools": 1024,
-      "total_students": 300467,
-      "total_boys": 139336,
-      "total_girls": 161114,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 300466,
+      "total_boys": 139355,
+      "total_girls": 161094,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "39",
@@ -422,10 +422,10 @@
       "slug": "talagang",
       "file": "data/talagang.json",
       "total_schools": 294,
-      "total_students": 57416,
-      "total_boys": 27391,
-      "total_girls": 30023,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 57415,
+      "total_boys": 27392,
+      "total_girls": 30021,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "36",
@@ -433,10 +433,10 @@
       "slug": "vehari",
       "file": "data/vehari.json",
       "total_schools": 1101,
-      "total_students": 295291,
-      "total_boys": 144477,
-      "total_girls": 150787,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 295269,
+      "total_boys": 144479,
+      "total_girls": 150763,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     },
     {
       "district_id": "40",
@@ -444,10 +444,10 @@
       "slug": "wazirabad",
       "file": "data/wazirabad.json",
       "total_schools": 313,
-      "total_students": 81794,
-      "total_boys": 35984,
-      "total_girls": 45806,
-      "scraped_at": "2026-09-29T06:18:21.467223+00:00"
+      "total_students": 81763,
+      "total_boys": 35971,
+      "total_girls": 45787,
+      "scraped_at": "2026-09-30T01:41:48.876608+00:00"
     }
   ]
 }
