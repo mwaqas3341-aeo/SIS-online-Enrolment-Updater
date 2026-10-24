@@ -1,5 +1,5 @@
 {
-  "scraped_at": "2026-10-24T01:13:03.819804+00:00",
+  "scraped_at": "2026-10-24T05:08:28.860865+00:00",
   "source": "https://sis.pesrp.edu.pk",
   "summary": {
     "total_districts": 40,
@@ -18,7 +18,7 @@
       "total_students": 220641,
       "total_boys": 100180,
       "total_girls": 120449,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "2",
@@ -29,7 +29,7 @@
       "total_students": 355538,
       "total_boys": 175456,
       "total_girls": 180058,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "3",
@@ -40,7 +40,7 @@
       "total_students": 308584,
       "total_boys": 151202,
       "total_girls": 157365,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "4",
@@ -51,7 +51,7 @@
       "total_students": 221846,
       "total_boys": 119588,
       "total_girls": 102238,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "5",
@@ -62,7 +62,7 @@
       "total_students": 99089,
       "total_boys": 45469,
       "total_girls": 53614,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "6",
@@ -73,7 +73,7 @@
       "total_students": 166463,
       "total_boys": 85497,
       "total_girls": 80960,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "7",
@@ -84,7 +84,7 @@
       "total_students": 284963,
       "total_boys": 147534,
       "total_girls": 137406,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "8",
@@ -95,7 +95,7 @@
       "total_students": 736624,
       "total_boys": 334378,
       "total_girls": 402165,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "9",
@@ -106,7 +106,7 @@
       "total_students": 298434,
       "total_boys": 131803,
       "total_girls": 166602,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "10",
@@ -117,7 +117,7 @@
       "total_students": 296143,
       "total_boys": 131103,
       "total_girls": 165014,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "11",
@@ -128,7 +128,7 @@
       "total_students": 130462,
       "total_boys": 62631,
       "total_girls": 67821,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "12",
@@ -139,7 +139,7 @@
       "total_students": 323537,
       "total_boys": 167431,
       "total_girls": 156090,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "13",
@@ -150,7 +150,7 @@
       "total_students": 134249,
       "total_boys": 60570,
       "total_girls": 73667,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "14",
@@ -161,7 +161,7 @@
       "total_students": 333623,
       "total_boys": 154904,
       "total_girls": 178697,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "15",
@@ -172,7 +172,7 @@
       "total_students": 361357,
       "total_boys": 178005,
       "total_girls": 183318,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "16",
@@ -183,7 +183,7 @@
       "total_students": 144202,
       "total_boys": 75649,
       "total_girls": 68545,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "37",
@@ -194,7 +194,7 @@
       "total_students": 127096,
       "total_boys": 66418,
       "total_girls": 60672,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "17",
@@ -205,7 +205,7 @@
       "total_students": 609621,
       "total_boys": 259805,
       "total_girls": 349722,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "18",
@@ -216,7 +216,7 @@
       "total_students": 267207,
       "total_boys": 134026,
       "total_girls": 133159,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "19",
@@ -227,7 +227,7 @@
       "total_students": 149998,
       "total_boys": 77256,
       "total_girls": 72734,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "20",
@@ -238,7 +238,7 @@
       "total_students": 184988,
       "total_boys": 84251,
       "total_girls": 100713,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "21",
@@ -249,7 +249,7 @@
       "total_students": 219529,
       "total_boys": 118227,
       "total_girls": 101289,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "22",
@@ -260,7 +260,7 @@
       "total_students": 342195,
       "total_boys": 166507,
       "total_girls": 175660,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "38",
@@ -271,7 +271,7 @@
       "total_students": 39047,
       "total_boys": 18637,
       "total_girls": 20408,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "23",
@@ -282,7 +282,7 @@
       "total_students": 213995,
       "total_boys": 113607,
       "total_girls": 100378,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "24",
@@ -293,7 +293,7 @@
       "total_students": 163369,
       "total_boys": 79943,
       "total_girls": 83415,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "25",
@@ -304,7 +304,7 @@
       "total_students": 193022,
       "total_boys": 89051,
       "total_girls": 103950,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "26",
@@ -315,7 +315,7 @@
       "total_students": 320977,
       "total_boys": 156084,
       "total_girls": 164847,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "27",
@@ -326,7 +326,7 @@
       "total_students": 198975,
       "total_boys": 101138,
       "total_girls": 97818,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "28",
@@ -337,7 +337,7 @@
       "total_students": 530220,
       "total_boys": 272516,
       "total_girls": 257659,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "29",
@@ -348,7 +348,7 @@
       "total_students": 186326,
       "total_boys": 105239,
       "total_girls": 81076,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "30",
@@ -359,7 +359,7 @@
       "total_students": 328643,
       "total_boys": 138880,
       "total_girls": 189734,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "31",
@@ -370,7 +370,7 @@
       "total_students": 322267,
       "total_boys": 152543,
       "total_girls": 169702,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "32",
@@ -381,7 +381,7 @@
       "total_students": 408512,
       "total_boys": 186667,
       "total_girls": 221811,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "33",
@@ -392,7 +392,7 @@
       "total_students": 295360,
       "total_boys": 134362,
       "total_girls": 160964,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "34",
@@ -403,7 +403,7 @@
       "total_students": 349256,
       "total_boys": 152591,
       "total_girls": 196631,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "35",
@@ -414,7 +414,7 @@
       "total_students": 301629,
       "total_boys": 140179,
       "total_girls": 161436,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "39",
@@ -425,7 +425,7 @@
       "total_students": 58580,
       "total_boys": 28009,
       "total_girls": 30569,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "36",
@@ -436,7 +436,7 @@
       "total_students": 296304,
       "total_boys": 144875,
       "total_girls": 151402,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     },
     {
       "district_id": "40",
@@ -447,7 +447,7 @@
       "total_students": 83914,
       "total_boys": 37032,
       "total_girls": 46876,
-      "scraped_at": "2026-10-24T01:13:03.819804+00:00"
+      "scraped_at": "2026-10-24T05:08:28.860865+00:00"
     }
   ]
 }
